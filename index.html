@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PRATICA P.A.O. — Incontro 0.1</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;background:#f4efe5;color:#29251f;font-family:Georgia,"Times New Roman",serif}body{overflow-x:hidden}
+.scene{min-height:100svh;width:100%;padding:48px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative}
+.soft-light{background:radial-gradient(circle at center,#fff 0%,#f8f4eb 38%,#e4dac6 100%)}.symbol{font-size:24px;letter-spacing:8px;opacity:.65;margin-bottom:42px}
+h1{margin:0;font-size:clamp(48px,15vw,82px);font-weight:400;letter-spacing:.08em;line-height:1}.line{width:46px;height:1px;background:#8e7b5d;margin:32px auto}
+.appear{opacity:0;transform:translateY(12px);animation:appear 2.5s ease forwards}.delay1{animation-delay:1.5s}.delay2{animation-delay:4s}.delay3{animation-delay:6.5s}
+@keyframes appear{to{opacity:1;transform:translateY(0)}}.intro{max-width:500px;font-size:24px;line-height:1.5}.now{display:block;font-size:38px;margin-top:12px;font-style:italic}
+.pause{margin-top:50px;font-size:16px;letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+button{margin-top:55px;padding:17px 34px;border:1px solid #76664e;border-radius:999px;background:rgba(255,255,255,.35);color:#29251f;font-family:inherit;font-size:18px;letter-spacing:.13em;cursor:pointer;opacity:0;animation:appear 2s ease forwards;animation-delay:9s}
+.hidden{display:none}.second{background:radial-gradient(circle at 50% 35%,#fffdf7 0%,#eee5d3 45%,#d8c8aa 100%)}.second h2{font-size:38px;font-weight:400;margin:0 0 38px}
+.second p{max-width:470px;font-size:22px;line-height:1.65;margin:10px 0}.breathe{width:110px;height:110px;margin:45px auto;border:1px solid rgba(91,76,54,.45);border-radius:50%;animation:breathe 8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.75);opacity:.35}50%{transform:scale(1.15);opacity:.85}}.question{margin-top:35px!important;font-style:italic;font-size:26px!important}
+.footer{position:absolute;bottom:25px;font-size:12px;letter-spacing:.18em;opacity:.45}
+</style></head><body>
+<section id="soglia" class="scene soft-light"><div class="symbol appear">△ ∞</div><h1 class="appear delay1">FERMATI</h1><div class="line appear delay2"></div><div class="intro appear delay2">Questa esperienza inizia qui.<span class="now">Adesso.</span></div><div class="pause appear delay3">Non c'è nulla da capire.</div><button onclick="entra()">MI FERMO</button><div class="footer">PRATICA △∞ P.A.O.</div></section>
+<section id="presenza" class="scene second hidden"><div class="symbol">△ ∞</div><h2>Sei qui.</h2><p>Per qualche istante<br>non andare da nessuna parte.</p><div class="breathe"></div><p>Porta semplicemente l'attenzione<br>a ciò che sta accadendo in te.</p><p>Un pensiero.<br>Una sensazione.<br>Un'emozione.</p><div class="line"></div><p class="question">Cosa c'è, proprio adesso?</p><div class="footer">INCONTRO 0.1</div></section>
+<script>
+function entra(){const s=document.getElementById("soglia"),p=document.getElementById("presenza");s.style.transition="opacity 1.5s ease";s.style.opacity="0";setTimeout(()=>{s.style.display="none";p.classList.remove("hidden");p.style.opacity="0";p.style.transition="opacity 2s ease";requestAnimationFrame(()=>p.style.opacity="1");window.scrollTo(0,0)},1500)}
+</script></body></html>
