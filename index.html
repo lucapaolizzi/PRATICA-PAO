@@ -3,23 +3,252 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PRATICA P.A.O. — Incontro 0.1</title>
+<title>PRATICA P.A.O. — Incontro 0.2</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;background:#f4efe5;color:#29251f;font-family:Georgia,"Times New Roman",serif}body{overflow-x:hidden}
-.scene{min-height:100svh;width:100%;padding:48px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative}
-.soft-light{background:radial-gradient(circle at center,#fff 0%,#f8f4eb 38%,#e4dac6 100%)}.symbol{font-size:24px;letter-spacing:8px;opacity:.65;margin-bottom:42px}
-h1{margin:0;font-size:clamp(48px,15vw,82px);font-weight:400;letter-spacing:.08em;line-height:1}.line{width:46px;height:1px;background:#8e7b5d;margin:32px auto}
-.appear{opacity:0;transform:translateY(12px);animation:appear 2.5s ease forwards}.delay1{animation-delay:1.5s}.delay2{animation-delay:4s}.delay3{animation-delay:6.5s}
-@keyframes appear{to{opacity:1;transform:translateY(0)}}.intro{max-width:500px;font-size:24px;line-height:1.5}.now{display:block;font-size:38px;margin-top:12px;font-style:italic}
-.pause{margin-top:50px;font-size:16px;letter-spacing:.16em;text-transform:uppercase;opacity:.6}
-button{margin-top:55px;padding:17px 34px;border:1px solid #76664e;border-radius:999px;background:rgba(255,255,255,.35);color:#29251f;font-family:inherit;font-size:18px;letter-spacing:.13em;cursor:pointer;opacity:0;animation:appear 2s ease forwards;animation-delay:9s}
-.hidden{display:none}.second{background:radial-gradient(circle at 50% 35%,#fffdf7 0%,#eee5d3 45%,#d8c8aa 100%)}.second h2{font-size:38px;font-weight:400;margin:0 0 38px}
-.second p{max-width:470px;font-size:22px;line-height:1.65;margin:10px 0}.breathe{width:110px;height:110px;margin:45px auto;border:1px solid rgba(91,76,54,.45);border-radius:50%;animation:breathe 8s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(.75);opacity:.35}50%{transform:scale(1.15);opacity:.85}}.question{margin-top:35px!important;font-style:italic;font-size:26px!important}
-.footer{position:absolute;bottom:25px;font-size:12px;letter-spacing:.18em;opacity:.45}
-</style></head><body>
-<section id="soglia" class="scene soft-light"><div class="symbol appear">△ ∞</div><h1 class="appear delay1">FERMATI</h1><div class="line appear delay2"></div><div class="intro appear delay2">Questa esperienza inizia qui.<span class="now">Adesso.</span></div><div class="pause appear delay3">Non c'è nulla da capire.</div><button onclick="entra()">MI FERMO</button><div class="footer">PRATICA △∞ P.A.O.</div></section>
-<section id="presenza" class="scene second hidden"><div class="symbol">△ ∞</div><h2>Sei qui.</h2><p>Per qualche istante<br>non andare da nessuna parte.</p><div class="breathe"></div><p>Porta semplicemente l'attenzione<br>a ciò che sta accadendo in te.</p><p>Un pensiero.<br>Una sensazione.<br>Un'emozione.</p><div class="line"></div><p class="question">Cosa c'è, proprio adesso?</p><div class="footer">INCONTRO 0.1</div></section>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%;background:#fbf8f1;color:#2d2a26;font-family:Georgia,"Times New Roman",serif}
+body{overflow-x:hidden}
+
+.scene{
+  min-height:100svh;
+  width:100%;
+  padding:44px 28px 64px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  position:relative;
+}
+
+.soft-light{
+  background:
+    radial-gradient(circle at 50% 28%,rgba(255,255,255,1) 0%,rgba(255,253,247,.98) 34%,rgba(248,242,230,.98) 68%,rgba(239,230,210,.96) 100%);
+}
+
+.symbol{
+  font-size:22px;
+  letter-spacing:7px;
+  opacity:.52;
+  margin-bottom:34px;
+}
+
+h1{
+  margin:0;
+  font-size:clamp(44px,13vw,74px);
+  font-weight:400;
+  letter-spacing:.07em;
+  line-height:1;
+}
+
+.substop{
+  margin-top:14px;
+  font-size:18px;
+  font-style:italic;
+  opacity:.72;
+}
+
+.line{
+  width:42px;
+  height:1px;
+  background:#a28e6f;
+  margin:28px auto;
+}
+
+.appear{
+  opacity:0;
+  transform:translateY(8px);
+  animation:appear 1.5s ease forwards;
+}
+
+.delay1{animation-delay:.5s}
+.delay2{animation-delay:1.6s}
+.delay3{animation-delay:2.9s}
+.delay4{animation-delay:4.2s}
+
+@keyframes appear{
+  to{opacity:1;transform:translateY(0)}
+}
+
+.intro{
+  max-width:500px;
+  font-size:24px;
+  line-height:1.45;
+}
+
+.now{
+  display:block;
+  font-size:36px;
+  margin-top:10px;
+  font-style:italic;
+}
+
+.pause{
+  margin-top:36px;
+  font-size:15px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  opacity:.54;
+}
+
+button{
+  margin-top:40px;
+  padding:16px 34px;
+  border:1px solid #8c7a60;
+  border-radius:999px;
+  background:rgba(255,255,255,.55);
+  color:#2d2a26;
+  font-family:inherit;
+  font-size:18px;
+  letter-spacing:.10em;
+  cursor:pointer;
+  opacity:0;
+  animation:appear 1.3s ease forwards;
+  animation-delay:5.1s;
+  box-shadow:0 8px 22px rgba(118,96,65,.08);
+}
+
+button:active{transform:scale(.985)}
+
+.tap-hint{
+  margin-top:11px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:12px;
+  letter-spacing:.06em;
+  opacity:0;
+  animation:appear 1.2s ease forwards;
+  animation-delay:5.6s;
+}
+
+.hidden{display:none}
+
+.second{
+  background:
+    radial-gradient(circle at 50% 32%,#fff 0%,#fbf7ef 46%,#efe4d0 100%);
+}
+
+.second h2{
+  font-size:40px;
+  font-weight:400;
+  margin:0 0 32px;
+}
+
+.second p{
+  max-width:470px;
+  font-size:22px;
+  line-height:1.6;
+  margin:10px 0;
+}
+
+.breathe{
+  width:106px;
+  height:106px;
+  margin:38px auto;
+  border:1px solid rgba(110,91,67,.30);
+  border-radius:50%;
+  box-shadow:0 0 0 0 rgba(150,128,93,.08);
+  animation:breathe 7s ease-in-out infinite;
+}
+
+@keyframes breathe{
+  0%,100%{transform:scale(.82);opacity:.36;box-shadow:0 0 0 0 rgba(150,128,93,.03)}
+  50%{transform:scale(1.08);opacity:.78;box-shadow:0 0 0 18px rgba(150,128,93,.04)}
+}
+
+.question{
+  margin-top:30px!important;
+  font-style:italic;
+  font-size:26px!important;
+}
+
+.footer{
+  position:absolute;
+  bottom:22px;
+  font-size:11px;
+  letter-spacing:.16em;
+  opacity:.36;
+}
+</style>
+</head>
+<body>
+
+<section id="soglia" class="scene soft-light">
+  <div class="symbol appear delay1">△ ∞</div>
+
+  <h1 class="appear delay1">FERMATI.</h1>
+  <div class="substop appear delay2">Solo un istante.</div>
+
+  <div class="line appear delay2"></div>
+
+  <div class="intro appear delay3">
+    Questa esperienza inizia qui.
+    <span class="now">Adesso.</span>
+  </div>
+
+  <div class="pause appear delay4">
+    Non c'è nulla da capire.
+  </div>
+
+  <button onclick="entra()">MI FERMO</button>
+  <div class="tap-hint">Tocca per iniziare</div>
+
+  <div class="footer">PRATICA △∞ P.A.O.</div>
+</section>
+
+<section id="presenza" class="scene second hidden">
+  <div class="symbol">△ ∞</div>
+
+  <h2>Sei qui.</h2>
+
+  <p>
+    Per qualche istante<br>
+    non andare da nessuna parte.
+  </p>
+
+  <div class="breathe"></div>
+
+  <p>
+    Porta semplicemente l'attenzione<br>
+    a ciò che sta accadendo in te.
+  </p>
+
+  <p>
+    Un pensiero.<br>
+    Una sensazione.<br>
+    Un'emozione.
+  </p>
+
+  <div class="line"></div>
+
+  <p class="question">
+    Cosa c'è, proprio adesso?
+  </p>
+
+  <div class="footer">INCONTRO 0.2</div>
+</section>
+
 <script>
-function entra(){const s=document.getElementById("soglia"),p=document.getElementById("presenza");s.style.transition="opacity 1.5s ease";s.style.opacity="0";setTimeout(()=>{s.style.display="none";p.classList.remove("hidden");p.style.opacity="0";p.style.transition="opacity 2s ease";requestAnimationFrame(()=>p.style.opacity="1");window.scrollTo(0,0)},1500)}
-</script></body></html>
+function entra(){
+  const s=document.getElementById("soglia");
+  const p=document.getElementById("presenza");
+
+  s.style.transition="opacity 1s ease";
+  s.style.opacity="0";
+
+  setTimeout(()=>{
+    s.style.display="none";
+    p.classList.remove("hidden");
+    p.style.opacity="0";
+    p.style.transition="opacity 1.3s ease";
+
+    requestAnimationFrame(()=>{
+      p.style.opacity="1";
+    });
+
+    window.scrollTo(0,0);
+  },1000);
+}
+</script>
+
+</body>
+</html>
