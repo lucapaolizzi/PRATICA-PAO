@@ -742,6 +742,37 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   .relation .chair.right{margin-left:26px !important}
 }
 
+
+/* ===== REVISIONE TIPOGRAFICA MOBILE ===== */
+.awareness .step-label{
+  width:100%;
+  max-width:100%;
+  padding:0 6px;
+  box-sizing:border-box;
+  text-align:center;
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal;
+  letter-spacing:clamp(.07em,1.8vw,.16em);
+  font-size:clamp(10px,3.15vw,12px);
+}
+
+/* Evita spezzature brutte nelle intestazioni A/B/C dell'ultima pagina */
+.triptych .card strong{
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+  letter-spacing:clamp(.025em,.8vw,.08em);
+  font-size:clamp(9px,2.55vw,13px);
+}
+
+/* Controllo generale dei testi principali: niente rotture dentro le parole */
+h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}
+
 </style>
 </head>
 <body>
