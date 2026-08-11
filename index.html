@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PRATICA P.A.O. — Incontro 0.5 rev.</title>
+<title>PRATICA P.A.O. — versione 0.8</title>
 <style>
 *{box-sizing:border-box}
 html,body{
@@ -275,67 +275,29 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   color:#51483c;
 }
 
+/* 0.3 — centro visivo più esperienziale */
+#s3 .permission{width:min(92vw,520px)}
+#s3 .okay{
+  position:relative;
+  background:radial-gradient(circle,rgba(222,202,169,.34) 0%,rgba(255,255,255,0) 72%);
+  padding:24px 16px;
+  margin-top:26px;
+}
+#s3 .okay::before,#s3 .okay::after{content:"";position:absolute;left:50%;transform:translateX(-50%);width:58%;height:1px;background:rgba(117,95,66,.42)}
+#s3 .okay::before{top:0} #s3 .okay::after{bottom:0}
+#s3 .question{margin-top:22px}
 
-/* 0.7 ultimo gesto */
-.final-gesture{
-  margin-top:30px;
-}
-.final-gesture .action{
-  font-size:20px;
-  font-weight:600;
-  border-width:2px;
-  background:rgba(255,252,245,.88);
-  box-shadow:0 11px 28px rgba(93,72,46,.16);
-}
-.stay-note{
-  margin-top:12px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:.10em;
-  line-height:1.5;
-  text-transform:uppercase;
-  color:#66543d;
-  opacity:.78;
-}
-
-/* 0.8 uscita */
-.exit{
-  justify-content:center;
-  padding-top:calc(44px + env(safe-area-inset-top));
-}
-.exit .symbol{
-  font-size:28px;
-  margin-bottom:34px;
-  opacity:.58;
-}
-.exit h2{
-  font-size:clamp(34px,8.7vw,48px);
-  line-height:1.2;
-}
-.exit .quiet{
-  margin-top:30px;
-  font-size:clamp(21px,5.4vw,27px);
-  line-height:1.6;
-  color:#4e463b;
-}
-.exit .begin{
-  margin-top:38px;
-  padding-top:28px;
-  border-top:1px solid rgba(117,95,66,.38);
-  width:min(500px,88vw);
-  font-size:clamp(34px,8.8vw,48px);
-  line-height:1.2;
-  font-style:italic;
-}
-.exit .brand{
-  margin-top:42px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.20em;
-  text-transform:uppercase;
-  opacity:.56;
+/* iPhone: il primo incontro deve entrare nello schermo senza scorrimento */
+@media (max-width:430px) and (max-height:900px){
+  #s1{min-height:100svh;padding:calc(20px + env(safe-area-inset-top)) 24px calc(54px + env(safe-area-inset-bottom));justify-content:space-evenly}
+  #s1 .symbol{margin-bottom:4px;font-size:19px}
+  #s1 h1{font-size:clamp(40px,11vw,54px)}
+  #s1 .line{margin:10px auto}
+  #s1 p{font-size:clamp(19px,5vw,23px);line-height:1.35;margin:4px 0}
+  #s1 .now{font-size:clamp(31px,8vw,40px);margin-top:3px}
+  #s1 .small{font-size:clamp(17px,4.5vw,20px);line-height:1.38}
+  #s1 .action{margin-top:8px;padding:17px 28px 15px}
+  #s1 .forward{margin-top:4px}
 }
 
 </style>
@@ -379,8 +341,8 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
     <div class="okay">Va bene così.</div>
   </div>
 
-  <div class="question">COSA SENTO?</div>
-  <button class="action" type="button" data-next="s4">RESTO QUI</button>
+  <div class="question">COSA SENTI?</div>
+  <button class="action" type="button" data-next="s4">LE LASCIO SPAZIO</button>
   <div class="forward">tocca per andare avanti</div>
   <div class="footer">INCONTRO 0.3</div>
 </section>
@@ -395,7 +357,7 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <div class="withyou">Con te.</div>
   <div class="line"></div>
   <p class="small soft">Forse qui posso<br>smettere di difendermi.</p>
-  <div class="question">COSA SCELGO?</div>
+  <div class="question">COSA SCEGLI?</div>
   <button class="action" type="button" data-next="s5">MI LASCIO INCONTRARE</button>
   <div class="forward">tocca per andare avanti</div>
   <div class="footer">INCONTRO 0.4</div>
@@ -439,11 +401,10 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <p class="inner">Da qui nasce la possibilità<br>di stare con ciò che c'è.</p>
 
   <div class="qblock">
-    <div class="q">COME AGISCO?</div>
-    <div class="q">COSA VOGLIO VERAMENTE?</div>
+    <div class="q">COME SCEGLI DI AGIRE?</div>
   </div>
 
-  <button class="action" type="button" data-next="s7">SCELGO</button>
+  <button class="action" type="button" data-next="s7">SCELGO COME AGIRE</button>
   <div class="forward">tocca per andare avanti</div>
 
   <div class="footer">INCONTRO 0.6</div>
@@ -472,28 +433,9 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
 
   <div class="final">LA PRESENZA SORGE<br>DALLA BUONA RELAZIONE.</div>
 
-  <p class="endnote">Non è necessario capire tutto.<br><strong>È sufficiente esserci.</strong></p>
-
-  <div class="final-gesture">
-    <button class="action" type="button" data-next="s8">CI SONO</button>
-    <div class="stay-note">Non per andare avanti.<br>Per restare qui.</div>
-  </div>
+  <p class="endnote">Non è necessario capire tutto.<br>È sufficiente esserci.</p>
 
   <div class="footer">INCONTRO 0.7</div>
-</section>
-
-<section id="s8" class="scene exit hidden">
-  <div class="symbol">△ ∞</div>
-
-  <h2>Adesso non devi fare altro.</h2>
-
-  <p class="quiet">Ciò che hai incontrato<br>può restare con te.</p>
-
-  <div class="begin">La pratica<br>comincia da qui.</div>
-
-  <div class="brand">PRATICA △∞ P.A.O.</div>
-
-  <div class="footer">INCONTRO 0.8</div>
 </section>
 
 <script>
