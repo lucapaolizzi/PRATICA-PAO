@@ -664,6 +664,44 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   .relation .chair::after{top:161px}
 }
 
+
+/* ===== Navigazione indietro ===== */
+.back-btn{
+  position:absolute;
+  left:18px;
+  bottom:calc(17px + env(safe-area-inset-bottom));
+  width:44px;
+  height:44px;
+  border:1px solid rgba(117,95,66,.45);
+  border-radius:50%;
+  background:rgba(255,252,246,.78);
+  color:#5f4e38;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:25px;
+  line-height:1;
+  cursor:pointer;
+  z-index:20;
+  box-shadow:0 5px 16px rgba(91,70,43,.10);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.back-btn:active{transform:scale(.96)}
+.scene .footer{
+  pointer-events:none;
+}
+@media (max-height:720px){
+  .back-btn{
+    width:38px;
+    height:38px;
+    left:12px;
+    bottom:calc(10px + env(safe-area-inset-bottom));
+    font-size:22px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -698,6 +736,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
     <button class="choice-btn secondary" type="button" data-loop="s2loop">MI BLOCCO NEL SOLITO LOOP</button>
   </div>
   <div id="s2loop" class="loop-note">Ti accorgi del blocco. Non devi forzarlo. La pagina successiva si apre quando scegli di esserci.</div>
+  <button class="back-btn" type="button" data-back="s1" aria-label="Torna alla pagina precedente">←</button>
   <div class="footer">INCONTRO 0.2</div>
 </section>
 
@@ -721,6 +760,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
     <button class="choice-btn secondary" type="button" data-loop="s3loop">MI DISTRAGGO — TORNO NEL SOLITO LOOP</button>
   </div>
   <div id="s3loop" class="loop-note">Ti distrai e torni al conosciuto. Puoi accorgertene senza giudicarti e scegliere di nuovo.</div>
+  <button class="back-btn" type="button" data-back="s2" aria-label="Torna alla pagina precedente">←</button>
 
   <div class="footer">INCONTRO 0.3</div>
 </section>
@@ -733,10 +773,10 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   </div>
 
   <div class="line"></div>
-  <p class="support">A volte non serve una risposta.<br>Non serve essere aggiustati.<br>Può bastare qualcuno che sappia restare.</p>
-  <div class="withyou">Con te.</div>
+  <p class="support">A volte non serve una risposta.<br>Non serve essere aggiustati.<br>Può bastare qualcuno che possa restare con te</p>
+  
 
-  <div class="release">FINALMENTE, FORSE POSSO<br>SMETTERE DI DIFENDERMI.</div>
+  <div class="release">FINALMENTE POSSO<br>SMETTERE DI DIFENDERMI.</div>
 
   <div class="question">COSA SCEGLI ADESSO?</div>
 
@@ -745,6 +785,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
     <button class="choice-btn secondary" type="button" data-loop="s4loop">TORNO A NON VEDERMI</button>
   </div>
   <div id="s4loop" class="loop-note">Chiudi gli occhi e torni al solito loop. Anche questo può essere visto. Quando vuoi, puoi scegliere di incontrarti.</div>
+  <button class="back-btn" type="button" data-back="s3" aria-label="Torna alla pagina precedente">←</button>
 
   <div class="footer">INCONTRO 0.4</div>
 </section>
@@ -773,6 +814,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
     <button class="choice-btn primary" type="button" data-next="s6">ENTRO NELLA RELAZIONE</button>
   </div>
   <div class="forward">tocca per andare avanti</div>
+  <button class="back-btn" type="button" data-back="s4" aria-label="Torna alla pagina precedente">←</button>
   <div class="footer">INCONTRO 0.5</div>
 </section>
 
@@ -792,6 +834,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
     <button class="choice-btn primary" type="button" data-next="s7">SCELGO COME AGIRE</button>
   </div>
   <div class="forward">tocca per andare avanti</div>
+  <button class="back-btn" type="button" data-back="s5" aria-label="Torna alla pagina precedente">←</button>
   <div class="footer">INCONTRO 0.6</div>
 </section>
 
@@ -818,6 +861,7 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   </div>
 
   <div class="final-sign">INVITO ALLA PRESENZA</div>
+  <button class="back-btn" type="button" data-back="s6" aria-label="Torna alla pagina precedente">←</button>
   <div class="footer">INCONTRO 0.7</div>
 </section>
 
@@ -853,6 +897,25 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   });
   document.querySelectorAll('[data-loop]').forEach(function(btn){
     btn.addEventListener('click',function(){showLoop(btn)});
+  });
+
+  function goBack(btn){
+    const current=btn.closest('.scene');
+    const prev=document.getElementById(btn.getAttribute('data-back'));
+    if(!current||!prev)return;
+    current.style.transition='opacity .35s ease';
+    current.style.opacity='0';
+    setTimeout(function(){
+      current.classList.add('hidden');
+      current.style.opacity='';
+      prev.classList.remove('hidden');
+      prev.classList.add('fade');
+      window.scrollTo({top:0,left:0,behavior:'instant'});
+    },360);
+  }
+
+  document.querySelectorAll('[data-back]').forEach(function(btn){
+    btn.addEventListener('click',function(){goBack(btn)});
   });
 })();
 </script>
