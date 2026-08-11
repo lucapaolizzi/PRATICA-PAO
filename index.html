@@ -3,338 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PRATICA P.A.O. — Incontro 0.3</title>
+<title>PRATICA P.A.O. — Incontro 0.4</title>
 <style>
 *{box-sizing:border-box}
 html,body{
   margin:0;padding:0;width:100%;
-  background:#fbf8f1;color:#2d2a26;
-  font-family:Georgia,"Times New Roman",serif
+  background:#fbf7ee;color:#29251f;
+  font-family:Georgia,"Times New Roman",serif;
 }
 body{overflow-x:hidden}
-
 .scene{
-  min-height:100svh;
-  width:100%;
-  padding:calc(28px + env(safe-area-inset-top)) 28px calc(56px + env(safe-area-inset-bottom));
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  position:relative;
+  min-height:100svh;width:100%;
+  padding:54px 28px 74px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;position:relative;
+  background:radial-gradient(circle at 50% 25%,#fff 0%,#fbf7ee 48%,#f1e5cf 100%);
 }
-
-.soft-light{
-  background:radial-gradient(circle at 50% 28%,#fff 0%,#fffdf7 34%,#f8f2e6 68%,#efe6d2 100%);
-}
-
-.symbol{
-  font-size:22px;
-  letter-spacing:7px;
-  opacity:.52;
-  margin-bottom:28px;
-}
-
-h1{
-  margin:0;
-  font-size:clamp(44px,13vw,74px);
-  font-weight:400;
-  letter-spacing:.07em;
-  line-height:1;
-}
-
-.substop{
-  margin-top:14px;
-  font-size:18px;
-  font-style:italic;
-  opacity:.72;
-}
-
-.line{
-  width:42px;
-  height:1px;
-  background:#a28e6f;
-  margin:28px auto;
-}
-
-.appear{
-  opacity:0;
-  transform:translateY(8px);
-  animation:appear 1.5s ease forwards;
-}
-
-.delay1{animation-delay:.5s}
-.delay2{animation-delay:1.6s}
-.delay3{animation-delay:2.9s}
-.delay4{animation-delay:4.2s}
-
-@keyframes appear{
-  to{opacity:1;transform:translateY(0)}
-}
-
-.intro{
-  max-width:500px;
-  font-size:24px;
-  line-height:1.45;
-}
-
-.now{
-  display:block;
-  font-size:36px;
-  margin-top:10px;
-  font-style:italic;
-}
-
-.pause{
-  margin-top:36px;
-  font-size:15px;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  opacity:.54;
-}
-
-.action{
-  margin-top:40px;
-  padding:16px 34px;
-  border:1px solid #8c7a60;
-  border-radius:999px;
-  background:rgba(255,255,255,.58);
-  color:#2d2a26;
-  font-family:inherit;
-  font-size:18px;
-  letter-spacing:.10em;
-  cursor:pointer;
-  box-shadow:0 8px 22px rgba(118,96,65,.08);
+.hidden{display:none}
+.symbol{font-size:22px;letter-spacing:7px;opacity:.52;margin-bottom:30px}
+.line{width:46px;height:1px;background:#9a8262;margin:30px auto}
+h1,h2{font-weight:400;margin:0}
+h1{font-size:clamp(47px,14vw,78px);letter-spacing:.06em}
+h2{font-size:clamp(38px,10vw,58px);line-height:1.2}
+p{max-width:500px;font-size:clamp(22px,6.2vw,31px);line-height:1.55;margin:12px 0}
+.small{font-size:clamp(20px,5.3vw,27px);color:#514a40}
+.now{display:block;font-size:clamp(34px,9vw,48px);font-style:italic;margin-top:8px}
+.question{font-size:clamp(35px,9vw,50px);font-style:italic;line-height:1.2;margin-top:30px}
+.withyou{font-size:clamp(34px,9vw,50px);font-style:italic;margin:28px 0 34px}
+.soft{font-style:italic;color:#4b4338}
+button{
+  margin-top:38px;padding:18px 30px;
+  border:1px solid #8a7456;border-radius:999px;
+  background:rgba(255,255,255,.48);color:#29251f;
+  font-family:inherit;font-size:17px;letter-spacing:.1em;
+  cursor:pointer;min-width:220px;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
-
-.action:active{transform:scale(.985)}
-
-#startBtn{
-  opacity:0;
-  animation:appear 1.3s ease forwards;
-  animation-delay:5.1s;
+button:active{transform:scale(.985)}
+.hint{
+  margin-top:10px;font-size:12px;letter-spacing:.06em;opacity:.5;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
 }
-
-.tap-hint{
-  margin-top:11px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:12px;
-  letter-spacing:.06em;
-  opacity:0;
-  animation:appear 1.2s ease forwards;
-  animation-delay:5.6s;
-}
-
-.hidden{display:none}
-
-.second{
-  background:radial-gradient(circle at 50% 30%,#fff 0%,#fbf7ef 46%,#efe4d0 100%);
-  justify-content:flex-start;
-  padding-top:calc(34px + env(safe-area-inset-top));
-}
-
-.second h2{
-  font-size:40px;
-  font-weight:400;
-  margin:0 0 26px;
-}
-
-.second p{
-  max-width:470px;
-  font-size:22px;
-  line-height:1.6;
-  margin:10px 0;
-}
-
-.breathe{
-  width:102px;
-  height:102px;
-  margin:30px auto 34px;
-  border:1px solid rgba(110,91,67,.30);
-  border-radius:50%;
-  box-shadow:0 0 0 0 rgba(150,128,93,.08);
-  animation:breathe 7s ease-in-out infinite;
-}
-
-@keyframes breathe{
-  0%,100%{transform:scale(.82);opacity:.36;box-shadow:0 0 0 0 rgba(150,128,93,.03)}
-  50%{transform:scale(1.08);opacity:.78;box-shadow:0 0 0 18px rgba(150,128,93,.04)}
-}
-
-.question{
-  margin-top:24px!important;
-  font-style:italic;
-  font-size:26px!important;
-}
-
-.microcopy{
-  margin-top:10px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:12px;
-  letter-spacing:.05em;
-  opacity:.5;
-}
-
-.third{
-  background:radial-gradient(circle at 50% 24%,#fff 0%,#fbf7ef 50%,#eee1ca 100%);
-  justify-content:flex-start;
-  padding-top:calc(42px + env(safe-area-inset-top));
-}
-
-.abc{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:13px;
-  letter-spacing:.24em;
-  text-transform:uppercase;
-  opacity:.48;
-  margin-bottom:22px;
-}
-
-.third h2{
-  font-size:clamp(34px,9vw,50px);
-  font-weight:400;
-  margin:0 0 28px;
-}
-
-.statement{
-  max-width:500px;
-  font-size:24px;
-  line-height:1.5;
-  margin:0 0 32px;
-}
-
-.soft-text{
-  max-width:500px;
-  font-size:20px;
-  line-height:1.65;
-  opacity:.82;
-  margin:0 0 18px;
-}
-
-.big-question{
-  margin-top:34px;
-  font-size:clamp(36px,9vw,54px);
-  font-style:italic;
-  line-height:1.25;
-}
-
 .footer{
-  position:absolute;
-  bottom:calc(18px + env(safe-area-inset-bottom));
-  font-size:11px;
-  letter-spacing:.16em;
-  opacity:.36;
+  position:absolute;bottom:22px;font-size:12px;
+  letter-spacing:.2em;opacity:.42
+}
+.breathe{
+  width:104px;height:104px;margin:35px auto;
+  border:1px solid rgba(126,103,73,.35);border-radius:50%;
+  animation:breathe 8s ease-in-out infinite
+}
+@keyframes breathe{
+  0%,100%{transform:scale(.78);opacity:.3}
+  50%{transform:scale(1.12);opacity:.75}
+}
+.fade{animation:fade .9s ease both}
+@keyframes fade{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
 }
 </style>
 </head>
 <body>
 
-<section id="soglia" class="scene soft-light">
-  <div class="symbol appear delay1">△ ∞</div>
-  <h1 class="appear delay1">FERMATI.</h1>
-  <div class="substop appear delay2">Solo un istante.</div>
-  <div class="line appear delay2"></div>
-
-  <div class="intro appear delay3">
-    Questa esperienza inizia qui.
-    <span class="now">Adesso.</span>
-  </div>
-
-  <div class="pause appear delay4">Non c'è nulla da capire.</div>
-
-  <button id="startBtn" class="action" type="button">MI FERMO</button>
-  <div class="tap-hint">Tocca per iniziare</div>
-
-  <div class="footer">PRATICA △∞ P.A.O.</div>
+<section id="s1" class="scene">
+  <div class="symbol">△ ∞</div>
+  <h1>FERMATI</h1>
+  <div class="line"></div>
+  <p>Questa esperienza inizia qui.<span class="now">Adesso.</span></p>
+  <p class="small">Non è necessario capire tutto.<br>È sufficiente fermarsi nel qui e ora.</p>
+  <button type="button" data-next="s2">MI FERMO</button>
+  <div class="hint">Tocca per iniziare</div>
+  <div class="footer">INCONTRO 0.1</div>
 </section>
 
-<section id="presenza" class="scene second hidden">
+<section id="s2" class="scene hidden">
   <div class="symbol">△ ∞</div>
-
   <h2>Sei qui.</h2>
-
   <p>Per qualche istante<br>non andare da nessuna parte.</p>
-
   <div class="breathe"></div>
-
   <p>Porta semplicemente l'attenzione<br>a ciò che sta accadendo in te.</p>
-
   <p>Un pensiero.<br>Una sensazione.<br>Un'emozione.</p>
-
   <div class="line"></div>
-
-  <p class="question">Cosa c'è, proprio adesso?</p>
-
-  <button id="continueBtn" class="action" type="button">RESTO QUI</button>
-  <div class="microcopy">Quando vuoi, puoi continuare.</div>
-
+  <div class="question">Cosa c'è, proprio adesso?</div>
+  <button type="button" data-next="s3">CI SONO</button>
   <div class="footer">INCONTRO 0.2</div>
 </section>
 
-<section id="accettazione" class="scene third hidden">
-  <div class="abc">A — ACCETTAZIONE</div>
-
-  <h2>Ogni difesa ha avuto le sue ragioni.</h2>
-
+<section id="s3" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>Ogni difesa ha avuto<br>le sue ragioni.</h2>
   <div class="line"></div>
-
-  <p class="soft-text">Non devi cambiarla.</p>
-  <p class="soft-text">Non devi mandarla via.</p>
-  <p class="soft-text">Puoi semplicemente accorgerti che c'è.</p>
-
-  <div class="big-question">COSA SENTO?</div>
-
-  <button id="stayBtn" class="action" type="button">RESTO QUI</button>
-
+  <p class="small">Non devi cambiarla.</p>
+  <p class="small">Non devi mandarla via.</p>
+  <p class="small">Puoi semplicemente<br>accorgerti che c'è.</p>
+  <div class="question">COSA SENTO?</div>
+  <button type="button" data-next="s4">RESTO QUI</button>
   <div class="footer">INCONTRO 0.3</div>
+</section>
+
+<section id="s4" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>Non tutto ciò che senti<br>devi sostenerlo da solo.</h2>
+  <div class="line"></div>
+  <p class="small">A volte non serve<br>una risposta.</p>
+  <p class="small">Non serve essere aggiustati.</p>
+  <p class="small">Può bastare qualcuno<br>che sappia restare.</p>
+  <div class="withyou">Con te.</div>
+  <div class="line"></div>
+  <p class="small soft">Forse qui posso<br>smettere di difendermi.</p>
+  <div class="question">COSA SCELGO?</div>
+  <button type="button" data-next="s5">MI LASCIO INCONTRARE</button>
+  <div class="footer">INCONTRO 0.4</div>
+</section>
+
+<section id="s5" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>Il Luogo<br>della Relazione.</h2>
+  <div class="line"></div>
+  <p class="small">Qui non sei più fuori.<br>E non sei ancora dentro.</p>
+  <p>Sei nel punto in cui<br>puoi scegliere di sederti.</p>
+  <div class="line"></div>
+  <p class="soft">Davanti a te.<br>Accanto all'altro.</p>
+  <div class="footer">INCONTRO 0.5</div>
 </section>
 
 <script>
 (function(){
-  const soglia = document.getElementById('soglia');
-  const presenza = document.getElementById('presenza');
-  const accettazione = document.getElementById('accettazione');
+  function showNext(button){
+    const current = button.closest('.scene');
+    const nextId = button.getAttribute('data-next');
+    const next = document.getElementById(nextId);
+    if(!current || !next) return;
 
-  function passa(da, a){
-    if(!da || !a) return;
-    da.style.transition='opacity .9s ease';
-    da.style.opacity='0';
+    current.style.transition = 'opacity .55s ease';
+    current.style.opacity = '0';
 
     setTimeout(function(){
-      da.style.display='none';
-      a.classList.remove('hidden');
-      a.style.opacity='0';
-      a.style.transition='opacity 1.2s ease';
-
-      requestAnimationFrame(function(){
-        a.style.opacity='1';
-      });
-
-      window.scrollTo({top:0,left:0,behavior:'auto'});
-    },900);
+      current.classList.add('hidden');
+      current.style.opacity = '';
+      next.classList.remove('hidden');
+      next.classList.add('fade');
+      window.scrollTo(0,0);
+    },560);
   }
 
-  document.getElementById('startBtn').addEventListener('click',function(){
-    passa(soglia,presenza);
-  });
+  document.querySelectorAll('button[data-next]').forEach(function(btn){
+    let handled = false;
 
-  document.getElementById('continueBtn').addEventListener('click',function(){
-    passa(presenza,accettazione);
-  });
-
-  document.getElementById('stayBtn').addEventListener('click',function(){
-    window.scrollTo({top:0,left:0,behavior:'smooth'});
-  });
-
-  ['startBtn','continueBtn','stayBtn'].forEach(function(id){
-    const el=document.getElementById(id);
-    el.addEventListener('touchend',function(e){
+    btn.addEventListener('touchend', function(e){
       e.preventDefault();
-      el.click();
-    },{passive:false});
+      if(handled) return;
+      handled = true;
+      showNext(btn);
+      setTimeout(function(){ handled = false; },700);
+    }, {passive:false});
+
+    btn.addEventListener('click', function(){
+      if(handled) return;
+      showNext(btn);
+    });
   });
 })();
 </script>
