@@ -513,6 +513,81 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
   min-width:0;
 }
 
+
+/* ===== 0.3: chiarisce il senso di "difesa" ===== */
+#s3 h2{
+  font-size:clamp(38px,9.5vw,56px);
+  line-height:1.08;
+  font-weight:600;
+  letter-spacing:.01em;
+}
+#s3 .defense-explain{
+  width:min(92vw,500px);
+  margin:0 auto 14px;
+  padding:12px 14px;
+  border-top:1px solid rgba(157,122,69,.28);
+  border-bottom:1px solid rgba(157,122,69,.28);
+  color:#6a5943;
+  font-size:clamp(18px,4.7vw,23px);
+  line-height:1.4;
+  background:rgba(255,252,245,.26);
+}
+
+/* ===== 0.5: sedie centrate come un unico blocco ===== */
+.relation .chairs-wrap{
+  position:relative;
+  width:min(88vw,430px);
+  max-width:430px;
+  height:265px;
+  margin:12px auto 6px;
+  display:block;
+  overflow:visible;
+}
+.relation .chair{
+  position:absolute;
+  bottom:0;
+  width:125px;
+  height:225px;
+  opacity:0;
+  filter:drop-shadow(0 12px 10px rgba(93,72,45,.10));
+}
+.relation .chair.left{
+  left:50%;
+  margin-left:-145px;
+  transform:rotate(4deg);
+  animation:chairCenterL 1.8s ease forwards .2s;
+}
+.relation .chair.right{
+  left:50%;
+  margin-left:20px;
+  transform:rotate(-4deg);
+  animation:chairCenterR 1.8s ease forwards .35s;
+}
+@keyframes chairCenterL{
+  from{opacity:0;transform:translateX(-12px) rotate(4deg)}
+  to{opacity:.95;transform:translateX(0) rotate(4deg)}
+}
+@keyframes chairCenterR{
+  from{opacity:0;transform:translateX(12px) rotate(-4deg)}
+  to{opacity:.95;transform:translateX(0) rotate(-4deg)}
+}
+@media (max-width:390px){
+  .relation .chairs-wrap{
+    width:min(90vw,360px);
+    height:235px;
+  }
+  .relation .chair{
+    width:112px;
+    height:205px;
+  }
+  .relation .chair.left{
+    margin-left:-128px;
+  }
+  .relation .chair.right{
+    margin-left:16px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -552,10 +627,11 @@ h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.
 
 <section id="s3" class="scene hidden">
   <div class="symbol">△ ∞</div>
-  <h2>Ogni difesa ha avuto<br>le sue ragioni.</h2>
+  <h2>OGNI DIFESA HA<br>LE SUE RAGIONI.</h2>
   <div class="line"></div>
 
   <div class="permission">
+    <p class="defense-explain"><em>È nata per proteggere qualcosa di te.</em></p>
     <p>Non devi cambiarla.</p>
     <p>Non devi mandarla via.</p>
     <p>Puoi semplicemente <strong>riconoscerla</strong>,<br>permettendole di esistere così com'è.</p>
