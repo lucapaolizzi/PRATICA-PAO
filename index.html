@@ -1184,5 +1184,75 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
   installAudioToggle();
 })();
 </script>
+
+<style>
+/* CANTO VITALE P.A.O. */
+.pao-vital-audio{
+ position:absolute;right:18px;top:calc(16px + env(safe-area-inset-top));z-index:60;
+ width:42px;height:42px;border-radius:50%;border:1px solid rgba(117,95,66,.34);
+ background:rgba(255,252,246,.72);color:#765b37;font-size:20px;cursor:pointer
+}
+.pao-vital-audio.off{opacity:.45}
+</style>
+<script>
+(function(){
+ let ac=null,out=null,on=false,timer=null,step=0;
+ const roots=[146.83,164.81,174.61,196,220,246.94,261.63];
+ const modes=[[1,1.122,1.335,1.498,1.682],[1,1.122,1.26,1.498,1.682],
+ [1,1.189,1.335,1.498,1.782],[1,1.122,1.335,1.587,1.782],
+ [1,1.189,1.335,1.498,1.682],[1,1.122,1.26,1.498,1.782],
+ [1,1.189,1.335,1.587,1.782]];
+
+ function init(){
+   if(ac)return;
+   ac=new (window.AudioContext||window.webkitAudioContext)();
+   out=ac.createGain(); out.gain.value=.0001; out.connect(ac.destination);
+ }
+ function voice(f,t,d,g){
+   const b=ac.createGain(), lp=ac.createBiquadFilter();
+   lp.type="lowpass"; lp.frequency.value=1000+step*120; lp.Q.value=.7;
+   [[1,"sine",.75],[2.01,"triangle",.12],[3.01,"sine",.045]].forEach(x=>{
+     let o=ac.createOscillator(),q=ac.createGain(); o.type=x[1];o.frequency.value=f*x[0];
+     q.gain.value=x[2];o.connect(q);q.connect(b);o.start(t);o.stop(t+d+.05);
+     o.detune.setValueAtTime(-5,t);o.detune.linearRampToValueAtTime(8,t+d*.55);
+     o.detune.linearRampToValueAtTime(0,t+d);
+   });
+   b.connect(lp);lp.connect(out);b.gain.setValueAtTime(.0001,t);
+   b.gain.exponentialRampToValueAtTime(g,t+.3);
+   b.gain.setValueAtTime(g,t+Math.max(.35,d-.45));
+   b.gain.exponentialRampToValueAtTime(.0001,t+d);
+ }
+ function phrase(){
+   if(!on)return;
+   let t=ac.currentTime+.05,r=roots[step],s=modes[step];
+   let pats=[[0,2,1,3],[0,1,3,4],[0,2,3,1],[1,3,4,2]],p=pats[Math.floor(Math.random()*pats.length)];
+   let gap=1.12-step*.03;
+   voice(r/2,t,1+p.length*gap,.009);
+   p.forEach((n,i)=>voice(r*s[n]*((i==3&&step>3)?2:1),t+i*gap,.85+Math.random()*.28,.016+step*.0014));
+ }
+ function cycle(){clearTimeout(timer);if(!on)return;phrase();timer=setTimeout(cycle,Math.max(3700,5700-step*240)+Math.random()*700)}
+ function start(){
+   init();if(ac.state==="suspended")ac.resume();on=true;
+   out.gain.cancelScheduledValues(ac.currentTime);out.gain.setValueAtTime(Math.max(out.gain.value,.0001),ac.currentTime);
+   out.gain.exponentialRampToValueAtTime(.75,ac.currentTime+1.5);
+   document.querySelectorAll(".pao-vital-audio").forEach(x=>x.classList.remove("off"));cycle();
+ }
+ function stop(){
+   if(!ac)return;on=false;clearTimeout(timer);out.gain.cancelScheduledValues(ac.currentTime);
+   out.gain.setValueAtTime(Math.max(out.gain.value,.0001),ac.currentTime);out.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+1);
+   document.querySelectorAll(".pao-vital-audio").forEach(x=>x.classList.add("off"));
+ }
+ document.querySelectorAll(".scene").forEach(s=>{
+   let b=document.createElement("button");b.className="pao-vital-audio off";b.type="button";b.textContent="♪";b.title="Suono";
+   b.onclick=e=>{e.stopPropagation();on?stop():start()};s.appendChild(b);
+ });
+ document.addEventListener("click",e=>{
+   let n=e.target.closest("[data-next]"),b=e.target.closest("[data-back]");
+   if(n||b){let id=(n?n.dataset.next:b.dataset.back);step=Math.max(0,Math.min(6,parseInt(id.slice(1))-1));if(!on)start();else cycle()}
+   if(e.target.closest("[data-loop]")&&on)voice(roots[step]/2,ac.currentTime+.03,1.25,.012);
+ },true);
+})();
+</script>
+
 </body>
 </html>
