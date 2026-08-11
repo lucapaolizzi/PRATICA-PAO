@@ -348,6 +348,171 @@ p{max-width:540px;margin:9px 0;font-size:clamp(20px,5.3vw,27px);line-height:1.5}
   #s1 p{font-size:clamp(18px,4.7vw,22px);line-height:1.34}
   #s1 .now{font-size:clamp(31px,8vw,41px)}
 }
+
+/* ===== Rifinitura globale centratura mobile ===== */
+html, body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+body{
+  position:relative;
+}
+.scene{
+  width:100vw;
+  max-width:100vw;
+  margin:0;
+  padding-left:clamp(20px,5vw,30px);
+  padding-right:clamp(20px,5vw,30px);
+  overflow-x:hidden;
+}
+.scene > *{
+  max-width:100%;
+}
+h1,h2,p,.question,.final,.release,.withyou,.closing,.choice,.lead,.core,.inner,.endnote,.final-thanks{
+  width:100%;
+  max-width:100%;
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+  overflow-wrap:break-word;
+  word-break:normal;
+}
+.choices,
+.permission,
+.fundamental,
+.triptych,
+.chairs-wrap,
+.final-thanks{
+  width:100%;
+  max-width:min(92vw,620px);
+  margin-left:auto;
+  margin-right:auto;
+}
+.choice-btn{
+  width:100%;
+  max-width:100%;
+}
+.relation,
+#s4,
+.closure{
+  align-items:center;
+}
+
+/* 0.4: impedisce qualsiasi debordo laterale */
+#s4 .fundamental,
+#s4 .support,
+#s4 .release,
+#s4 .question,
+#s4 .choices,
+#s4 .loop-note{
+  width:min(100%,560px);
+  max-width:100%;
+  margin-left:auto;
+  margin-right:auto;
+}
+#s4 .fundamental h2{
+  font-size:clamp(35px,9.2vw,58px);
+  line-height:1.06;
+}
+#s4 .release{
+  font-size:clamp(25px,6.9vw,39px);
+  padding-left:10px;
+  padding-right:10px;
+}
+#s4 .question{
+  font-size:clamp(31px,8.2vw,45px);
+}
+
+/* 0.5: sedie e testi perfettamente centrati */
+.relation h2,
+.relation .lead,
+.relation .choice,
+.relation .closing,
+.relation .choices{
+  width:min(100%,560px);
+  margin-left:auto;
+  margin-right:auto;
+}
+.chairs-wrap{
+  justify-content:center;
+  gap:clamp(24px,7vw,42px);
+  overflow:hidden;
+}
+.chair.left,
+.chair.right{
+  flex:0 0 auto;
+}
+@media (max-width:390px){
+  .chairs-wrap{gap:20px}
+  .chair{transform:scale(.90)!important;transform-origin:bottom center}
+}
+
+/* 0.7: finale centrato e senza tagli */
+.closure{
+  padding-left:clamp(18px,4.5vw,26px);
+  padding-right:clamp(18px,4.5vw,26px);
+}
+.closure .abc{
+  width:100%;
+  text-align:center;
+  white-space:normal;
+}
+.triptych{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.card{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.card strong{
+  white-space:normal;
+}
+.final{
+  width:min(100%,680px);
+  max-width:100%;
+  font-size:clamp(38px,9.7vw,66px);
+  line-height:1.03;
+  padding:0 2px;
+}
+.final .gold{
+  display:block;
+  width:100%;
+}
+.final-mark,
+.endnote,
+.final-thanks,
+.final-sign{
+  margin-left:auto;
+  margin-right:auto;
+}
+.final-thanks{
+  width:min(100%,590px);
+}
+@media (max-width:430px){
+  .triptych{
+    gap:4px;
+    padding-left:2px;
+    padding-right:2px;
+  }
+  .card{
+    padding:6px 2px;
+    font-size:clamp(11px,3vw,14px);
+  }
+  .card strong{
+    font-size:clamp(8px,2.2vw,10px);
+    letter-spacing:.04em;
+  }
+  .final{
+    font-size:clamp(36px,9.3vw,54px);
+  }
+}
+
+/* Evita che Safari consideri elementi più larghi del viewport */
+*{
+  min-width:0;
+}
+
 </style>
 </head>
 <body>
