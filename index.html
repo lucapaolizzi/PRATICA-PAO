@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PRATICA P.A.O. — Incontro 0.4</title>
+<title>PRATICA P.A.O. — Incontro 0.5</title>
 <style>
 *{box-sizing:border-box}
 html,body{
@@ -64,6 +64,85 @@ button:active{transform:scale(.985)}
   from{opacity:0;transform:translateY(8px)}
   to{opacity:1;transform:none}
 }
+
+/* 0.5 */
+.relation{
+  justify-content:flex-start;
+  padding-top:calc(34px + env(safe-area-inset-top));
+}
+.relation .symbol{margin-bottom:18px}
+.relation h2{
+  font-size:clamp(34px,8.7vw,48px);
+  line-height:1.12;
+  margin-top:2px;
+}
+.relation .lead{
+  margin-top:16px;
+  font-size:clamp(20px,5.3vw,26px);
+  line-height:1.5;
+  color:#4f483e;
+}
+.chairs-wrap{
+  width:min(360px,88vw);
+  height:210px;
+  margin:18px auto 12px;
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:42px;
+}
+.chair{
+  width:92px;height:150px;
+  position:relative;
+  opacity:0;
+  filter:drop-shadow(0 10px 10px rgba(110,87,58,.08));
+}
+.chair.left{
+  transform:translateX(-16px) rotate(3deg);
+  animation:chairLeft 2.8s ease forwards .45s;
+}
+.chair.right{
+  transform:translateX(16px) rotate(-3deg);
+  animation:chairRight 2.8s ease forwards .7s;
+}
+@keyframes chairLeft{
+  to{opacity:.78;transform:translateX(0) rotate(5deg)}
+}
+@keyframes chairRight{
+  to{opacity:.78;transform:translateX(0) rotate(-5deg)}
+}
+.chair .back{
+  position:absolute;left:18px;top:0;
+  width:56px;height:74px;
+  border:1.4px solid rgba(108,86,59,.55);
+  border-radius:18px 18px 12px 12px;
+  background:rgba(255,255,255,.18);
+}
+.chair .seat{
+  position:absolute;left:12px;top:78px;
+  width:68px;height:17px;
+  border:1.4px solid rgba(108,86,59,.55);
+  border-radius:8px;
+  background:rgba(255,255,255,.22);
+}
+.chair .leg{
+  position:absolute;top:94px;width:2px;height:52px;
+  background:rgba(108,86,59,.48);
+}
+.chair .leg.l1{left:20px;transform:rotate(4deg)}
+.chair .leg.l2{right:20px;transform:rotate(-4deg)}
+.relation .choice{
+  margin-top:10px;
+  font-size:clamp(22px,5.8vw,29px);
+  line-height:1.5;
+}
+.relation .closing{
+  margin-top:16px;
+  font-size:clamp(24px,6.6vw,34px);
+  line-height:1.45;
+  font-style:italic;
+}
 </style>
 </head>
 <body>
@@ -119,14 +198,34 @@ button:active{transform:scale(.985)}
   <div class="footer">INCONTRO 0.4</div>
 </section>
 
-<section id="s5" class="scene hidden">
+<section id="s5" class="scene relation hidden">
   <div class="symbol">△ ∞</div>
-  <h2>Il Luogo<br>della Relazione.</h2>
+  <h2>Il Luogo della Relazione.</h2>
+
+  <p class="lead">Qui non sei più fuori.<br>E non sei ancora dentro.</p>
+
+  <div class="chairs-wrap" aria-label="Due sedie, una di fronte all'altra">
+    <div class="chair left">
+      <div class="back"></div>
+      <div class="seat"></div>
+      <div class="leg l1"></div>
+      <div class="leg l2"></div>
+    </div>
+
+    <div class="chair right">
+      <div class="back"></div>
+      <div class="seat"></div>
+      <div class="leg l1"></div>
+      <div class="leg l2"></div>
+    </div>
+  </div>
+
+  <p class="choice">Sei nel punto in cui<br>puoi scegliere di sederti.</p>
+
   <div class="line"></div>
-  <p class="small">Qui non sei più fuori.<br>E non sei ancora dentro.</p>
-  <p>Sei nel punto in cui<br>puoi scegliere di sederti.</p>
-  <div class="line"></div>
-  <p class="soft">Davanti a te.<br>Accanto all'altro.</p>
+
+  <div class="closing">Davanti a te.<br>Accanto all'altro.</div>
+
   <div class="footer">INCONTRO 0.5</div>
 </section>
 
