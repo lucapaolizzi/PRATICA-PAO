@@ -269,11 +269,6 @@ p{max-width:540px;margin:9px 0;font-size:clamp(20px,5.3vw,27px);line-height:1.5}
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   font-size:clamp(10px,2.7vw,13px);letter-spacing:.08em;text-transform:uppercase
 }
-.card-text{
-  display:block;
-  width:100%;
-}
-
 .final{
   width:min(96vw,700px);
   margin:18px auto 0;
@@ -778,6 +773,55 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
   hyphens:none;
 }
 
+/* ===== Correzioni finali concordate ===== */
+#s1 .now{
+  display:block;
+  margin-top:5px;
+}
+.triptych .card strong,
+.triptych .card span{
+  display:block;
+}
+.triptych .card span{
+  margin-top:3px;
+}
+
+
+/* ===== PAO SOUND — ambient generativo ===== */
+.audio-toggle{
+  position:fixed;
+  top:calc(14px + env(safe-area-inset-top));
+  right:16px;
+  width:42px;
+  height:42px;
+  border:1px solid rgba(117,95,66,.38);
+  border-radius:50%;
+  background:rgba(255,252,246,.72);
+  color:#6b573d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:18px;
+  cursor:pointer;
+  z-index:50;
+  box-shadow:0 5px 16px rgba(91,70,43,.08);
+  -webkit-backdrop-filter:blur(7px);
+  backdrop-filter:blur(7px);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  opacity:.72;
+  transition:opacity .25s ease, transform .2s ease, background .25s ease;
+}
+.audio-toggle:active{transform:scale(.95)}
+.audio-toggle.on{opacity:.92;background:rgba(255,249,235,.88)}
+.audio-toggle .audio-off{display:none}
+.audio-toggle.muted .audio-on{display:none}
+.audio-toggle.muted .audio-off{display:inline}
+@media (max-height:720px){
+  .audio-toggle{width:38px;height:38px;top:calc(9px + env(safe-area-inset-top));right:12px;font-size:16px}
+}
+
 </style>
 </head>
 <body>
@@ -919,9 +963,9 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
   <div class="abc">PRATICA P.A.O. — A · B · C</div>
 
   <div class="triptych">
-    <div class="card"><strong>A — Accettazione</strong><span class="card-text">Riconosco ciò che c'è.</span></div>
-    <div class="card"><strong>B — Buona Relazione</strong><span class="card-text">Mi lascio incontrare.</span></div>
-    <div class="card"><strong>C — Consapevolezza</strong><span class="card-text">Scelgo come agire.</span></div>
+    <div class="card"><strong>A — Accettazione</strong><span>Riconosco ciò che c'è.</span></div>
+    <div class="card"><strong>B — Buona Relazione</strong><span>Mi lascio incontrare.</span></div>
+    <div class="card"><strong>C — Consapevolezza</strong><span>Scelgo come agire.</span></div>
   </div>
 
   <div class="final">LA PRESENZA<br>SORGE DALLA<br><span class="gold">BUONA RELAZIONE.</span></div>
@@ -943,10 +987,147 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 
 <script>
 (function(){
+  /* PAO SOUND: paesaggi sonori sintetizzati nel browser, senza file esterni. */
+  let audioCtx=null;
+  let master=null;
+  let currentBus=null;
+  let soundEnabled=true;
+  let audioStarted=false;
+  let currentScene='s1';
+
+  const soundProfiles={
+    s1:{root:110.00, notes:[1,1.5,2],      cutoff:520,  level:.030, drift:.030},
+    s2:{root:130.81, notes:[1,1.25,1.5],   cutoff:650,  level:.034, drift:.026},
+    s3:{root:123.47, notes:[1,1.20,1.5],   cutoff:560,  level:.033, drift:.034},
+    s4:{root:146.83, notes:[1,1.25,1.875], cutoff:760,  level:.037, drift:.027},
+    s5:{root:164.81, notes:[1,1.5,2.0],    cutoff:880,  level:.038, drift:.023},
+    s6:{root:174.61, notes:[1,1.25,1.5],   cutoff:1050, level:.037, drift:.020},
+    s7:{root:196.00, notes:[1,1.5,2.0],    cutoff:1250, level:.041, drift:.018}
+  };
+
+  function ensureAudio(){
+    if(!audioCtx){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC)return false;
+      audioCtx=new AC();
+      master=audioCtx.createGain();
+      master.gain.value=soundEnabled?1:0;
+      master.connect(audioCtx.destination);
+    }
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    audioStarted=true;
+    return true;
+  }
+
+  function makeAmbient(sceneId, fadeIn){
+    if(!ensureAudio()||!soundEnabled)return;
+    const p=soundProfiles[sceneId]||soundProfiles.s1;
+    const now=audioCtx.currentTime;
+    const bus=audioCtx.createGain();
+    const filter=audioCtx.createBiquadFilter();
+    filter.type='lowpass';
+    filter.frequency.setValueAtTime(p.cutoff,now);
+    filter.Q.value=.25;
+    bus.gain.setValueAtTime(0,now);
+    bus.connect(filter); filter.connect(master);
+
+    const nodes=[];
+    p.notes.forEach(function(mult,i){
+      const osc=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      const lfo=audioCtx.createOscillator();
+      const lfoGain=audioCtx.createGain();
+      osc.type=i===0?'sine':'triangle';
+      osc.frequency.value=p.root*mult;
+      osc.detune.value=(i-1)*3.5;
+      g.gain.value=i===0?.62:(i===1?.26:.15);
+      lfo.type='sine';
+      lfo.frequency.value=p.drift+(i*.006);
+      lfoGain.gain.value=i===0?.10:.05;
+      lfo.connect(lfoGain); lfoGain.connect(g.gain);
+      osc.connect(g); g.connect(bus);
+      osc.start(); lfo.start();
+      nodes.push(osc,lfo);
+    });
+
+    bus.gain.linearRampToValueAtTime(p.level,now+(fadeIn||2.8));
+    const old=currentBus;
+    currentBus={bus:bus,nodes:nodes};
+    if(old){
+      try{
+        old.bus.gain.cancelScheduledValues(now);
+        old.bus.gain.setValueAtTime(old.bus.gain.value,now);
+        old.bus.gain.linearRampToValueAtTime(0,now+2.5);
+        setTimeout(function(){
+          old.nodes.forEach(function(n){try{n.stop()}catch(e){}});
+          try{old.bus.disconnect()}catch(e){}
+        },2800);
+      }catch(e){}
+    }
+  }
+
+  function switchAmbient(sceneId){
+    currentScene=sceneId;
+    if(audioStarted&&soundEnabled)makeAmbient(sceneId,2.4);
+  }
+
+  function cue(kind){
+    if(!ensureAudio()||!soundEnabled)return;
+    const now=audioCtx.currentTime;
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    const filt=audioCtx.createBiquadFilter();
+    const isLoop=kind==='loop';
+    osc.type='sine';
+    osc.frequency.setValueAtTime(isLoop?174.61:392,now);
+    if(!isLoop)osc.frequency.exponentialRampToValueAtTime(523.25,now+.38);
+    else osc.frequency.exponentialRampToValueAtTime(146.83,now+.42);
+    filt.type='lowpass'; filt.frequency.value=isLoop?700:1500;
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(isLoop?.020:.026,now+.035);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.72);
+    osc.connect(filt); filt.connect(gain); gain.connect(master);
+    osc.start(now); osc.stop(now+.78);
+  }
+
+  function installAudioToggle(){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='audio-toggle on';
+    b.setAttribute('aria-label','Attiva o disattiva il suono');
+    b.setAttribute('title','Suono');
+    b.innerHTML='<span class="audio-on">♪</span><span class="audio-off">×</span>';
+    b.addEventListener('click',function(){
+      if(!audioStarted){
+        soundEnabled=true;
+        ensureAudio();
+        makeAmbient(currentScene,1.5);
+        b.classList.remove('muted');
+        b.classList.add('on');
+        return;
+      }
+      soundEnabled=!soundEnabled;
+      b.classList.toggle('muted',!soundEnabled);
+      b.classList.toggle('on',soundEnabled);
+      if(master){
+        const t=audioCtx.currentTime;
+        master.gain.cancelScheduledValues(t);
+        master.gain.setValueAtTime(master.gain.value,t);
+        master.gain.linearRampToValueAtTime(soundEnabled?1:0,t+.45);
+      }
+      if(soundEnabled&&!currentBus)makeAmbient(currentScene,1.5);
+      else if(soundEnabled&&currentBus&&currentBus.bus.gain.value===0)makeAmbient(currentScene,1.5);
+    });
+    document.body.appendChild(b);
+  }
+
   function showNext(btn){
     const current=btn.closest('.scene');
     const next=document.getElementById(btn.getAttribute('data-next'));
     if(!current||!next)return;
+    ensureAudio();
+    cue('forward');
+    switchAmbient(next.id);
     current.style.transition='opacity .45s ease';
     current.style.opacity='0';
     setTimeout(function(){
@@ -962,6 +1143,9 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
     const id=btn.getAttribute('data-loop');
     const note=document.getElementById(id);
     if(!note)return;
+    ensureAudio();
+    if(!currentBus&&soundEnabled)makeAmbient(btn.closest('.scene').id,1.8);
+    cue('loop');
     document.querySelectorAll('.loop-note.show').forEach(function(n){
       if(n!==note)n.classList.remove('show');
     });
@@ -979,6 +1163,9 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
     const current=btn.closest('.scene');
     const prev=document.getElementById(btn.getAttribute('data-back'));
     if(!current||!prev)return;
+    ensureAudio();
+    cue('back');
+    switchAmbient(prev.id);
     current.style.transition='opacity .35s ease';
     current.style.opacity='0';
     setTimeout(function(){
@@ -993,6 +1180,8 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
   document.querySelectorAll('[data-back]').forEach(function(btn){
     btn.addEventListener('click',function(){goBack(btn)});
   });
+
+  installAudioToggle();
 })();
 </script>
 </body>
