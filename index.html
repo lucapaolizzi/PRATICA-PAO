@@ -3,303 +3,351 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PRATICA P.A.O. — versione 0.8</title>
+<title>PRATICA P.A.O. — esperienza</title>
 <style>
-*{box-sizing:border-box}
-html,body{
-  margin:0;padding:0;width:100%;
-  background:#fbf7ee;color:#29251f;
-  font-family:Georgia,"Times New Roman",serif
+:root{
+  --ink:#2b251e;
+  --muted:#6f6252;
+  --gold:#9d7a45;
+  --gold2:#c7a66b;
+  --paper:#fbf7ee;
+  --paper2:#f1e4cc;
 }
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;background:var(--paper);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
 body{overflow-x:hidden}
+button{font:inherit}
 
 .scene{
-  min-height:100svh;width:100%;
-  padding:calc(48px + env(safe-area-inset-top)) 28px calc(78px + env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  text-align:center;position:relative;
-  background:radial-gradient(circle at 50% 24%,#fff 0%,#fbf7ee 48%,#f0e3cc 100%);
+  min-height:100svh;
+  width:100%;
+  padding:calc(34px + env(safe-area-inset-top)) 28px calc(64px + env(safe-area-inset-bottom));
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  position:relative;
+  background:
+    radial-gradient(circle at 50% 20%,rgba(255,255,255,.98) 0%,rgba(251,247,238,.95) 48%,rgba(240,226,201,.96) 100%);
 }
-.hidden{display:none}
-.symbol{font-size:22px;letter-spacing:7px;opacity:.5;margin-bottom:26px}
-.line{width:48px;height:1px;background:#927a59;margin:28px auto}
-h1,h2{font-weight:400;margin:0}
-h1{font-size:clamp(46px,13vw,76px);letter-spacing:.06em}
-h2{font-size:clamp(36px,9vw,52px);line-height:1.18}
-p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 0}
-.small{font-size:clamp(19px,5.1vw,25px);color:#514a40}
-.now{display:block;font-size:clamp(34px,9vw,48px);font-style:italic;margin-top:8px}
-.question{font-size:clamp(34px,8.8vw,48px);font-style:italic;line-height:1.2;margin-top:28px}
-.withyou{font-size:clamp(34px,9vw,49px);font-style:italic;margin:26px 0 30px}
-.soft{font-style:italic;color:#4b4338}
+.hidden{display:none!important}
+.fade{animation:fade .75s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* pulsanti più visibili */
-.action{
-  margin-top:34px;
-  padding:21px 32px 18px;
-  border:2px solid #755f42;
-  border-radius:999px;
-  background:rgba(255,252,245,.88);
-  color:#29251f;
-  font-family:inherit;
-  font-size:20px;
-  font-weight:600;
-  letter-spacing:.11em;
-  cursor:pointer;
-  min-width:min(86vw,360px);
-  box-shadow:0 11px 28px rgba(93,72,46,.18);
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
+.symbol{font-size:22px;letter-spacing:9px;opacity:.48;margin-bottom:20px}
+h1,h2{margin:0;font-weight:400}
+h1{font-size:clamp(48px,13vw,76px);letter-spacing:.065em}
+h2{font-size:clamp(35px,8.8vw,52px);line-height:1.14}
+p{max-width:540px;margin:9px 0;font-size:clamp(20px,5.3vw,27px);line-height:1.5}
+.small{font-size:clamp(18px,4.8vw,24px);color:#50483d}
+.soft{font-style:italic}
+.now{display:block;margin-top:5px;font-size:clamp(34px,9vw,49px);font-style:italic}
+.line{width:48px;height:1px;background:var(--gold);margin:22px auto}
+.question{
+  margin-top:22px;
+  font-size:clamp(34px,8.8vw,49px);
+  font-style:italic;
+  line-height:1.14;
 }
-.action:active{transform:scale(.985)}
-.forward{
-  margin-top:10px;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:14px;
-  font-weight:700;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:#5f4c34;
-  opacity:1;
-}
-.forward::after{content:"  →";font-size:18px;vertical-align:-1px}
 .footer{
-  position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));
-  font-size:12px;letter-spacing:.2em;opacity:.42
+  position:absolute;
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  font-size:12px;
+  letter-spacing:.22em;
+  color:#746957;
+  opacity:.48;
 }
 .breathe{
-  width:104px;height:104px;margin:34px auto;
-  border:1px solid rgba(126,103,73,.35);border-radius:50%;
-  animation:breathe 8s ease-in-out infinite
+  width:92px;height:92px;margin:24px auto;
+  border:1px solid rgba(116,94,62,.32);
+  border-radius:50%;
+  animation:breathe 7.5s ease-in-out infinite
 }
-@keyframes breathe{
-  0%,100%{transform:scale(.78);opacity:.3}
-  50%{transform:scale(1.12);opacity:.75}
-}
-.fade{animation:fade .9s ease both}
-@keyframes fade{
-  from{opacity:0;transform:translateY(8px)}
-  to{opacity:1;transform:none}
-}
+@keyframes breathe{0%,100%{transform:scale(.78);opacity:.30}50%{transform:scale(1.12);opacity:.72}}
 
-/* 0.3 - dare permesso alla difesa di esistere */
-.permission{
-  max-width:510px;
-  margin-top:18px;
-}
-.permission p{
-  font-size:clamp(20px,5.2vw,26px);
-  line-height:1.55;
-  color:#50483d;
-  margin:10px 0;
-}
-.okay{
-  margin:30px auto 8px;
-  padding:17px 22px;
-  width:min(86vw,390px);
-  border-top:1px solid rgba(117,95,66,.45);
-  border-bottom:1px solid rgba(117,95,66,.45);
-  font-size:clamp(34px,9vw,48px);
-  font-style:italic;
-  font-weight:600;
-  line-height:1.15;
-  color:#302920;
-}
-
-/* 0.5 - sedie più importanti */
-.relation{
-  justify-content:flex-start;
-  padding-top:calc(28px + env(safe-area-inset-top));
-}
-.relation .symbol{margin-bottom:14px}
-.relation h2{
-  font-size:clamp(32px,8.2vw,46px);
-  line-height:1.1;
-}
-.relation .lead{
-  margin-top:16px;
-  font-size:clamp(20px,5.2vw,25px);
-  line-height:1.48;
-  color:#4f483e;
-}
-.chairs-wrap{
-  width:min(520px,96vw);
-  height:320px;
-  margin:14px auto 8px;
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:flex-end;
-  gap:36px;
-}
-.chair{
-  width:145px;height:250px;
-  position:relative;
-  opacity:0;
-  filter:drop-shadow(0 14px 12px rgba(93,72,45,.12));
-}
-.chair.left{
-  transform:translateX(-18px) rotate(3deg);
-  animation:chairLeft 2.6s ease forwards .35s;
-}
-.chair.right{
-  transform:translateX(18px) rotate(-3deg);
-  animation:chairRight 2.6s ease forwards .6s;
-}
-@keyframes chairLeft{
-  to{opacity:.95;transform:translateX(0) rotate(6deg)}
-}
-@keyframes chairRight{
-  to{opacity:.95;transform:translateX(0) rotate(-6deg)}
-}
-.chair .back{
-  position:absolute;left:25px;top:0;
-  width:95px;height:128px;
-  border:2px solid rgba(103,81,54,.66);
-  border-radius:21px 21px 15px 15px;
-  background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(238,226,204,.30));
-}
-.chair .seat{
-  position:absolute;left:14px;top:137px;
-  width:117px;height:28px;
-  border:2px solid rgba(103,81,54,.66);
-  border-radius:10px;
-  background:rgba(255,255,255,.34);
-}
-.chair .leg{
-  position:absolute;top:164px;width:3px;height:82px;
-  background:rgba(103,81,54,.60);
-  border-radius:2px;
-}
-.chair .leg.l1{left:28px;transform:rotate(5deg)}
-.chair .leg.l2{right:28px;transform:rotate(-5deg)}
-.relation .choice{
-  margin-top:8px;
-  font-size:clamp(22px,5.8vw,29px);
-  line-height:1.48;
-}
-.relation .closing{
-  margin-top:15px;
-  font-size:clamp(25px,6.6vw,34px);
-  line-height:1.42;
-  font-style:italic;
-}
-
-/* 0.6 - Consapevolezza */
-.awareness{
-  justify-content:flex-start;
-  padding-top:calc(34px + env(safe-area-inset-top));
-}
-.step-label{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.22em;
-  text-transform:uppercase;
-  color:#6b5a43;
-  opacity:.72;
-  margin-bottom:20px;
-}
-.awareness h2{
-  font-size:clamp(34px,8.6vw,48px);
-  line-height:1.16;
-}
-.awareness .core{
-  margin-top:24px;
-  max-width:520px;
-  font-size:clamp(22px,5.7vw,28px);
-  line-height:1.55;
-}
-.awareness .inner{
-  margin-top:20px;
-  max-width:520px;
-  font-size:clamp(21px,5.4vw,27px);
-  line-height:1.55;
-  color:#4d4439;
-}
-.awareness .qblock{
-  margin-top:24px;
-}
-.awareness .q{
-  font-size:clamp(32px,8.2vw,44px);
-  font-style:italic;
-  line-height:1.2;
-  margin:12px 0;
-}
-
-/* 0.7 - Chiusura */
-.closure{
-  justify-content:center;
-  padding-top:calc(42px + env(safe-area-inset-top));
-}
-.closure .abc{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:.20em;
-  text-transform:uppercase;
-  opacity:.62;
-  margin-bottom:26px;
-}
-.closure .triptych{
-  width:min(520px,92vw);
+.choices{
+  width:min(92vw,560px);
   display:grid;
-  gap:16px;
-  margin:12px auto 26px;
+  gap:12px;
+  margin-top:24px;
 }
-.closure .card{
-  padding:18px 20px;
-  border-top:1px solid rgba(117,95,66,.34);
-  border-bottom:1px solid rgba(117,95,66,.34);
-  background:rgba(255,255,255,.22);
-}
-.closure .card strong{
-  display:block;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:13px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  margin-bottom:6px;
-}
-.closure .final{
-  margin-top:28px;
-  font-size:clamp(32px,8.5vw,48px);
+.choice-btn{
+  width:100%;
+  min-height:68px;
+  padding:16px 22px;
+  border:2px solid #755f42;
+  border-radius:999px;
+  background:rgba(255,252,246,.86);
+  color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,4.8vw,22px);
+  font-weight:700;
+  letter-spacing:.08em;
   line-height:1.18;
+  cursor:pointer;
+  box-shadow:0 9px 24px rgba(91,70,43,.12);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.choice-btn.primary{
+  background:rgba(255,251,240,.97);
+  box-shadow:0 11px 27px rgba(91,70,43,.18);
+}
+.choice-btn.secondary{
+  border-color:rgba(111,92,67,.55);
+  color:#5d5245;
+  background:rgba(255,255,255,.34);
+  box-shadow:none;
+  font-size:clamp(15px,4.3vw,19px);
+}
+.choice-btn:active{transform:scale(.986)}
+.forward{
+  margin-top:8px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:11px;
+  font-weight:750;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#6d5739;
+}
+.forward::after{content:"  →";font-size:16px}
+.loop-note{
+  display:none;
+  width:min(88vw,500px);
+  margin-top:14px;
+  padding:13px 16px;
+  border-top:1px solid rgba(135,109,74,.33);
+  border-bottom:1px solid rgba(135,109,74,.33);
+  color:#645849;
+  font-size:clamp(16px,4.25vw,20px);
+  line-height:1.4;
   font-style:italic;
 }
-.closure .endnote{
-  margin-top:20px;
-  font-size:clamp(19px,4.9vw,24px);
-  line-height:1.5;
-  color:#51483c;
-}
+.loop-note.show{display:block;animation:fade .55s ease both}
 
-/* 0.3 — centro visivo più esperienziale */
-#s3 .permission{width:min(92vw,520px)}
+/* 0.1: sempre interamente visibile */
+#s1{height:100svh;min-height:100svh;overflow:hidden;justify-content:space-evenly}
+#s1 .choices{margin-top:8px;gap:10px}
+#s1 .line{margin:10px auto}
+#s1 p{margin:3px 0}
+#s1 .symbol{margin-bottom:0}
+
+/* 0.3 */
+#s3 .permission{width:min(92vw,530px)}
+#s3 .permission p{font-size:clamp(18px,4.8vw,24px);line-height:1.48}
 #s3 .okay{
   position:relative;
-  background:radial-gradient(circle,rgba(222,202,169,.34) 0%,rgba(255,255,255,0) 72%);
-  padding:24px 16px;
-  margin-top:26px;
+  width:min(92vw,500px);
+  margin:22px auto 2px;
+  padding:20px 16px;
+  font-size:clamp(38px,10vw,56px);
+  font-weight:700;
+  font-style:italic;
+  background:radial-gradient(circle,rgba(226,205,169,.38) 0%,rgba(255,255,255,0) 72%);
 }
-#s3 .okay::before,#s3 .okay::after{content:"";position:absolute;left:50%;transform:translateX(-50%);width:58%;height:1px;background:rgba(117,95,66,.42)}
+#s3 .okay::before,#s3 .okay::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  width:70%;height:1px;background:rgba(117,95,66,.42)
+}
 #s3 .okay::before{top:0} #s3 .okay::after{bottom:0}
-#s3 .question{margin-top:22px}
+#s3 .question{margin-top:18px}
 
-/* iPhone: il primo incontro deve entrare nello schermo senza scorrimento */
-@media (max-width:430px) and (max-height:900px){
-  #s1{min-height:100svh;padding:calc(20px + env(safe-area-inset-top)) 24px calc(54px + env(safe-area-inset-bottom));justify-content:space-evenly}
-  #s1 .symbol{margin-bottom:4px;font-size:19px}
-  #s1 h1{font-size:clamp(40px,11vw,54px)}
-  #s1 .line{margin:10px auto}
-  #s1 p{font-size:clamp(19px,5vw,23px);line-height:1.35;margin:4px 0}
-  #s1 .now{font-size:clamp(31px,8vw,40px);margin-top:3px}
-  #s1 .small{font-size:clamp(17px,4.5vw,20px);line-height:1.38}
-  #s1 .action{margin-top:8px;padding:17px 28px 15px}
-  #s1 .forward{margin-top:4px}
+/* 0.4 — concetto fondamentale */
+#s4{background:
+  radial-gradient(circle at 50% 19%,rgba(255,255,255,.98) 0%,rgba(251,247,238,.96) 43%,rgba(239,223,194,.96) 100%);
+}
+#s4 .fundamental{
+  width:min(96vw,620px);
+  position:relative;
+  padding:22px 10px 16px;
+  margin-bottom:10px;
+}
+#s4 .fundamental::before{
+  content:"";
+  position:absolute;
+  inset:-16px -10px;
+  background:radial-gradient(ellipse at center,rgba(228,191,122,.30),rgba(255,255,255,0) 68%);
+  filter:blur(1px);
+  pointer-events:none;
+}
+#s4 .fundamental h2{
+  position:relative;
+  font-size:clamp(41px,10.5vw,62px);
+  line-height:1.05;
+  font-weight:700;
+  letter-spacing:.015em;
+}
+#s4 .support{
+  max-width:520px;
+  font-size:clamp(18px,4.8vw,24px);
+  line-height:1.46;
+  color:#4e473d;
+}
+#s4 .withyou{
+  font-size:clamp(37px,9vw,52px);
+  font-style:italic;
+  margin:8px 0 10px;
+}
+#s4 .release{
+  width:min(92vw,530px);
+  margin:14px auto 2px;
+  padding:18px 14px;
+  border-top:1px solid rgba(158,122,69,.45);
+  border-bottom:1px solid rgba(158,122,69,.45);
+  color:#6f5128;
+  font-size:clamp(27px,7.2vw,41px);
+  font-weight:700;
+  font-style:italic;
+  line-height:1.2;
+  background:radial-gradient(circle,rgba(229,199,142,.24),rgba(255,255,255,0) 70%);
+}
+#s4 .question{margin-top:16px}
+
+/* 0.5 sedie */
+.relation{justify-content:flex-start;padding-top:calc(22px + env(safe-area-inset-top))}
+.relation .lead{font-size:clamp(18px,4.8vw,24px);color:#51493f}
+.chairs-wrap{
+  width:min(500px,94vw);height:265px;margin:10px auto 4px;
+  display:flex;justify-content:center;align-items:flex-end;gap:42px
+}
+.chair{width:125px;height:225px;position:relative;opacity:0;filter:drop-shadow(0 12px 10px rgba(93,72,45,.10))}
+.chair.left{transform:translateX(-18px) rotate(2deg);animation:chairL 2.3s ease forwards .25s}
+.chair.right{transform:translateX(18px) rotate(-2deg);animation:chairR 2.3s ease forwards .45s}
+@keyframes chairL{to{opacity:.95;transform:translateX(0) rotate(5deg)}}
+@keyframes chairR{to{opacity:.95;transform:translateX(0) rotate(-5deg)}}
+.chair .back{position:absolute;left:22px;top:0;width:82px;height:116px;border:2px solid rgba(102,82,57,.58);border-radius:20px;background:rgba(255,255,255,.24)}
+.chair .seat{position:absolute;left:12px;top:125px;width:102px;height:26px;border:2px solid rgba(102,82,57,.58);border-radius:10px;background:rgba(255,255,255,.22)}
+.chair .leg{position:absolute;top:150px;width:3px;height:70px;background:rgba(102,82,57,.55);border-radius:2px}
+.chair .leg.l1{left:25px;transform:rotate(5deg)} .chair .leg.l2{right:25px;transform:rotate(-5deg)}
+.relation .choice{font-size:clamp(20px,5.3vw,27px);line-height:1.42;margin:8px 0 0}
+.relation .closing{font-size:clamp(26px,6.7vw,35px);font-style:italic;line-height:1.4;margin-top:8px}
+
+/* 0.6 */
+.awareness .step-label,.closure .abc{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#71634f;opacity:.72
+}
+.awareness .step-label{margin-bottom:14px}
+.awareness .core,.awareness .inner{font-size:clamp(19px,5vw,25px);line-height:1.5}
+.awareness .inner{color:#51483d}
+.awareness .q{font-size:clamp(34px,8.5vw,47px);font-style:italic;line-height:1.13;margin-top:18px}
+
+/* 0.7 — il “caffè” finale */
+.closure{
+  justify-content:flex-start;
+  padding-top:calc(28px + env(safe-area-inset-top));
+  background:
+    radial-gradient(circle at 50% 63%,rgba(255,231,175,.50) 0%,rgba(250,241,220,.24) 26%,rgba(251,247,238,.95) 60%,rgba(238,222,194,.98) 100%);
+  overflow:hidden;
+}
+.closure::before{
+  content:"";
+  position:absolute;left:50%;top:54%;
+  width:150vw;height:62vh;transform:translate(-50%,-50%);
+  background:repeating-conic-gradient(from 0deg,rgba(216,168,83,.12) 0 1.2deg,transparent 1.2deg 8deg);
+  -webkit-mask-image:radial-gradient(circle,black 0%,transparent 66%);
+  mask-image:radial-gradient(circle,black 0%,transparent 66%);
+  pointer-events:none;
+}
+.closure>*{position:relative;z-index:1}
+.closure .abc{margin:8px 0 18px}
+.triptych{
+  width:min(94vw,620px);
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:0 auto 20px;
+  padding:13px 8px;
+  border-top:1px solid rgba(158,122,69,.35);
+  border-bottom:1px solid rgba(158,122,69,.35);
+  background:rgba(255,255,255,.18);
+}
+.card{padding:6px 5px;font-size:clamp(13px,3.4vw,17px);line-height:1.25}
+.card strong{
+  display:block;margin-bottom:4px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:clamp(10px,2.7vw,13px);letter-spacing:.08em;text-transform:uppercase
+}
+.final{
+  width:min(96vw,700px);
+  margin:18px auto 0;
+  font-size:clamp(44px,10.6vw,72px);
+  line-height:1.03;
+  font-style:italic;
+  font-weight:700;
+  letter-spacing:-.015em;
+  text-shadow:0 6px 24px rgba(157,122,69,.10);
+}
+.final .gold{color:#8b642f}
+.final-mark{
+  margin:20px auto 12px;
+  width:74px;height:74px;border-radius:50%;
+  position:relative;
+  background:radial-gradient(circle,rgba(220,170,80,.75) 0%,rgba(220,170,80,.20) 28%,rgba(255,255,255,0) 70%);
+}
+.final-mark::before{
+  content:"△  ∞";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  white-space:nowrap;font-size:18px;letter-spacing:5px;color:#8c6a3e
+}
+.endnote{
+  margin:5px auto 0;
+  font-size:clamp(19px,4.8vw,24px);line-height:1.45;color:#4f463a
+}
+.final-thanks{
+  width:min(92vw,590px);
+  margin:18px auto 0;
+  padding:14px 16px;
+  border:1px solid rgba(177,140,78,.35);
+  border-radius:18px;
+  background:rgba(255,251,240,.42);
+  font-size:clamp(18px,4.6vw,23px);
+  line-height:1.38;
+}
+.final-thanks strong{display:block;color:#806035;letter-spacing:.06em;margin-bottom:3px}
+.final-sign{
+  margin-top:15px;
+  font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#77654d
 }
 
+/* telefoni più bassi */
+@media (max-height:780px){
+  .scene{padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(52px + env(safe-area-inset-bottom))}
+  .symbol{margin-bottom:10px}
+  h1{font-size:44px} h2{font-size:34px}
+  p{font-size:19px;line-height:1.38;margin:5px 0}
+  .small{font-size:17px}
+  .line{margin:14px auto}
+  .question{font-size:31px;margin-top:14px}
+  .choices{gap:8px;margin-top:14px}
+  .choice-btn{min-height:56px;padding:12px 18px;font-size:16px}
+  .choice-btn.secondary{font-size:14px}
+  .breathe{width:70px;height:70px;margin:14px auto}
+  #s3 .okay{font-size:34px;margin-top:14px;padding:14px}
+  #s4 .fundamental{padding:8px 6px 4px}
+  #s4 .fundamental h2{font-size:36px}
+  #s4 .support{font-size:16px}
+  #s4 .withyou{font-size:32px;margin:4px}
+  #s4 .release{font-size:25px;padding:12px;margin-top:8px}
+  .chairs-wrap{height:190px}
+  .chair{transform:scale(.82)!important;transform-origin:bottom center}
+  .awareness .core,.awareness .inner{font-size:17px}
+  .awareness .q{font-size:30px}
+  .closure .abc{margin:2px 0 10px}
+  .triptych{margin-bottom:10px;padding:8px 5px}
+  .final{font-size:37px;margin-top:10px}
+  .final-mark{width:52px;height:52px;margin:10px auto 6px}
+  .endnote{font-size:17px}
+  .final-thanks{font-size:15px;margin-top:10px;padding:10px 12px}
+}
+
+/* prima pagina: niente scroll */
+@media (max-width:430px){
+  #s1{padding-left:22px;padding-right:22px}
+  #s1 h1{font-size:clamp(43px,12vw,58px)}
+  #s1 p{font-size:clamp(18px,4.7vw,22px);line-height:1.34}
+  #s1 .now{font-size:clamp(31px,8vw,41px)}
+}
 </style>
 </head>
 <body>
@@ -310,8 +358,12 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <div class="line"></div>
   <p>Questa esperienza inizia qui.<span class="now">Adesso.</span></p>
   <p class="small">Non è necessario capire tutto.<br>È sufficiente fermarsi nel qui e ora.</p>
-  <button class="action" type="button" data-next="s2">MI FERMO</button>
-  <div class="forward">tocca per andare avanti</div>
+
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s2">MI FERMO</button>
+    <button class="choice-btn secondary" type="button" data-loop="s1loop">RESTO NEL SOLITO LOOP</button>
+  </div>
+  <div id="s1loop" class="loop-note">Anche questa è una scelta. Quando vuoi, puoi scegliere di fermarti.</div>
   <div class="footer">INCONTRO 0.1</div>
 </section>
 
@@ -323,9 +375,13 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <p>Porta semplicemente l'attenzione<br>a ciò che sta accadendo in te.</p>
   <p>Un pensiero.<br>Una sensazione.<br>Un'emozione.</p>
   <div class="line"></div>
-  <div class="question">Cosa c'è, proprio adesso?</div>
-  <button class="action" type="button" data-next="s3">CI SONO</button>
-  <div class="forward">tocca per andare avanti</div>
+
+  <div class="question">CI SEI?</div>
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s3">CI SONO</button>
+    <button class="choice-btn secondary" type="button" data-loop="s2loop">MI BLOCCO NEL SOLITO LOOP</button>
+  </div>
+  <div id="s2loop" class="loop-note">Ti accorgi del blocco. Non devi forzarlo. La pagina successiva si apre quando scegli di esserci.</div>
   <div class="footer">INCONTRO 0.2</div>
 </section>
 
@@ -338,28 +394,41 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
     <p>Non devi cambiarla.</p>
     <p>Non devi mandarla via.</p>
     <p>Puoi semplicemente <strong>riconoscerla</strong>,<br>permettendole di esistere così com'è.</p>
-    <div class="okay">Va bene così.</div>
   </div>
 
-  <div class="question">COSA SENTI?</div>
-  <button class="action" type="button" data-next="s4">LE LASCIO SPAZIO</button>
-  <div class="forward">tocca per andare avanti</div>
+  <div class="okay">VAI BENE COSÌ.</div>
+  <div class="question">ADESSO, COSA SENTI?</div>
+
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s4">DO SPAZIO A CIÒ CHE C'È</button>
+    <button class="choice-btn secondary" type="button" data-loop="s3loop">MI DISTRAGGO — TORNO NEL SOLITO LOOP</button>
+  </div>
+  <div id="s3loop" class="loop-note">Ti distrai e torni al conosciuto. Puoi accorgertene senza giudicarti e scegliere di nuovo.</div>
+
   <div class="footer">INCONTRO 0.3</div>
 </section>
 
 <section id="s4" class="scene hidden">
   <div class="symbol">△ ∞</div>
-  <h2>Non tutto ciò che senti<br>devi sostenerlo da solo.</h2>
+
+  <div class="fundamental">
+    <h2>Non tutto ciò che senti<br>devi sostenerlo da solo.</h2>
+  </div>
+
   <div class="line"></div>
-  <p class="small">A volte non serve<br>una risposta.</p>
-  <p class="small">Non serve essere aggiustati.</p>
-  <p class="small">Può bastare qualcuno<br>che sappia restare.</p>
+  <p class="support">A volte non serve una risposta.<br>Non serve essere aggiustati.<br>Può bastare qualcuno che sappia restare.</p>
   <div class="withyou">Con te.</div>
-  <div class="line"></div>
-  <p class="small soft">Forse qui posso<br>smettere di difendermi.</p>
-  <div class="question">COSA SCEGLI?</div>
-  <button class="action" type="button" data-next="s5">MI LASCIO INCONTRARE</button>
-  <div class="forward">tocca per andare avanti</div>
+
+  <div class="release">FINALMENTE, FORSE POSSO<br>SMETTERE DI DIFENDERMI.</div>
+
+  <div class="question">COSA SCEGLI ADESSO?</div>
+
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s5">INCONTRO ME STESSO</button>
+    <button class="choice-btn secondary" type="button" data-loop="s4loop">TORNO A NON VEDERMI</button>
+  </div>
+  <div id="s4loop" class="loop-note">Chiudi gli occhi e torni al solito loop. Anche questo può essere visto. Quando vuoi, puoi scegliere di incontrarti.</div>
+
   <div class="footer">INCONTRO 0.4</div>
 </section>
 
@@ -383,7 +452,9 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <div class="line"></div>
   <div class="closing">Davanti a te.<br>Accanto all'altro.</div>
 
-  <button class="action" type="button" data-next="s6">ENTRO NELLA RELAZIONE</button>
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s6">ENTRO NELLA RELAZIONE</button>
+  </div>
   <div class="forward">tocca per andare avanti</div>
   <div class="footer">INCONTRO 0.5</div>
 </section>
@@ -393,20 +464,17 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <div class="symbol">△ ∞</div>
 
   <h2>La fiducia nella relazione<br>precede la presenza.</h2>
-
   <div class="line"></div>
 
   <p class="core">Ciò che impari nella relazione<br>può diventare una tua forza interiore.</p>
-
   <p class="inner">Da qui nasce la possibilità<br>di stare con ciò che c'è.</p>
 
-  <div class="qblock">
-    <div class="q">COME SCEGLI DI AGIRE?</div>
+  <div class="q">COME SCEGLI DI AGIRE?</div>
+
+  <div class="choices">
+    <button class="choice-btn primary" type="button" data-next="s7">SCELGO COME AGIRE</button>
   </div>
-
-  <button class="action" type="button" data-next="s7">SCELGO COME AGIRE</button>
   <div class="forward">tocca per andare avanti</div>
-
   <div class="footer">INCONTRO 0.6</div>
 </section>
 
@@ -415,61 +483,61 @@ p{max-width:500px;font-size:clamp(21px,5.8vw,29px);line-height:1.55;margin:11px 
   <div class="abc">PRATICA P.A.O. — A · B · C</div>
 
   <div class="triptych">
-    <div class="card">
-      <strong>A — Accettazione</strong>
-      Riconosco ciò che c'è.
-    </div>
-    <div class="card">
-      <strong>B — Buona Relazione</strong>
-      Mi lascio incontrare.
-    </div>
-    <div class="card">
-      <strong>C — Consapevolezza</strong>
-      Scelgo come agire.
-    </div>
+    <div class="card"><strong>A — Accettazione</strong>Riconosco ciò che c'è.</div>
+    <div class="card"><strong>B — Buona Relazione</strong>Mi lascio incontrare.</div>
+    <div class="card"><strong>C — Consapevolezza</strong>Scelgo come agire.</div>
   </div>
 
-  <div class="line"></div>
+  <div class="final">LA PRESENZA<br>SORGE DALLA<br><span class="gold">BUONA RELAZIONE.</span></div>
 
-  <div class="final">LA PRESENZA SORGE<br>DALLA BUONA RELAZIONE.</div>
+  <div class="final-mark"></div>
 
-  <p class="endnote">Non è necessario capire tutto.<br>È sufficiente esserci.</p>
+  <p class="endnote">Non è necessario capire tutto.<br><em>È sufficiente esserci.</em></p>
 
+  <div class="final-thanks">
+    <strong>GRAZIE PER ESSERTI DATO QUESTO TEMPO.</strong>
+    Questa pratica non promette una trasformazione.<br>
+    Ti invita semplicemente a incontrare te stesso.
+  </div>
+
+  <div class="final-sign">INVITO ALLA PRESENZA</div>
   <div class="footer">INCONTRO 0.7</div>
 </section>
 
 <script>
 (function(){
-  function showNext(button){
-    const current=button.closest('.scene');
-    const next=document.getElementById(button.getAttribute('data-next'));
+  function showNext(btn){
+    const current=btn.closest('.scene');
+    const next=document.getElementById(btn.getAttribute('data-next'));
     if(!current||!next)return;
-    current.style.transition='opacity .55s ease';
+    current.style.transition='opacity .45s ease';
     current.style.opacity='0';
     setTimeout(function(){
       current.classList.add('hidden');
       current.style.opacity='';
       next.classList.remove('hidden');
       next.classList.add('fade');
-      window.scrollTo(0,0);
-    },560);
+      window.scrollTo({top:0,left:0,behavior:'instant'});
+    },460);
   }
 
-  document.querySelectorAll('button[data-next]').forEach(function(btn){
-    let handled=false;
-    btn.addEventListener('touchend',function(e){
-      e.preventDefault();
-      if(handled)return;
-      handled=true;
-      showNext(btn);
-      setTimeout(function(){handled=false},700);
-    },{passive:false});
-    btn.addEventListener('click',function(){
-      if(!handled)showNext(btn);
+  function showLoop(btn){
+    const id=btn.getAttribute('data-loop');
+    const note=document.getElementById(id);
+    if(!note)return;
+    document.querySelectorAll('.loop-note.show').forEach(function(n){
+      if(n!==note)n.classList.remove('show');
     });
+    note.classList.add('show');
+  }
+
+  document.querySelectorAll('[data-next]').forEach(function(btn){
+    btn.addEventListener('click',function(){showNext(btn)});
+  });
+  document.querySelectorAll('[data-loop]').forEach(function(btn){
+    btn.addEventListener('click',function(){showLoop(btn)});
   });
 })();
 </script>
-
 </body>
 </html>
