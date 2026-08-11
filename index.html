@@ -1186,71 +1186,130 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 </script>
 
 <style>
-/* CANTO VITALE P.A.O. */
-.pao-vital-audio{
- position:absolute;right:18px;top:calc(16px + env(safe-area-inset-top));z-index:60;
- width:42px;height:42px;border-radius:50%;border:1px solid rgba(117,95,66,.34);
- background:rgba(255,252,246,.72);color:#765b37;font-size:20px;cursor:pointer
+/* ===== COLONNA SONORA P.A.O. ===== */
+.pao-music{
+  position:absolute;
+  right:18px;
+  top:calc(16px + env(safe-area-inset-top));
+  z-index:40;
+  width:42px;height:42px;
+  border:1px solid rgba(117,95,66,.34);
+  border-radius:50%;
+  background:rgba(255,252,246,.74);
+  color:#765b37;
+  display:flex;align-items:center;justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:19px;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-.pao-vital-audio.off{opacity:.45}
+.pao-music.muted{opacity:.45}
 </style>
-<script>
-(function(){
- let ac=null,out=null,on=false,timer=null,step=0;
- const roots=[146.83,164.81,174.61,196,220,246.94,261.63];
- const modes=[[1,1.122,1.335,1.498,1.682],[1,1.122,1.26,1.498,1.682],
- [1,1.189,1.335,1.498,1.782],[1,1.122,1.335,1.587,1.782],
- [1,1.189,1.335,1.498,1.682],[1,1.122,1.26,1.498,1.782],
- [1,1.189,1.335,1.587,1.782]];
 
- function init(){
-   if(ac)return;
-   ac=new (window.AudioContext||window.webkitAudioContext)();
-   out=ac.createGain(); out.gain.value=.0001; out.connect(ac.destination);
- }
- function voice(f,t,d,g){
-   const b=ac.createGain(), lp=ac.createBiquadFilter();
-   lp.type="lowpass"; lp.frequency.value=1000+step*120; lp.Q.value=.7;
-   [[1,"sine",.75],[2.01,"triangle",.12],[3.01,"sine",.045]].forEach(x=>{
-     let o=ac.createOscillator(),q=ac.createGain(); o.type=x[1];o.frequency.value=f*x[0];
-     q.gain.value=x[2];o.connect(q);q.connect(b);o.start(t);o.stop(t+d+.05);
-     o.detune.setValueAtTime(-5,t);o.detune.linearRampToValueAtTime(8,t+d*.55);
-     o.detune.linearRampToValueAtTime(0,t+d);
-   });
-   b.connect(lp);lp.connect(out);b.gain.setValueAtTime(.0001,t);
-   b.gain.exponentialRampToValueAtTime(g,t+.3);
-   b.gain.setValueAtTime(g,t+Math.max(.35,d-.45));
-   b.gain.exponentialRampToValueAtTime(.0001,t+d);
- }
- function phrase(){
-   if(!on)return;
-   let t=ac.currentTime+.05,r=roots[step],s=modes[step];
-   let pats=[[0,2,1,3],[0,1,3,4],[0,2,3,1],[1,3,4,2]],p=pats[Math.floor(Math.random()*pats.length)];
-   let gap=1.12-step*.03;
-   voice(r/2,t,1+p.length*gap,.009);
-   p.forEach((n,i)=>voice(r*s[n]*((i==3&&step>3)?2:1),t+i*gap,.85+Math.random()*.28,.016+step*.0014));
- }
- function cycle(){clearTimeout(timer);if(!on)return;phrase();timer=setTimeout(cycle,Math.max(3700,5700-step*240)+Math.random()*700)}
- function start(){
-   init();if(ac.state==="suspended")ac.resume();on=true;
-   out.gain.cancelScheduledValues(ac.currentTime);out.gain.setValueAtTime(Math.max(out.gain.value,.0001),ac.currentTime);
-   out.gain.exponentialRampToValueAtTime(.75,ac.currentTime+1.5);
-   document.querySelectorAll(".pao-vital-audio").forEach(x=>x.classList.remove("off"));cycle();
- }
- function stop(){
-   if(!ac)return;on=false;clearTimeout(timer);out.gain.cancelScheduledValues(ac.currentTime);
-   out.gain.setValueAtTime(Math.max(out.gain.value,.0001),ac.currentTime);out.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+1);
-   document.querySelectorAll(".pao-vital-audio").forEach(x=>x.classList.add("off"));
- }
- document.querySelectorAll(".scene").forEach(s=>{
-   let b=document.createElement("button");b.className="pao-vital-audio off";b.type="button";b.textContent="♪";b.title="Suono";
-   b.onclick=e=>{e.stopPropagation();on?stop():start()};s.appendChild(b);
- });
- document.addEventListener("click",e=>{
-   let n=e.target.closest("[data-next]"),b=e.target.closest("[data-back]");
-   if(n||b){let id=(n?n.dataset.next:b.dataset.back);step=Math.max(0,Math.min(6,parseInt(id.slice(1))-1));if(!on)start();else cycle()}
-   if(e.target.closest("[data-loop]")&&on)voice(roots[step]/2,ac.currentTime+.03,1.25,.012);
- },true);
+<audio id="paoAudioA" preload="auto" loop></audio>
+<audio id="paoAudioB" preload="auto" loop></audio>
+
+<script>
+/* ===== COLONNA SONORA P.A.O. — 3 brani reali ===== */
+(function(){
+  const map={
+    s1:"inizio.mp3", s2:"inizio.mp3",
+    s3:"centro.mp3", s4:"centro.mp3", s5:"centro.mp3",
+    s6:"finale.mp3", s7:"finale.mp3"
+  };
+  const a=document.getElementById("paoAudioA");
+  const b=document.getElementById("paoAudioB");
+  let current=a, standby=b, currentFile="", enabled=true, unlocked=false;
+  const target=.24, fadeMs=1800;
+
+  function buttons(){
+    return document.querySelectorAll(".pao-music");
+  }
+  function updateButtons(){
+    buttons().forEach(x=>{
+      x.textContent=enabled?"♪":"×";
+      x.classList.toggle("muted",!enabled);
+      x.setAttribute("aria-label",enabled?"Disattiva musica":"Attiva musica");
+    });
+  }
+  function visibleScene(){
+    return document.querySelector(".scene:not(.hidden)");
+  }
+  function fade(el,from,to,ms,done){
+    const start=performance.now();
+    el.volume=from;
+    function tick(now){
+      const k=Math.min(1,(now-start)/ms);
+      el.volume=from+(to-from)*k;
+      if(k<1) requestAnimationFrame(tick); else if(done) done();
+    }
+    requestAnimationFrame(tick);
+  }
+  function playFor(sceneId, immediate){
+    if(!enabled || !unlocked) return;
+    const file=map[sceneId];
+    if(!file) return;
+    if(file===currentFile){
+      if(current.paused) current.play().catch(()=>{});
+      return;
+    }
+    standby.src=file;
+    standby.currentTime=0;
+    standby.volume=0;
+    standby.play().then(()=>{
+      if(!currentFile || immediate){
+        current.pause();
+        standby.volume=target;
+      }else{
+        fade(current,current.volume,target?0:0,fadeMs,()=>current.pause());
+        fade(standby,0,target,fadeMs);
+      }
+      const tmp=current; current=standby; standby=tmp;
+      currentFile=file;
+    }).catch(()=>{});
+  }
+  function unlockAndPlay(sceneId){
+    unlocked=true;
+    playFor(sceneId,true);
+  }
+
+  document.querySelectorAll(".scene").forEach(scene=>{
+    if(scene.querySelector(".pao-music")) return;
+    const m=document.createElement("button");
+    m.type="button"; m.className="pao-music";
+    m.textContent="♪"; m.setAttribute("aria-label","Disattiva musica");
+    m.addEventListener("click",function(e){
+      e.stopPropagation();
+      enabled=!enabled;
+      if(enabled){
+        unlocked=true;
+        const s=visibleScene();
+        if(s) playFor(s.id,true);
+      }else{
+        current.pause();standby.pause();
+      }
+      updateButtons();
+    });
+    scene.appendChild(m);
+  });
+
+  document.addEventListener("click",function(e){
+    const next=e.target.closest("[data-next]");
+    const back=e.target.closest("[data-back]");
+    if(next){
+      const id=next.getAttribute("data-next");
+      if(!unlocked) unlockAndPlay(id);
+      else setTimeout(()=>playFor(id,false),500);
+    }else if(back){
+      const id=back.getAttribute("data-back");
+      if(!unlocked) unlockAndPlay(id);
+      else setTimeout(()=>playFor(id,false),400);
+    }else if(!unlocked && e.target.closest("[data-loop]")){
+      const s=visibleScene(); if(s) unlockAndPlay(s.id);
+    }
+  },true);
+
+  updateButtons();
 })();
 </script>
 
