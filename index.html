@@ -1199,7 +1199,7 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 .pao-sound{position:absolute;right:18px;top:calc(16px + env(safe-area-inset-top));z-index:50;width:42px;height:42px;padding:0;border:1px solid rgba(117,95,66,.38);border-radius:50%;background:rgba(255,252,246,.80);color:#765b37;display:flex;align-items:center;justify-content:center;font:21px Georgia,serif;box-shadow:0 4px 14px rgba(91,70,43,.07);cursor:pointer}
 .pao-sound.muted{opacity:.48}
 </style>
-<audio id="birthdayAudio" src="happy-birthday.mp3" preload="auto" loop></audio>
+
 <script>
 (function(){
  const a=document.getElementById("birthdayAudio");let on=true,started=false;a.volume=.20;
@@ -1207,6 +1207,20 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
  function play(){if(on)a.play().then(()=>started=true).catch(()=>{})}
  document.querySelectorAll(".scene").forEach(s=>{let b=document.createElement("button");b.type="button";b.className="pao-sound";b.textContent="♪";b.onclick=e=>{e.preventDefault();e.stopPropagation();on=!on;if(on)play();else a.pause();sync()};s.appendChild(b)});
  document.addEventListener("click",e=>{if(!e.target.closest(".pao-sound")&&!started&&on&&e.target.closest("button"))play()},true);sync();
+})();
+</script>
+
+<style>
+.pao-sound{position:absolute;right:18px;top:calc(16px + env(safe-area-inset-top));z-index:50;width:42px;height:42px;padding:0;border:1px solid rgba(117,95,66,.38);border-radius:50%;background:rgba(255,252,246,.80);color:#765b37;display:flex;align-items:center;justify-content:center;font:21px Georgia,serif;box-shadow:0 4px 14px rgba(91,70,43,.07);cursor:pointer}
+.pao-sound.muted{opacity:.48}
+</style>
+<audio id="tantiAuguriAudio" src="tanti-auguri.mp3" preload="auto"></audio>
+<script>
+(function(){
+ const a=document.getElementById("tantiAuguriAudio"),s7=document.getElementById("s7");let on=true;a.volume=.28;
+ if(s7){const b=document.createElement("button");b.type="button";b.className="pao-sound";b.textContent="♪";b.setAttribute("aria-label","Disattiva musica");
+ b.onclick=function(e){e.preventDefault();e.stopPropagation();on=!on;if(on){a.currentTime=0;a.play().catch(()=>{});b.textContent="♪";b.classList.remove("muted")}else{a.pause();b.textContent="×";b.classList.add("muted")}};s7.appendChild(b)}
+ document.addEventListener("click",function(e){if(e.target.closest('[data-next="s7"]')&&on){a.currentTime=0;a.play().catch(()=>{})}if(e.target.closest('[data-back="s6"]')){a.pause();a.currentTime=0}},true);
 })();
 </script>
 </body>
