@@ -178,6 +178,14 @@ h1{
     soundBtn.textContent = '×';
   }
 
+  function stopMusic() {
+    audio.pause();
+    audio.currentTime = 0;
+    playing = false;
+    soundBtn.classList.add('off');
+    soundBtn.textContent = '×';
+  }
+
   soundBtn.addEventListener('click', () => {
     playing ? pauseMusic() : playMusic();
   });
@@ -188,8 +196,16 @@ h1{
 
   // Il pulsante principale porta direttamente a TRACCE.
   document.getElementById('stopBtn').addEventListener('click', () => {
-    // href="./feed/" gestisce la navigazione in modo affidabile anche su GitHub Pages.
+    stopMusic();
   });
+
+  // Su iPhone/Safari ferma l'audio quando la pagina viene lasciata,
+  // nascosta, chiusa o mandata in background.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopMusic();
+  });
+  window.addEventListener('pagehide', stopMusic);
+  window.addEventListener('beforeunload', stopMusic);
 
   loopBtn.addEventListener('click', () => {
     loopMsg.classList.add('show');
