@@ -1032,6 +1032,22 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 }
 </style>
 
+
+<style id="pao-final-audio-fix">
+.pao-audio-choice button {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  gap:8px !important;
+}
+.pao-music-toggle {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -1221,7 +1237,7 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 <audio id="paoAmbientAudio" preload="auto" loop playsinline>
   <source src="meditation-ambience.mp3" type="audio/mpeg">
 </audio>
-<button id="paoMusicToggle" class="pao-music-toggle" type="button" aria-label="Attiva o disattiva la musica">🔇</button>
+<button id="paoMusicToggle" title="Suono acceso / spento" class="pao-music-toggle" type="button" aria-label="Attiva o disattiva la musica">🔇</button>
 <div id="paoMusicToast" class="pao-music-toast">tocca 🔇 per il sottofondo</div>
 
 <script>

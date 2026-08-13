@@ -197,6 +197,22 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
 }
 </style>
 
+
+<style id="spec-final-audio-fix">
+.spec-audio-choice button {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  gap:8px !important;
+}
+.spec-music-toggle {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+</style>
+
 </head>
 <body>
 
@@ -307,7 +323,7 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
 <audio id="specAmbientAudio" preload="auto" loop playsinline>
   <source src="meditation-ambience.mp3" type="audio/mpeg">
 </audio>
-<button id="specMusicToggle" class="spec-music-toggle" type="button" aria-label="Attiva o disattiva la musica">🔇</button>
+<button id="specMusicToggle" title="Suono acceso / spento" class="spec-music-toggle" type="button" aria-label="Attiva o disattiva la musica">🔇</button>
 
 <script>
 function showScene(id){
