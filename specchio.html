@@ -143,6 +143,60 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
 }
 
 </style>
+
+<style id="specchio-audio-style">
+.spec-audio-choice{
+  width:min(92vw,560px);
+  display:grid;
+  gap:10px;
+  margin:18px auto 8px;
+}
+.spec-audio-choice button{
+  width:100%;
+  min-height:58px;
+  padding:12px 18px;
+  border:1.5px solid rgba(117,95,66,.65);
+  border-radius:999px;
+  background:rgba(255,252,246,.78);
+  color:#4e4438;
+  font:700 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.spec-audio-choice button.secondary{
+  border-color:rgba(111,92,67,.45);
+  background:rgba(255,255,255,.30);
+}
+.spec-audio-note{
+  margin:7px auto 0;
+  font-size:14px;
+  line-height:1.35;
+  font-style:italic;
+  color:#746957;
+  text-align:center;
+}
+.spec-music-toggle{
+  position:fixed;
+  top:calc(10px + env(safe-area-inset-top));
+  right:10px;
+  z-index:300;
+  width:40px;height:40px;
+  border:1px solid rgba(117,95,66,.42);
+  border-radius:50%;
+  background:rgba(251,247,238,.88);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  color:#635747;
+  font-size:17px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 5px 14px rgba(75,57,36,.10);
+  cursor:pointer;
+}
+</style>
+
 </head>
 <body>
 
@@ -153,7 +207,14 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
   <div class="line"></div>
   <p>Il primo impulso può essere:</p>
   <div class="question">“È lui il problema.”</div>
-  <div class="choices">
+  
+<div class="spec-audio-choice">
+  <button type="button" id="specStartWithSound">ENTRO CON IL SUONO 🔊</button>
+  <button type="button" id="specStartSilent" class="secondary">ENTRO IN SILENZIO</button>
+</div>
+<div class="spec-audio-note">Puoi cambiare scelta in ogni momento.</div>
+
+<div class="choices">
     <button class="choice secondary" data-loop="loop1">VOGLIO CHE CAMBI</button>
     <button class="choice" data-next="m2">OSSERVO COSA ACCADE IN ME</button>
   </div>
@@ -242,6 +303,12 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
   <div class="footer">△ ∞ P.A.O.</div>
 </section>
 
+
+<audio id="specAmbientAudio" preload="auto" loop playsinline>
+  <source src="meditation-ambience.mp3" type="audio/mpeg">
+</audio>
+<button id="specMusicToggle" class="spec-music-toggle" type="button" aria-label="Attiva o disattiva la musica">🔇</button>
+
 <script>
 function showScene(id){
   document.querySelectorAll('.scene').forEach(s=>s.classList.add('hidden'));
@@ -257,5 +324,64 @@ document.addEventListener('click',e=>{
   }
 });
 </script>
+
+<script id="specchio-audio-js">
+(function(){
+  const audio = document.getElementById('specAmbientAudio');
+  const toggle = document.getElementById('specMusicToggle');
+  const withSound = document.getElementById('specStartWithSound');
+  const silent = document.getElementById('specStartSilent');
+  if(!audio || !toggle) return;
+
+  const TARGET = 0.16;
+  let fadeTimer = null;
+
+  function setIcon(){
+    toggle.textContent = (!audio.paused && audio.volume > 0.001) ? '🔊' : '🔇';
+  }
+
+  function fadeIn(){
+    clearInterval(fadeTimer);
+    audio.volume = 0;
+    const p = audio.play();
+    if(p && p.then){
+      p.then(()=>{
+        let i=0, steps=24;
+        fadeTimer=setInterval(()=>{
+          i++;
+          audio.volume=Math.min(TARGET, TARGET*i/steps);
+          setIcon();
+          if(i>=steps) clearInterval(fadeTimer);
+        },90);
+      }).catch(()=>{ setIcon(); });
+    }
+  }
+
+  function chooseSound(){
+    fadeIn();
+  }
+
+  function chooseSilent(){
+    clearInterval(fadeTimer);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = TARGET;
+    setIcon();
+  }
+
+  if(withSound) withSound.addEventListener('click', chooseSound);
+  if(silent) silent.addEventListener('click', chooseSilent);
+
+  toggle.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(audio.paused) fadeIn();
+    else { audio.pause(); setIcon(); }
+  });
+
+  setIcon();
+})();
+</script>
+
 </body>
 </html>
