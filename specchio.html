@@ -60,6 +60,88 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
  }
 }
 
+
+/* Tre rifiniture di leggibilità */
+.info-title span{display:block}
+.info-title .info-word{
+  white-space:nowrap;
+  font-size:.78em;
+  letter-spacing:-.025em;
+  margin-top:.08em;
+}
+
+.shift-question{
+  width:min(92vw,560px);
+  margin:22px auto 0;
+  text-align:center;
+}
+.shift-from span,.shift-to span{
+  display:block;
+  font:700 13px/1.1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.18em;
+  color:#806035;
+  margin-bottom:7px;
+}
+.shift-from strong{
+  display:block;
+  font-size:clamp(25px,6.4vw,34px);
+  line-height:1.12;
+  font-style:italic;
+  font-weight:400;
+}
+.shift-arrow{
+  margin:10px 0 8px;
+  color:#9d7a45;
+  font-size:29px;
+  line-height:1;
+}
+.shift-to strong{
+  display:block;
+  font-size:clamp(29px,7.5vw,39px);
+  line-height:1.10;
+  font-style:italic;
+  font-weight:600;
+}
+
+.final-thought{
+  width:min(92vw,560px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-top:2px;
+}
+.final-thought h2{margin:0}
+.final-bridge{
+  margin:17px 0 9px;
+  font-size:clamp(20px,5.2vw,27px);
+  line-height:1.2;
+  font-style:italic;
+}
+.final-answer{
+  width:100%;
+  padding:17px 13px 18px;
+  border:1px solid rgba(177,140,78,.36);
+  border-radius:20px;
+  background:rgba(255,251,240,.43);
+}
+.final-answer strong{
+  display:block;
+  font-size:clamp(29px,7.3vw,39px);
+  line-height:1.08;
+  font-style:italic;
+}
+.final-answer strong:first-child{
+  white-space:nowrap;
+  font-size:clamp(27px,6.9vw,37px);
+}
+@media(max-width:430px){
+  .info-title .info-word{font-size:.72em}
+  .shift-question{margin-top:16px}
+  .shift-arrow{margin:8px 0 6px}
+  .final-bridge{margin-top:13px;margin-bottom:7px}
+  .final-answer{padding-top:14px;padding-bottom:15px}
+}
+
 </style>
 </head>
 <body>
@@ -94,7 +176,11 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
 
 <section id="m3" class="scene hidden">
   <div class="symbol">△ ∞</div>
-  <h2>E SE IL FASTIDIO<br>FOSSE UN’INFORMAZIONE?</h2>
+  <h2 class="info-title">
+    <span>E SE IL FASTIDIO</span>
+    <span>FOSSE</span>
+    <span class="info-word">UN’INFORMAZIONE?</span>
+  </h2>
   <div class="line"></div>
   <p>Quello che l’altro muove dentro di me<br>può portare alla luce:</p>
   <div class="threshold">
@@ -112,7 +198,11 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
   <div class="line"></div>
   <p>Posso reagire<br>come ho sempre fatto…</p>
   <p class="soft">oppure fermarmi e osservare.</p>
-  <div class="question">DA “COSA MI STAI FACENDO?”<br><span class="gold">A</span><br>“COSA STA ACCADENDO IN ME?”</div>
+  <div class="shift-question">
+    <div class="shift-from"><span>DA</span><strong>“COSA MI STAI FACENDO?”</strong></div>
+    <div class="shift-arrow" aria-hidden="true">↓</div>
+    <div class="shift-to"><span>A</span><strong>“COSA STA ACCADENDO IN ME?”</strong></div>
+  </div>
   <div class="choices"><button class="choice" data-next="m5">ATTRAVERSO LA SOGLIA</button></div>
   <button class="back" data-back="m3">←</button>
   <a class="home" href="index.html">HOME</a>
@@ -134,11 +224,14 @@ p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.
 <section id="m6" class="scene hidden">
   <div class="symbol">△ ∞</div>
   <div class="label">LA RELAZIONE COME OPPORTUNITÀ</div>
-  <h2>CIÒ CHE MI DISTURBA<br>NELLA RELAZIONE</h2>
-  <div class="line"></div>
-  <div class="endbox">
-    <p>può diventare</p>
-    <div class="big">UN’OCCASIONE<br>PER INCONTRARE<br>ME STESSO.</div>
+  <div class="final-thought">
+    <h2>CIÒ CHE MI DISTURBA<br>NELLA RELAZIONE</h2>
+    <div class="final-bridge">può diventare</div>
+    <div class="final-answer">
+      <strong>UN’OCCASIONE</strong>
+      <strong>PER INCONTRARE</strong>
+      <strong>ME STESSO.</strong>
+    </div>
   </div>
   <div class="question">COSA STA ACCADENDO IN ME?</div>
   <div class="choices">
