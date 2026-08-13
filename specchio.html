@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LA RELAZIONE COME SPECCHIO — P.A.O.</title>
+<style>
+:root{--ink:#2b251e;--muted:#6f6252;--gold:#9d7a45;--paper:#fbf7ee;--paper2:#f1e4cc}
+*{box-sizing:border-box}html,body{margin:0;width:100%;background:var(--paper);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+body{overflow-x:hidden}button{font:inherit}
+.scene{
+ min-height:100svh;width:100%;padding:calc(34px + env(safe-area-inset-top)) 26px calc(62px + env(safe-area-inset-bottom));
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;
+ background:radial-gradient(circle at 50% 20%,rgba(255,255,255,.98) 0%,rgba(251,247,238,.95) 48%,rgba(240,226,201,.96) 100%);
+}
+.hidden{display:none!important}.fade{animation:fade .7s ease both}@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.symbol{font-size:22px;letter-spacing:9px;opacity:.48;margin-bottom:19px}
+.label{font:800 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#71634f;opacity:.72;margin-bottom:12px}
+h1,h2{margin:0;font-weight:400}h1{font-size:clamp(43px,11vw,68px);line-height:1.07}h2{font-size:clamp(35px,8.9vw,54px);line-height:1.12}
+p{max-width:560px;margin:8px 0;font-size:clamp(19px,5vw,26px);line-height:1.48}.soft{font-style:italic;color:#51493f}
+.line{width:48px;height:1px;background:var(--gold);margin:21px auto}
+.question{margin-top:20px;font-size:clamp(30px,7.8vw,46px);font-style:italic;line-height:1.16}
+.big{font-size:clamp(40px,10vw,62px);font-weight:700;font-style:italic;line-height:1.06}
+.gold{color:#806035}
+.choices{width:min(92vw,560px);display:grid;gap:12px;margin-top:24px}
+.choice{
+ width:100%;min-height:66px;padding:15px 20px;border:2px solid #755f42;border-radius:999px;background:rgba(255,252,246,.9);
+ color:var(--ink);font-weight:700;letter-spacing:.07em;line-height:1.2;cursor:pointer;box-shadow:0 9px 24px rgba(91,70,43,.12);
+}
+.choice.secondary{border-color:rgba(111,92,67,.55);color:#5d5245;background:rgba(255,255,255,.34);box-shadow:none;font-size:.92em}
+.loop{display:none;width:min(88vw,500px);margin-top:15px;padding:13px 16px;border-top:1px solid rgba(135,109,74,.33);border-bottom:1px solid rgba(135,109,74,.33);color:#645849;font-size:clamp(16px,4.2vw,20px);line-height:1.4;font-style:italic}
+.loop.show{display:block;animation:fade .5s ease both}
+.back,.home{
+ position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));border:0;background:transparent;color:#75654e;cursor:pointer;
+ font:700 13px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase;text-decoration:none
+}
+.back{left:22px;font-size:22px}.home{right:22px}
+.footer{position:absolute;bottom:calc(19px + env(safe-area-inset-bottom));font:600 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#77654d;opacity:.42;pointer-events:none}
+.threshold{width:min(92vw,520px);margin:22px auto 2px;padding:19px 13px;border-top:1px solid rgba(158,122,69,.43);border-bottom:1px solid rgba(158,122,69,.43);background:radial-gradient(circle,rgba(229,199,142,.24),rgba(255,255,255,0) 70%)}
+.endbox{width:min(92vw,560px);padding:20px 16px;border:1px solid rgba(177,140,78,.36);border-radius:20px;background:rgba(255,251,240,.43);margin-top:22px}
+@media(max-height:760px){.scene{padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(50px + env(safe-area-inset-bottom))}.symbol{margin-bottom:9px}h1{font-size:40px}h2{font-size:33px}p{font-size:18px;line-height:1.36;margin:5px 0}.line{margin:13px auto}.question{font-size:29px;margin-top:13px}.choices{gap:8px;margin-top:14px}.choice{min-height:54px;padding:11px 16px;font-size:15px}.threshold{margin-top:12px;padding:12px}.big{font-size:36px}}
+</style>
+</head>
+<body>
+
+<section id="m1" class="scene">
+  <div class="symbol">△ ∞</div>
+  <div class="label">LA RELAZIONE COME SPECCHIO</div>
+  <h1>L’ALTRO<br>TI DÀ FASTIDIO.</h1>
+  <div class="line"></div>
+  <p>Il primo impulso può essere:</p>
+  <div class="question">“È lui il problema.”</div>
+  <div class="choices">
+    <button class="choice secondary" data-loop="loop1">VOGLIO CHE CAMBI</button>
+    <button class="choice" data-next="m2">OSSERVO COSA ACCADE IN ME</button>
+  </div>
+  <div id="loop1" class="loop">Se tutto dipende dall’altro, resto nel solito loop.<br>Posso fermarmi e guardare anche ciò che accade in me.</div>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">INCONTRO S.1</div>
+</section>
+
+<section id="m2" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>L’ALTRO<br>È UNO SPECCHIO.</h2>
+  <div class="line"></div>
+  <p>Non perché sia uguale a te.</p>
+  <p>Ma perché nella relazione può mostrarti qualcosa di te<br><strong>che da solo non riesci a vedere.</strong></p>
+  <div class="choices"><button class="choice" data-next="m3">VADO PIÙ A FONDO</button></div>
+  <button class="back" data-back="m1" aria-label="Indietro">←</button>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">INCONTRO S.2</div>
+</section>
+
+<section id="m3" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>E SE IL FASTIDIO<br>FOSSE UN’INFORMAZIONE?</h2>
+  <div class="line"></div>
+  <p>Quello che l’altro muove dentro di me<br>può portare alla luce:</p>
+  <div class="threshold">
+    <p class="big">una paura.<br>una ferita.<br>una difesa.</p>
+  </div>
+  <div class="choices"><button class="choice" data-next="m4">RESTO E OSSERVO</button></div>
+  <button class="back" data-back="m2">←</button>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">INCONTRO S.3</div>
+</section>
+
+<section id="m4" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>IL FASTIDIO<br>DIVENTA UNA SOGLIA.</h2>
+  <div class="line"></div>
+  <p>Posso reagire<br>come ho sempre fatto…</p>
+  <p class="soft">oppure fermarmi e osservare.</p>
+  <div class="question">DA “COSA MI STAI FACENDO?”<br><span class="gold">A</span><br>“COSA STA ACCADENDO IN ME?”</div>
+  <div class="choices"><button class="choice" data-next="m5">ATTRAVERSO LA SOGLIA</button></div>
+  <button class="back" data-back="m3">←</button>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">INCONTRO S.4</div>
+</section>
+
+<section id="m5" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <h2>L’ALTRO PUÒ<br>DIVENTARE UN MAESTRO.</h2>
+  <div class="line"></div>
+  <p>Non perché sappia cosa è giusto per me.</p>
+  <p>Ma perché la relazione può portare alla luce<br><strong>ciò che in me chiede attenzione.</strong></p>
+  <div class="choices"><button class="choice" data-next="m6">INCONTRO ME STESSO</button></div>
+  <button class="back" data-back="m4">←</button>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">INCONTRO S.5</div>
+</section>
+
+<section id="m6" class="scene hidden">
+  <div class="symbol">△ ∞</div>
+  <div class="label">LA RELAZIONE COME OPPORTUNITÀ</div>
+  <h2>CIÒ CHE MI DISTURBA<br>NELLA RELAZIONE</h2>
+  <div class="line"></div>
+  <div class="endbox">
+    <p>può diventare</p>
+    <div class="big">UN’OCCASIONE<br>PER INCONTRARE<br>ME STESSO.</div>
+  </div>
+  <div class="question">COSA STA ACCADENDO IN ME?</div>
+  <div class="choices">
+    <a class="choice" style="display:flex;align-items:center;justify-content:center;text-decoration:none" href="pratica.html">ENTRO NELLA PRATICA P.A.O.</a>
+  </div>
+  <button class="back" data-back="m5">←</button>
+  <a class="home" href="index.html">HOME</a>
+  <div class="footer">△ ∞ P.A.O.</div>
+</section>
+
+<script>
+function showScene(id){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.add('hidden'));
+  const target=document.getElementById(id);
+  if(target){target.classList.remove('hidden');target.classList.remove('fade');void target.offsetWidth;target.classList.add('fade');window.scrollTo(0,0)}
+}
+document.addEventListener('click',e=>{
+  const n=e.target.closest('[data-next]'); if(n){showScene(n.dataset.next);return}
+  const b=e.target.closest('[data-back]'); if(b){showScene(b.dataset.back);return}
+  const l=e.target.closest('[data-loop]'); if(l){
+    const el=document.getElementById(l.dataset.loop);
+    if(el)el.classList.toggle('show');
+  }
+});
+</script>
+</body>
+</html>
