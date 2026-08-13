@@ -1048,6 +1048,93 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 }
 </style>
 
+
+<style id="pao-responsive-final">
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box;min-width:0}
+button,a{-webkit-tap-highlight-color:transparent}
+.scene,main{
+  width:100%;
+  max-width:100%;
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
+}
+.scene{
+  padding-left:max(22px,env(safe-area-inset-left));
+  padding-right:max(22px,env(safe-area-inset-right));
+}
+.scene > *, main > *{
+  margin-left:auto;
+  margin-right:auto;
+}
+h1,h2,p,.question,.big,.soft,.label,.eyebrow,.now,
+.final,.final-thought,.final-answer,.threshold,.permission,
+.fundamental,.support,.release,.withyou,.lead,.choice,.closing,
+.core,.inner,.endnote,.final-thanks,.shift-question{
+  max-width:100%;
+  text-align:center;
+  overflow-wrap:normal;
+  word-break:normal;
+  hyphens:none;
+}
+.choices,.doors,.pao-audio-choice,.spec-audio-choice{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.choice,.choice-btn,.door,.pao-audio-choice button,.spec-audio-choice button{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+@media(max-width:430px){
+  .scene{padding-left:24px;padding-right:24px}
+  h1{font-size:clamp(38px,10.2vw,52px);line-height:1.07}
+  h2{font-size:clamp(30px,8vw,40px);line-height:1.10}
+  p{font-size:clamp(18px,4.7vw,22px);line-height:1.42}
+  .question{font-size:clamp(27px,7vw,35px);line-height:1.13}
+  .big{font-size:clamp(31px,8vw,40px);line-height:1.08}
+  .choices,.doors{width:min(100%,560px)}
+}
+@media(max-width:390px){
+  .scene{padding-left:20px;padding-right:20px}
+  h1{font-size:clamp(36px,9.8vw,46px)}
+  h2{font-size:clamp(28px,7.6vw,36px)}
+}
+@media(max-height:760px){
+  .scene{padding-top:calc(18px + env(safe-area-inset-top));padding-bottom:calc(54px + env(safe-area-inset-bottom))}
+}
+</style>
+
+<style id="pratica-optical-final">
+.pao-audio-choice{width:min(100%,560px)!important}
+.pao-audio-choice button{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#s3 .soft-bridge{
+  width:min(100%,520px);
+  text-align:center;
+  margin-left:auto;
+  margin-right:auto;
+}
+.relation .chairs-wrap{margin-left:auto!important;margin-right:auto!important}
+.awareness .step-label,.closure .abc,.final-sign{text-align:center}
+@media(max-width:430px){
+  #s1{padding-left:22px!important;padding-right:22px!important}
+  #s1 h1{font-size:clamp(39px,10.4vw,50px)!important;line-height:1.06}
+  #s4 .fundamental h2{font-size:clamp(33px,8.7vw,43px)!important}
+  #s4 .release{font-size:clamp(24px,6.3vw,32px)!important}
+  .awareness .q{font-size:clamp(28px,7.2vw,36px)!important}
+  .final{font-size:clamp(34px,8.8vw,48px)!important}
+}
+</style>
+
 </head>
 <body>
 
