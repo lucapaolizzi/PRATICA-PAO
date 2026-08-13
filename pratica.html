@@ -997,6 +997,41 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 }
 </style>
 
+
+<style id="pao-pratica-audio-choice">
+.pao-audio-choice{
+  width:min(92vw,560px);
+  display:grid;
+  gap:10px;
+  margin:18px auto 8px;
+}
+.pao-audio-choice button{
+  width:100%;
+  min-height:58px;
+  padding:12px 18px;
+  border:1.5px solid rgba(117,95,66,.65);
+  border-radius:999px;
+  background:rgba(255,252,246,.78);
+  color:#4e4438;
+  font:700 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.pao-audio-choice button.secondary{
+  border-color:rgba(111,92,67,.45);
+  background:rgba(255,255,255,.30);
+}
+.pao-audio-note{
+  margin:7px auto 0;
+  font-size:14px;
+  line-height:1.35;
+  font-style:italic;
+  color:#746957;
+  text-align:center;
+}
+</style>
+
 </head>
 <body>
 
@@ -1013,7 +1048,14 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
   <p>Questa esperienza inizia qui.<span class="now">Adesso.</span></p>
   <p class="small">Non è necessario capire tutto.<br>È sufficiente fermarsi nel qui e ora.</p>
 
-  <div class="choices">
+  
+<div class="pao-audio-choice">
+  <button type="button" id="paoStartWithSound">ENTRO CON IL SUONO 🔊</button>
+  <button type="button" id="paoStartSilent" class="secondary">ENTRO IN SILENZIO</button>
+</div>
+<div class="pao-audio-note">Puoi cambiare scelta in ogni momento.</div>
+
+<div class="choices">
     <button class="choice-btn primary" type="button" data-next="s2">MI FERMO</button>
     <button class="choice-btn secondary" type="button" data-loop="s1loop">RESTO NEL SOLITO LOOP</button>
   </div>
@@ -1287,70 +1329,73 @@ h1,h2,.question,.awareness .q,.final,.closing,.choice-btn{
 })();
 </script>
 
+
 <script id="pao-pratica-audio-js">
 (function(){
   const audio = document.getElementById('paoAmbientAudio');
   const toggle = document.getElementById('paoMusicToggle');
   const toast = document.getElementById('paoMusicToast');
+  const withSound = document.getElementById('paoStartWithSound');
+  const silent = document.getElementById('paoStartSilent');
   if(!audio || !toggle) return;
 
   const TARGET = 0.16;
   let fadeTimer = null;
-  let userMuted = localStorage.getItem('pao_music_muted') === '1';
 
-  function icon(){
+  function setIcon(){
     toggle.textContent = (!audio.paused && audio.volume > 0.001) ? '🔊' : '🔇';
   }
 
   function fadeIn(){
-    if(userMuted) return;
     clearInterval(fadeTimer);
     audio.volume = 0;
     const p = audio.play();
     if(p && p.then){
       p.then(()=>{
-        let i=0, steps=24;
-        fadeTimer=setInterval(()=>{
+        let i = 0, steps = 24;
+        fadeTimer = setInterval(()=>{
           i++;
-          audio.volume=Math.min(TARGET, TARGET*i/steps);
-          icon();
-          if(i>=steps) clearInterval(fadeTimer);
-        },90);
-      }).catch(()=>{ icon(); });
+          audio.volume = Math.min(TARGET, TARGET * i / steps);
+          setIcon();
+          if(i >= steps) clearInterval(fadeTimer);
+        }, 90);
+      }).catch(()=>{ setIcon(); });
     }
   }
+
+  function chooseSound(){
+    localStorage.setItem('pao_music_muted','0');
+    fadeIn();
+    if(toast) toast.classList.remove('show');
+  }
+
+  function chooseSilent(){
+    clearInterval(fadeTimer);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.volume = TARGET;
+    localStorage.setItem('pao_music_muted','1');
+    setIcon();
+    if(toast) toast.classList.remove('show');
+  }
+
+  if(withSound) withSound.addEventListener('click', chooseSound);
+  if(silent) silent.addEventListener('click', chooseSilent);
 
   toggle.addEventListener('click', function(e){
     e.preventDefault();
     e.stopPropagation();
     if(audio.paused){
-      userMuted=false;
-      localStorage.setItem('pao_music_muted','0');
-      fadeIn();
+      chooseSound();
     }else{
       audio.pause();
-      userMuted=true;
       localStorage.setItem('pao_music_muted','1');
-      icon();
+      setIcon();
     }
-    if(toast) toast.classList.remove('show');
   });
 
-  // On iPhone/Safari the first user gesture is the reliable moment to start audio.
-  function firstGesture(e){
-    if(userMuted) return;
-    if(e.target && e.target.closest && e.target.closest('#paoMusicToggle')) return;
-    fadeIn();
-    document.removeEventListener('click', firstGesture, true);
-  }
-  document.addEventListener('click', firstGesture, true);
-
-  // Small hint only until the first interaction.
-  if(!userMuted && toast){
-    setTimeout(()=>toast.classList.add('show'), 900);
-    setTimeout(()=>toast.classList.remove('show'), 4200);
-  }
-  icon();
+  if(toast) toast.classList.remove('show');
+  setIcon();
 })();
 </script>
 
