@@ -1135,6 +1135,90 @@ h1,h2,p,.question,.big,.soft,.label,.eyebrow,.now,
 }
 </style>
 
+
+<style id="s1-layout-fix">
+/* Prima schermata: separa INCONTRO 0.1 da MI FERMO e libera la barra Safari */
+#s1{
+  justify-content:flex-start !important;
+  min-height:100svh;
+  height:auto !important;
+  overflow-y:auto !important;
+  padding-top:calc(28px + env(safe-area-inset-top)) !important;
+  padding-bottom:calc(110px + env(safe-area-inset-bottom)) !important;
+}
+
+#s1 .symbol{
+  margin-top:0 !important;
+  margin-bottom:12px !important;
+}
+
+#s1 .pao-audio-choice{
+  margin-top:18px !important;
+  margin-bottom:8px !important;
+}
+
+#s1 .pao-audio-note{
+  margin-top:8px !important;
+  margin-bottom:18px !important;
+}
+
+#s1 .choices{
+  margin-top:0 !important;
+  margin-bottom:0 !important;
+  width:min(100%,560px) !important;
+}
+
+#s1 .choice-btn{
+  min-height:66px !important;
+}
+
+#s1 .footer{
+  position:static !important;
+  order:unset !important;
+  margin:18px auto 8px !important;
+  width:100% !important;
+  text-align:center !important;
+  font-size:11px !important;
+  letter-spacing:.20em !important;
+  opacity:.48 !important;
+}
+
+/* Il vero gesto principale */
+#s1 .choices .choice-btn.primary{
+  margin-top:0 !important;
+  position:relative;
+  z-index:2;
+}
+
+@media(max-width:430px){
+  #s1{
+    padding-left:22px !important;
+    padding-right:22px !important;
+    padding-bottom:calc(120px + env(safe-area-inset-bottom)) !important;
+  }
+
+  #s1 .footer{
+    margin-top:16px !important;
+    margin-bottom:10px !important;
+  }
+
+  #s1 .choice-btn{
+    min-height:62px !important;
+  }
+}
+
+@media(max-height:760px){
+  #s1{
+    padding-top:calc(18px + env(safe-area-inset-top)) !important;
+    padding-bottom:calc(118px + env(safe-area-inset-bottom)) !important;
+  }
+
+  #s1 .pao-audio-note{
+    margin-bottom:14px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 
