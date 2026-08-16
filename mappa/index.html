@@ -95,7 +95,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 #s1 .lead,#s2 .lead,#s3 .lead,#s4 .lead,#presence .lead,#integration .lead{max-width:600px}
 #threshold .statement{max-width:610px}
 @media(max-width:430px){
-  .scene{padding-top:calc(26px + env(safe-area-inset-top));padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  .scene{padding-top:calc(88px + env(safe-area-inset-top));padding-bottom:calc(92px + env(safe-area-inset-bottom))}
   .stepnum{width:74px;height:74px;font-size:36px}
   .kicker{font-size:clamp(18px,5vw,22px)}
   .subkicker{font-size:13px}
@@ -114,7 +114,8 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
   .scene{
     min-height:100svh;
-    padding-top:calc(30px + env(safe-area-inset-top));
+    /* fascia superiore riservata al comando audio: nessun testo può finirgli sotto */
+    padding-top:calc(88px + env(safe-area-inset-top));
     padding-right:24px;
     padding-bottom:calc(86px + env(safe-area-inset-bottom));
     padding-left:24px;
@@ -143,7 +144,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   /* D è volutamente più densa: mantiene aria senza comprimere */
   #s4{
     justify-content:flex-start;
-    padding-top:calc(28px + env(safe-area-inset-top));
+    padding-top:calc(88px + env(safe-area-inset-top));
     padding-bottom:calc(92px + env(safe-area-inset-bottom));
   }
   #s4 .stepnum{width:62px;height:62px;font-size:30px;margin-bottom:10px;}
@@ -166,7 +167,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   /* Due dimensioni: scroll naturale e cards più equilibrate */
   #split{
     justify-content:flex-start;
-    padding-top:calc(26px + env(safe-area-inset-top));
+    padding-top:calc(88px + env(safe-area-inset-top));
     padding-bottom:calc(96px + env(safe-area-inset-bottom));
   }
   #split .symbol{font-size:42px;margin-bottom:8px;}
@@ -184,11 +185,11 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   /* Responsabilità emotiva: leggibile senza effetto “muro” */
   #responsibility{
     justify-content:flex-start;
-    padding-top:calc(30px + env(safe-area-inset-top));
+    padding-top:calc(88px + env(safe-area-inset-top));
     padding-bottom:calc(96px + env(safe-area-inset-bottom));
   }
-  #responsibility .kicker{font-size:15px;letter-spacing:.12em;margin-bottom:12px;}
-  #responsibility h2{font-size:30px;line-height:1.06;}
+  #responsibility .kicker{font-size:14px;letter-spacing:.10em;margin-bottom:12px;max-width:285px;}
+  #responsibility h2{font-size:29px;line-height:1.07;max-width:350px;}
   #responsibility .pillars{gap:8px;margin-top:20px;max-width:350px;}
   #responsibility .pillar{padding:13px 8px;font-size:16.5px;line-height:1.38;}
   #responsibility .note{margin-top:18px;padding:14px 8px;font-size:16.5px;}
@@ -197,7 +198,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   /* Chiusura */
   #end{
     justify-content:flex-start;
-    padding-top:calc(34px + env(safe-area-inset-top));
+    padding-top:calc(88px + env(safe-area-inset-top));
     padding-bottom:calc(96px + env(safe-area-inset-bottom));
   }
   #end .symbol{font-size:27px;margin-bottom:20px;}
@@ -217,16 +218,16 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
   /* Audio coerente con la Pratica: alto a destra, mai sopra i CTA */
   .audio-controls{
-    top:calc(14px + env(safe-area-inset-top));
-    right:14px;
+    top:calc(12px + env(safe-area-inset-top));
+    right:12px;
     bottom:auto;
     flex-direction:column;
     align-items:flex-end;
     gap:8px;
   }
   .audio-btn{
-    width:50px;height:50px;
-    font-size:21px;
+    width:48px;height:48px;
+    font-size:20px;
     background:rgba(255,252,246,.90);
   }
   .volume-wrap{
@@ -245,11 +246,18 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   }
 }
 
+@media (max-width:430px) and (max-height:760px){
+  .scene{justify-content:flex-start;}
+  #s0,#s1,#s2,#s3,#presence,#integration{padding-bottom:calc(96px + env(safe-area-inset-bottom));}
+}
+
 @media (max-width:375px){
   .scene{padding-left:20px;padding-right:20px;}
   h2{font-size:30px;}
   #s0 h1{font-size:38px;}
-  #s4 h2,#responsibility h2{font-size:28px;}
+  #s4 h2{font-size:28px;}
+  #responsibility .kicker{font-size:13px;letter-spacing:.085em;max-width:255px;}
+  #responsibility h2{font-size:27px;}
   #end .closing{font-size:24px;}
 }
 
