@@ -261,6 +261,59 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   #end .closing{font-size:24px;}
 }
 
+
+
+/* ===== Ultimo passaggio iPhone — micro-rifinitura visiva ===== */
+@media (max-width:430px){
+  /* fascia audio più netta e coerente su tutte le scene */
+  .audio-controls{
+    top:calc(10px + env(safe-area-inset-top));
+    right:12px;
+  }
+  .audio-btn{width:46px;height:46px;font-size:19px;}
+
+  /* responsabilità: nessuna competizione tra kicker e comando audio */
+  #responsibility{
+    padding-top:calc(106px + env(safe-area-inset-top));
+  }
+  #responsibility .kicker{
+    width:100%;
+    max-width:260px;
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom:14px;
+    font-size:13.5px;
+    line-height:1.18;
+    letter-spacing:.095em;
+    text-align:center;
+  }
+  #responsibility h2{
+    max-width:340px;
+    margin-left:auto;
+    margin-right:auto;
+    font-size:28px;
+    line-height:1.08;
+  }
+  #responsibility .pillars{margin-top:22px;}
+  #responsibility .note{margin-top:20px;}
+  #responsibility .next{margin-top:24px;}
+
+  /* integrazione: blocco centrale un filo più respirato */
+  #integration .kicker{margin-bottom:10px;}
+  #integration h2{max-width:345px;}
+  #integration .note{margin-top:20px;}
+
+  /* chiusura: migliora la lettura delle tre affermazioni */
+  #end .closing{line-height:1.24;}
+  #end .closing-sub{line-height:1.46;}
+}
+
+@media (max-width:375px){
+  #responsibility{padding-top:calc(102px + env(safe-area-inset-top));}
+  #responsibility .kicker{max-width:235px;font-size:12.5px;letter-spacing:.08em;}
+  #responsibility h2{font-size:26px;max-width:320px;}
+}
+
 </style>
 </head>
 <body>
