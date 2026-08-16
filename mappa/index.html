@@ -342,18 +342,18 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
       <div class="stepnum" style="margin:0 auto 14px">F</div>
       <h3>LIBERTÀ<br><span class="gold">DI SCELTA</span></h3>
       <p>Posso scegliere. Non sono più obbligato a reagire sempre nello stesso modo.</p>
-      <button class="choice" data-select="liberta">ENTRO NELLA SCELTA</button>
+      <button class="choice" data-next="integration">ENTRO NELLA SCELTA</button>
     </div>
     <div class="path">
       <div class="stepnum" style="margin:0 auto 14px">G</div>
       <h3>SPONTANEITÀ<br><span class="gold">OLTRE LA SCELTA</span></h3>
       <p>Quando accade, non devo decidere. Posso lasciare che l’esperienza si muova spontaneamente.</p>
-      <button class="choice" data-select="spontaneita">ENTRO OLTRE LA SCELTA</button>
+      <button class="choice" data-next="integration">ENTRO OLTRE LA SCELTA</button>
     </div>
   </div>
   <div class="infinity">∞</div>
   <p class="small">Non devo vivere in una sola delle due.<br>Posso muovermi tra entrambe.</p>
-  <button class="next" data-next="integration">INTEGRO</button><button class="back" data-back="presence">‹</button>
+  <button class="back" data-back="presence">‹</button>
 </section>
 
 <section class="scene hidden" id="integration">
@@ -406,11 +406,6 @@ function show(id){
 document.addEventListener('click',e=>{
   const n=e.target.closest('[data-next]'); if(n) show(n.dataset.next);
   const b=e.target.closest('[data-back]'); if(b) show(b.dataset.back);
-  const c=e.target.closest('[data-select]'); if(c){
-    document.querySelectorAll('.path').forEach(p=>p.style.opacity='.48');
-    c.closest('.path').style.opacity='1';
-    c.textContent=c.dataset.select==='liberta'?'SCELGO':'LASCIO ACCADERE';
-  }
 });
 const start=location.hash.slice(1); if(start&&document.getElementById(start))show(start);
 
