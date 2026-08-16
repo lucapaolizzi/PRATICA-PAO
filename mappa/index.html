@@ -21,7 +21,7 @@ main{width:min(100%,760px);margin:0 auto}
 .symbol{font-size:30px;letter-spacing:.35em;color:var(--gold);margin-bottom:18px}.kicker{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(17px,4.7vw,24px);font-weight:850;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);line-height:1.12;margin-bottom:12px}.subkicker{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px;font-weight:800;letter-spacing:.20em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weight:500}h2{font-size:clamp(36px,9vw,60px);line-height:1.02;font-weight:500}h3{font-size:clamp(24px,6vw,34px);font-weight:500}.serif-big{font-size:clamp(32px,8vw,52px);line-height:1.12}.lead{margin-top:22px;font-size:clamp(20px,5vw,27px);line-height:1.5;max-width:620px}.small{font-size:clamp(17px,4.4vw,21px);line-height:1.55;max-width:620px}.gold{color:var(--gold)}.line{width:70px;height:1px;background:var(--gold);margin:28px auto}.note{margin-top:28px;padding:20px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:clamp(18px,4.8vw,23px);line-height:1.5;font-style:italic;max-width:640px}
 .next,.choice{margin-top:34px;min-height:58px;padding:15px 24px;border:1px solid rgba(112,88,57,.48);border-radius:999px;background:rgba(255,255,255,.34);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:800;letter-spacing:.08em;font-size:15px;color:var(--ink);cursor:pointer}.next:active,.choice:active{transform:scale(.98)}
-.stepnum{width:72px;height:72px;border:1.5px solid rgba(156,109,40,.62);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--gold);margin-bottom:18px}.footer{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;letter-spacing:.18em;color:#8f806e}.back{position:absolute;left:18px;bottom:calc(16px + env(safe-area-inset-bottom));width:44px;height:44px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,252,246,.82);font-size:23px;cursor:pointer;color:var(--muted)}
+.stepnum{width:78px;height:78px;border:1.8px solid rgba(156,109,40,.70);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:600;color:var(--gold);margin-bottom:14px;box-shadow:0 5px 18px rgba(90,66,38,.06)}.footer{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;letter-spacing:.18em;color:#8f806e}.back{position:absolute;left:18px;bottom:calc(16px + env(safe-area-inset-bottom));width:44px;height:44px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,252,246,.82);font-size:23px;cursor:pointer;color:var(--muted)}
 .hidden{display:none!important}.fadein{animation:fade .8s ease both}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .threshold{background:radial-gradient(circle at 50% 48%,rgba(255,244,211,.92),rgba(247,241,230,.98) 58%,rgba(230,214,187,.98) 100%)}
 .threshold .triangle{font-size:82px;line-height:1;color:var(--gold);margin:12px 0 8px}.threshold .statement{font-size:clamp(26px,6.8vw,40px);line-height:1.28;max-width:650px}.threshold .enter{margin-top:38px;padding:20px 30px;font-size:16px}
@@ -29,6 +29,18 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 .split{padding-top:calc(38px + env(safe-area-inset-top));justify-content:flex-start}.split-title{margin-bottom:24px}.path-grid{display:grid;grid-template-columns:1fr;gap:18px;width:100%;max-width:660px}.path{border:1px solid var(--line);border-radius:28px;padding:24px 20px;background:var(--card);text-align:left}.path h3{margin-bottom:8px}.path p{font-size:18px;line-height:1.5}.path .choice{width:100%;margin-top:18px}.infinity{font-size:70px;color:var(--gold);margin:22px 0 8px}
 .foundation{background:linear-gradient(180deg,#f7f1e6 0%,#efe1c9 100%)}.pillars{display:grid;grid-template-columns:1fr;gap:14px;width:100%;max-width:640px;margin-top:26px}.pillar{padding:18px;border-top:1px solid var(--line);font-size:18px;line-height:1.45}.closing{font-size:clamp(28px,7.4vw,44px);line-height:1.25}.closing-sub{margin-top:24px;font-size:clamp(18px,4.8vw,23px);line-height:1.5;max-width:620px}
 @media(min-width:640px){.path-grid{grid-template-columns:1fr 1fr}.pillars{grid-template-columns:1fr 1fr}.scene{padding-left:42px;padding-right:42px}}
+
+
+.concept{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:clamp(19px,5.2vw,27px);
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--gold);
+  line-height:1.1;
+  margin:2px 0 16px;
+}
 
 /* ===== Audio ambiente Mappa P.A.O. ===== */
 .audio-controls{
@@ -98,7 +110,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 <section class="scene hidden" id="s1">
   <div class="stepnum">A</div>
   <div class="kicker">ASCOLTA</div>
-  <div class="subkicker">PAURA</div>
+  <div class="concept">PAURA</div>
   <h2>QUALCOSA È TROPPO.</h2>
   <p class="lead">Accade qualcosa che emotivamente faccio fatica a sostenere.</p>
   <div class="note">Prima di fare qualcosa, riconosco ciò che sta accadendo dentro di me.</div>
@@ -108,7 +120,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 <section class="scene hidden" id="s2">
   <div class="stepnum">B</div>
   <div class="kicker">DIALOGA</div>
-  <div class="subkicker">DIFESA</div>
+  <div class="concept">DIFESA</div>
   <h2>DI FRONTE ALLA PAURA<br><span class="gold">NASCE LA DIFESA.</span></h2>
   <p class="lead">Non è un errore. Nasce per proteggermi da ciò che, in quel momento, non riesco a sostenere da solo.</p>
   <div class="note">Non combatto la difesa. Provo ad ascoltare ciò che sta cercando di proteggere.</div>
@@ -118,7 +130,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 <section class="scene hidden" id="s3">
   <div class="stepnum">C</div>
   <div class="kicker">SCEGLI</div>
-  <div class="subkicker">BUONA RELAZIONE</div>
+  <div class="concept">BUONA RELAZIONE</div>
   <h2>NON SONO PIÙ SOLO<br>CON CIÒ CHE SENTO.</h2>
   <p class="lead">Incontro una relazione nella quale posso sentirmi accolto senza dover essere diverso da ciò che sono.</p>
   <div class="note">Posso scegliere di entrare in relazione e lasciarmi accompagnare.</div>
@@ -127,9 +139,9 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
 <section class="scene hidden" id="s4">
   <div class="stepnum">D</div>
-  <div class="kicker">FIDUCIA</div>
-  <h2>POSSO COMINCIARE<br><span class="gold">A FIDARMI.</span></h2>
-  <p class="lead">La fiducia cresce nella relazione. Poco alla volta, la difesa può allentarsi.</p>
+  <div class="concept">FIDUCIA</div>
+  <h2>DALLA BUONA RELAZIONE<br><span class="gold">NASCE LA FIDUCIA.</span></h2>
+  <p class="lead">Posso cominciare a fidarmi. Poco alla volta, la difesa può allentarsi.</p>
   <div class="line"></div>
   <div class="subkicker">AFFIDAMENTO</div>
   <p class="serif-big">POSSO LASCIARE<br>IL CONTROLLO.</p>
@@ -147,7 +159,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
 <section class="scene presence hidden" id="presence">
   <div class="stepnum">E</div>
-  <div class="kicker">PRESENZA</div>
+  <div class="concept">PRESENZA</div>
   <h2>POSSO STARCI.</h2>
   <p class="lead">Non devo più fuggire da ciò che sento.</p>
   <div class="note">La presenza nasce quando la fiducia nella relazione prende il posto della difesa.</div>
@@ -178,7 +190,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
 <section class="scene hidden" id="integration">
   <div class="stepnum">∞</div>
-  <div class="kicker">INTEGRAZIONE</div>
+  <div class="concept">INTEGRAZIONE</div>
   <h2>CIÒ CHE HO VISSUTO<br>DIVENTA ANCHE MIO.</h2>
   <p class="lead">Ciò che prima riuscivo a sostenere nella relazione può diventare una forza interiore.</p>
   <div class="note">Posso scegliere quando serve. Posso lasciare accadere quando accade. E posso tornare.</div>
@@ -186,7 +198,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 </section>
 
 <section class="scene foundation hidden" id="responsibility">
-  <div class="kicker">RESPONSABILITÀ EMOTIVA</div>
+  <div class="concept">RESPONSABILITÀ EMOTIVA</div>
   <h2>IL TERRENO CHE<br>SOSTIENE TUTTO.</h2>
   <div class="pillars">
     <div class="pillar">Riconosco ciò che sento.</div>
