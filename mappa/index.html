@@ -204,7 +204,14 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   #end .symbol{font-size:27px;margin-bottom:20px;}
   #end .closing{font-size:26px;line-height:1.22;max-width:350px;}
   #end .closing-sub{margin-top:20px;font-size:17px;line-height:1.42;max-width:350px;}
-  #end .next{margin-top:26px;}
+  #end .next{margin-top:20px;}
+
+  /* Ultima rifinitura: chiusura più raccolta su iPhone */
+  #end{padding-top:calc(72px + env(safe-area-inset-top));}
+  #end .symbol{margin-bottom:16px;}
+  #end .closing{font-size:24px;line-height:1.18;max-width:342px;}
+  #end .closing-sub{margin-top:16px;font-size:16.5px;line-height:1.36;max-width:342px;}
+  #end .audio-safe{padding-right:54px;}
 
   /* Navigazione */
   .back{
@@ -452,7 +459,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 
 <section class="scene hidden" id="end">
   <div class="symbol">△ ∞</div>
-  <p class="closing">La libertà mi permette di scegliere.<br><br>La spontaneità mi permette di andare oltre la scelta.<br><br><span class="gold">La presenza mi permette di non perdermi in nessuna delle due.</span></p>
+  <p class="closing">La libertà mi permette di scegliere.<br><span style="display:block;height:18px"></span>La spontaneità mi permette di andare oltre la scelta.<br><span style="display:block;height:18px"></span><span class="gold">La presenza mi permette di non perdermi in nessuna delle due.</span></p>
   <p class="closing-sub">Sono libero di scegliere.<br>Sono libero di essere spontaneo.<br>Sono responsabile di ciò che sento e di ciò che accade attraverso di me.</p>
   <button class="next" data-next="s0">RICOMINCIO</button><button class="back" data-back="responsibility">‹</button>
   <div class="footer">MAPPA P.A.O.</div>
