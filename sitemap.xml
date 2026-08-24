@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <url>
-    <loc>https://praticapao.it/</loc>
-  </url>
-
-  <url>
-    <loc>https://praticapao.it/mappa/</loc>
-  </url>
-
-  <url>
-    <loc>https://praticapao.it/feed/</loc>
-  </url>
-
+  <url><loc>https://praticapao.it/</loc></url>
+  <url><loc>https://praticapao.it/mappa/</loc></url>
+  <url><loc>https://praticapao.it/feed/</loc></url>
+  <url><loc>https://praticapao.it/quaderno/</loc></url>
 </urlset>
