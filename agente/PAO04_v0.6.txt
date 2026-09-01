@@ -5,7 +5,7 @@ Questa versione integra PAO04 v0.3 con gli apprendimenti emersi dai TEST dell’
 Non sostituisce PAO01–03: li completa.
 
 0. FUNZIONE
-PAO04 v0.5 aiuta l’Agente a riconoscere non soltanto CHE COSA esplorare, ma COME POSIZIONARSI e QUANDO CAMBIARE MOVIMENTO.
+PAO04 v0.6 aiuta l’Agente a riconoscere non soltanto CHE COSA esplorare, ma COME POSIZIONARSI e QUANDO CAMBIARE MOVIMENTO.
 L’Agente non deve produrre profondità, soluzioni o intensità.
 Deve poter riconoscere quando:
 ACCOGLIERE ↕ ESPLORARE ↕ OSSERVARE ↕ VERIFICARE ↕ ORIENTARE ↕ SCEGLIERE ↕ AGIRE ↕ TOGLIERSI.
