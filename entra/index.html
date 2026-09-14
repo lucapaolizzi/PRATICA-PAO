@@ -1,1 +1,29 @@
-
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le quattro porte — P.A.O.</title>
+<meta name="description" content="Pratica P.A.O. — Pratica, Mappa, Quaderno e Agente P.A.O. Silver.">
+<meta name="theme-color" content="#f4efe5">
+<style>
+:root{--paper:#f4efe5;--paper2:#ebe2d2;--ink:#211d18;--muted:#756b5f;--gold:#a88b56;--line:rgba(63,51,36,.20)}
+*{box-sizing:border-box}html{background:var(--paper)}
+body{margin:0;min-height:100svh;color:var(--ink);background:radial-gradient(circle at 50% -10%,#fff,transparent 38rem),linear-gradient(180deg,var(--paper),#f7f3eb 52%,var(--paper2));font-family:Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
+main{width:min(100%,760px);min-height:100svh;margin:auto;padding:calc(34px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:center}
+.head{text-align:center;margin:0 auto 30px;max-width:620px}.mark{font-family:Arial,sans-serif;font-size:25px;letter-spacing:.18em;color:var(--gold);margin-bottom:10px}.brand{font-family:Arial,sans-serif;font-size:12px;letter-spacing:.30em;text-transform:uppercase;color:var(--muted);margin:0 0 25px}
+h1{margin:0;font-size:clamp(32px,8.2vw,55px);line-height:1.04;font-weight:500;letter-spacing:-.025em}.lead{margin:16px auto 0;max-width:470px;color:var(--muted);font-size:clamp(16px,4vw,20px);line-height:1.45}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:13px;width:100%;margin:auto}.door{min-height:190px;padding:22px 18px 20px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.42);color:var(--ink);text-decoration:none;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px rgba(56,43,28,.045);transition:.18s ease;-webkit-tap-highlight-color:transparent}.door:active{transform:scale(.985)}.door:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+.num{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}.name{margin:24px 0 8px;font-size:clamp(22px,5vw,29px);line-height:1.03;font-weight:500}.silver{font-size:.47em;display:block;margin-top:7px;letter-spacing:.13em;font-family:Arial,sans-serif;text-transform:uppercase;color:var(--muted)}.desc{margin:0;color:var(--muted);font-size:14px;line-height:1.4}.arrow{margin-top:18px;font-family:Arial,sans-serif;font-size:17px;color:var(--gold)}
+.foot{text-align:center;margin:27px auto 0;color:var(--muted);font-size:13px;line-height:1.5;max-width:440px}
+@media(max-width:560px){main{justify-content:flex-start;padding-left:16px;padding-right:16px}.head{margin-top:8px;margin-bottom:24px}.doors{grid-template-columns:1fr;gap:10px}.door{min-height:135px;padding:18px 19px}.doorTop{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.name{margin:12px 0 6px;font-size:25px}.arrow{margin:0;padding-top:5px}.foot{margin-top:22px}}
+@media(min-width:561px){.door:hover{transform:translateY(-2px);background:rgba(255,255,255,.60);border-color:rgba(168,139,86,.46)}}@media(prefers-reduced-motion:reduce){.door{transition:none}}
+</style></head>
+<body><main>
+<header class="head"><div class="mark">△ ∞</div><p class="brand">P.A.O.</p><h1>Quattro modi di entrare.<br>Un solo spazio.</h1><p class="lead">Non c’è un ordine da seguire.<br>Entra da dove senti.</p></header>
+<nav class="doors" aria-label="Le quattro porte P.A.O.">
+<a class="door" href="/pratica.html"><div class="doorTop"><div><span class="num">P.A.O.</span><h2 class="name">Pratica</h2><p class="desc">Mi fermo.<br>Incontro ciò che c’è.</p></div><span class="arrow">→</span></div></a>
+<a class="door" href="/mappa/"><div class="doorTop"><div><span class="num">P.A.O.</span><h2 class="name">Mappa</h2><p class="desc">Mi oriento.<br>Vedo il percorso.</p></div><span class="arrow">→</span></div></a>
+<a class="door" href="/quaderno/"><div class="doorTop"><div><span class="num">P.A.O.</span><h2 class="name">Quaderno</h2><p class="desc">Scrivo.<br>Lascio parlare ciò che emerge.</p></div><span class="arrow">→</span></div></a>
+<a class="door" href="/agente/"><div class="doorTop"><div><span class="num">P.A.O.</span><h2 class="name">Agente P.A.O.<span class="silver">Silver</span></h2><p class="desc">Ho una mappa.<br>Il territorio è il tuo.</p></div><span class="arrow">→</span></div></a>
+</nav><footer class="foot">La porta non decide il percorso.<br>È il percorso che comincia da dove sei.</footer>
+</main></body></html>
