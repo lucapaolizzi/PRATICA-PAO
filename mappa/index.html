@@ -375,29 +375,17 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
   #identity .next{margin-top:20px;margin-bottom:22px;}
 }
 
-.pao-hub{position:fixed;right:16px;top:calc(14px + env(safe-area-inset-top));z-index:120}
-.pao-hub-btn{width:54px;height:54px;border:1px solid rgba(36,33,30,.7);border-radius:50%;background:rgba(247,243,234,.94);color:#24211e;font:20px Arial,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.08)}
-.pao-hub-panel{position:absolute;right:0;top:64px;width:235px;padding:12px;border:1px solid rgba(36,33,30,.22);border-radius:18px;background:rgba(247,243,234,.98);box-shadow:0 12px 30px rgba(0,0,0,.12);display:none}
-.pao-hub.open .pao-hub-panel{display:block}
-.pao-hub-panel a{display:block;padding:12px 10px;border-bottom:1px solid rgba(36,33,30,.16);color:#24211e;text-decoration:none;font:700 12px Arial,sans-serif;letter-spacing:.12em}
-.pao-hub-panel a:last-child{border-bottom:0}
-.pao-hub-title{padding:6px 10px 10px;font:700 9px Arial,sans-serif;letter-spacing:.14em;color:#6f675f;line-height:1.45}
+.pao-doors{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;z-index:120;padding:10px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,252,246,.90);color:var(--muted);text-decoration:none;font:700 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.10em;box-shadow:0 6px 20px rgba(90,66,38,.08)}
+.pao-doors:active{transform:scale(.98)}
+.symbol{letter-spacing:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;line-height:.72;font-family:Arial,sans-serif}
 </style>
 </head>
 <body>
-<div class="pao-hub" id="paoHub">
-  <button class="pao-hub-btn" id="paoHubBtn" type="button" aria-label="Apri collegamenti P.A.O.">♾️🔺</button>
-  <div class="pao-hub-panel">
-    <div class="pao-hub-title">TUTTO ↔ UNO<br>OPEN ACCOMPANYING PROGRAM</div>
-    <a href="/">PRATICA P.A.O.</a>
-    <a href="/mappa/">MAPPA P.A.O.</a>
-    <a href="/quaderno/">QUADERNO P.A.O.</a>
-  </div>
-</div>
+<a class="pao-doors" href="/entra/">LE QUATTRO PORTE</a>
 
 <main>
 <section class="scene" id="s0">
-  <div class="symbol">△ ∞</div>
+  <div class="symbol" aria-label="Silver"><span>∞</span><span>△</span></div>
   <div class="kicker">MAPPA P.A.O.</div>
   <div class="line"></div>
   <h1>L’ALFABETO<br>DELLA PRESENZA.</h1>
@@ -538,7 +526,7 @@ h1,h2,h3,p{margin:0}h1{font-size:clamp(44px,11vw,74px);line-height:.98;font-weig
 </section>
 
 <section class="scene hidden" id="end">
-  <div class="symbol">△ ∞</div>
+  <div class="symbol" aria-label="Silver"><span>∞</span><span>△</span></div>
   <p class="closing">La libertà mi permette di scegliere.<br><span style="display:block;height:18px"></span>La spontaneità mi permette di andare oltre la scelta.<br><span style="display:block;height:18px"></span><span class="gold">La presenza mi permette di non perdermi in nessuna delle due.</span></p>
   <p class="closing-sub">Sono libero di scegliere.<br>Sono libero di essere spontaneo.<br>Sono responsabile di ciò che sento e di ciò che accade attraverso di me.</p>
   <button class="next" data-next="s0">RICOMINCIO</button><button class="back" data-back="responsibility">‹</button>
@@ -631,14 +619,6 @@ paoMusic.addEventListener('pause', () => {
 });
 </script>
 
-<script>
-(function(){
-  const hub=document.getElementById('paoHub');
-  const btn=document.getElementById('paoHubBtn');
-  if(!hub||!btn) return;
-  btn.addEventListener('click',function(e){e.stopPropagation();hub.classList.toggle('open');});
-  document.addEventListener('click',function(e){if(!hub.contains(e.target)) hub.classList.remove('open');});
-})();
-</script>
+
 </body>
 </html>
