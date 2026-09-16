@@ -69,14 +69,14 @@ body{
   display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;
 }
 textarea{
-  width:100%; resize:none; min-height:52px; max-height:150px;
+  width:100%; resize:none; min-height:66px; max-height:150px;
   border:1px solid var(--line); border-radius:15px; background:var(--paper);
   color:var(--ink); font:16px/1.4 Arial,Helvetica,sans-serif;
   padding:14px 15px; box-shadow:none;
 }
 textarea::placeholder{color:#918b80}
 .send{
-  min-height:52px;border:1px solid var(--ink);border-radius:15px;
+  min-height:66px;border:1px solid var(--ink);border-radius:15px;
   padding:0 14px;background:var(--ink);color:#fff;font-weight:700;
   font-size:11px;letter-spacing:.12em;cursor:pointer;
 }
@@ -116,7 +116,6 @@ textarea::placeholder{color:#918b80}
       placeholder="Scrivi qui quello che vuoi…" aria-label="Messaggio per Silver"></textarea>
     <button class="send" type="submit">INVIA</button>
   </form>
-  <div class="note">Prototipo della Stanza Silver · nessun messaggio viene inviato a un servizio AI in questa versione.</div>
 </main>
 
 <script>
