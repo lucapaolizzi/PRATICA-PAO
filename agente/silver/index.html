@@ -81,7 +81,7 @@ body{
   font-size:15px; white-space:pre-wrap;
 }
 .msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:5px}
-.msg.silver{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.silver{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:5px;letter-spacing:normal;margin:0;font-weight:400}
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
@@ -147,37 +147,68 @@ textarea::placeholder{color:#918b80}
 </main>
 
 <script>
+const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
+
 const form = document.getElementById('composer');
 const input = document.getElementById('input');
 const opening = document.getElementById('opening');
 const conversation = document.getElementById('conversation');
+const send = form.querySelector('.send');
 
 function addMessage(text, who){
   const el=document.createElement('div');
   el.className='msg '+who;
   el.textContent=text;
   conversation.appendChild(el);
+  return el;
 }
+
 function resize(){
   input.style.height='auto';
   input.style.height=Math.min(input.scrollHeight,150)+'px';
 }
+
 input.addEventListener('input',resize);
 
-form.addEventListener('submit',e=>{
+form.addEventListener('submit', async e=>{
   e.preventDefault();
   const text=input.value.trim();
-  if(!text) return;
+  if(!text || send.disabled) return;
+
   opening.style.display='none';
   conversation.style.display='flex';
   document.querySelector('.mascot').style.width='92px';
   document.querySelector('.identity').style.paddingBottom='2px';
+
   addMessage(text,'user');
-  input.value=''; resize();
-  setTimeout(()=>{
-    addMessage('Ti ho letto. In questa prima versione stiamo verificando soltanto la Stanza Silver; il cervello P.A.O. verrà collegato nel passaggio successivo.','silver');
-    conversation.lastElementChild.scrollIntoView({behavior:'smooth',block:'nearest'});
-  },300);
+  input.value='';
+  resize();
+
+  send.disabled=true;
+  send.textContent='…';
+
+  try{
+    const response = await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:text})
+    });
+
+    const data = await response.json();
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || 'Risposta non valida');
+    }
+
+    addMessage(data.reply || 'Ti ho ricevuto.','silver');
+  }catch(err){
+    addMessage('In questo momento non riesco a collegarmi. Riprova tra poco.','silver');
+    console.error('Silver Worker:',err);
+  }finally{
+    send.disabled=false;
+    send.textContent='INVIA';
+    input.focus();
+    conversation.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
 });
 </script>
 </body>
