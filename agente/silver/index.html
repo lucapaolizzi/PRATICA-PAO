@@ -292,7 +292,7 @@ async function fetchSpeechChunk(text){
 
 async function speakSilver(text, button){
   // Se stiamo già ascoltando QUESTO messaggio:
-  // primo tocco = PAUSA, tocco successivo = RIPRENDI dallo stesso punto.
+  // tocco = PAUSA / RIPRENDI dallo stesso punto.
   if(activeListenButton === button && activeAudio){
     if(activePaused){
       activePaused = false;
@@ -310,7 +310,7 @@ async function speakSilver(text, button){
     return;
   }
 
-  // Se era attiva un'altra lettura, la chiudiamo e ripristiniamo il suo pulsante.
+  // Ferma un'eventuale altra lettura.
   if(activeListenButton && activeListenButton !== button){
     playbackRunId++;
 
@@ -318,15 +318,10 @@ async function speakSilver(text, button){
       activeAudio.pause();
       activeAudio = null;
     }
-    if(activeAudioDone){
-      activeAudioDone();
-      activeAudioDone = null;
-    }
     if(activeAudioUrl){
       URL.revokeObjectURL(activeAudioUrl);
       activeAudioUrl = null;
     }
-
     activeListenButton.textContent = '🔊 ASCOLTA';
     activeListenButton.disabled = false;
     activeListenButton = null;
@@ -339,16 +334,27 @@ async function speakSilver(text, button){
   activeListenButton = button;
   activePaused = false;
   button.disabled = false;
+  button.textContent = chunks.length > 1 ? '… PREPARO AUDIO' : '…';
 
   try{
+    // PRECARICA TUTTI I BLOCCHI prima di iniziare.
+    // Su iPhone evita che la lettura si interrompa tra un blocco e il successivo.
+    const blobs = [];
     for(let i=0;i<chunks.length;i++){
       if(myRunId !== playbackRunId) return;
 
       button.textContent = chunks.length > 1
-        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + chunks.length
-        : 'Ⅱ PAUSA';
+        ? '… PREPARO ' + (i+1) + '/' + chunks.length
+        : '…';
 
       const blob = await fetchSpeechChunk(chunks[i]);
+      blobs.push(blob);
+    }
+
+    if(myRunId !== playbackRunId) return;
+
+    // Riproduzione continua dei blocchi già pronti.
+    for(let i=0;i<blobs.length;i++){
       if(myRunId !== playbackRunId) return;
 
       if(activeAudioUrl){
@@ -356,9 +362,13 @@ async function speakSilver(text, button){
         activeAudioUrl = null;
       }
 
-      activeAudioUrl = URL.createObjectURL(blob);
+      activeAudioUrl = URL.createObjectURL(blobs[i]);
       activeAudio = new Audio(activeAudioUrl);
       activePaused = false;
+
+      button.textContent = blobs.length > 1
+        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + blobs.length
+        : 'Ⅱ PAUSA';
 
       await new Promise((resolve,reject)=>{
         let settled = false;
@@ -366,16 +376,13 @@ async function speakSilver(text, button){
         const finish = ()=>{
           if(settled) return;
           settled = true;
-          activeAudioDone = null;
           resolve();
         };
 
-        activeAudioDone = finish;
         activeAudio.addEventListener('ended',finish,{once:true});
         activeAudio.addEventListener('error',()=>{
           if(settled) return;
           settled = true;
-          activeAudioDone = null;
           reject(new Error('Errore riproduzione voce'));
         },{once:true});
 
@@ -383,13 +390,11 @@ async function speakSilver(text, button){
       });
 
       if(myRunId !== playbackRunId) return;
+    }
 
-      if(activeAudioUrl){
-        URL.revokeObjectURL(activeAudioUrl);
-        activeAudioUrl = null;
-      }
-      activeAudio = null;
-      activePaused = false;
+    if(activeAudioUrl){
+      URL.revokeObjectURL(activeAudioUrl);
+      activeAudioUrl = null;
     }
 
     if(myRunId === playbackRunId && activeListenButton === button){
@@ -410,9 +415,6 @@ async function speakSilver(text, button){
     if(activeAudioUrl){
       URL.revokeObjectURL(activeAudioUrl);
       activeAudioUrl = null;
-    }
-    if(activeAudioDone){
-      activeAudioDone = null;
     }
 
     button.textContent = '🔊 ASCOLTA';
