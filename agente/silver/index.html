@@ -27,10 +27,14 @@ body{
 }
 .topbar{
   min-height:34px; display:flex; align-items:flex-start; justify-content:space-between;
+  position:relative; z-index:20;
 }
 .back{
   color:var(--muted); text-decoration:none; font-size:11px; letter-spacing:.12em;
-  text-transform:uppercase; padding:7px 0;
+  text-transform:uppercase; padding:10px 12px 10px 0;
+  display:inline-block;
+  position:relative; z-index:21;
+  touch-action:manipulation;
 }
 .back:focus-visible,.send:focus-visible,.listen:focus-visible,textarea:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px
@@ -134,7 +138,7 @@ textarea::placeholder{color:#918b80}
 <body>
 <main class="shell">
   <div class="topbar">
-    <a class="back" href="/agente/patto/">INDIETRO</a>
+    <a class="back" href="/agente/patto/" id="backLink">INDIETRO</a>
   </div>
 
   <header class="identity" aria-label="Silver, Agente P.A.O.">
@@ -163,6 +167,17 @@ textarea::placeholder{color:#918b80}
 <script>
 const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
 const SPEECH_URL = WORKER_URL + 'speech';
+
+
+const backLink = document.getElementById('backLink');
+backLink.addEventListener('click', e=>{
+  e.preventDefault();
+  if(window.history.length > 1){
+    window.history.back();
+  }else{
+    window.location.href = '/agente/patto/';
+  }
+});
 
 const form = document.getElementById('composer');
 const input = document.getElementById('input');
@@ -273,28 +288,8 @@ async function fetchSpeechChunk(text){
 }
 
 async function speakSilver(text, button){
-  if(activeAudio){
-    activeAudio.pause();
-    activeAudio = null;
-  }
-  if(activeAudioUrl){
-    URL.revokeObjectURL(activeAudioUrl);
-    activeAudioUrl = null;
-  }
-  if(activeListenButton && activeListenButton !== button){
-    activeListenButton.textContent = '🔊 ASCOLTA';
-    activeListenButton.disabled = false;
-  }
-
-  button.disabled = true;
-  button.textContent = '…';
-  activeListenButton = button;
-
-  const chunks = splitForSpeech(text);
-  let stopped = false;
-
-  const stopPlayback = ()=>{
-    stopped = true;
+  // Se questo stesso messaggio sta già parlando, il tocco significa STOP.
+  if(activeListenButton === button){
     if(activeAudio){
       activeAudio.pause();
       activeAudio = null;
@@ -303,33 +298,59 @@ async function speakSilver(text, button){
       URL.revokeObjectURL(activeAudioUrl);
       activeAudioUrl = null;
     }
+    button.dataset.speaking = '0';
     button.textContent = '🔊 ASCOLTA';
     button.disabled = false;
     activeListenButton = null;
+    return;
+  }
 
-    // Dopo STOP, il pulsante torna ad avviare da capo la lettura.
-    button.onclick = ()=>speakSilver(text,button);
-  };
+  // Se sta parlando un altro messaggio, fermalo e ripristina il suo pulsante.
+  if(activeListenButton && activeListenButton !== button){
+    if(activeAudio){
+      activeAudio.pause();
+      activeAudio = null;
+    }
+    if(activeAudioUrl){
+      URL.revokeObjectURL(activeAudioUrl);
+      activeAudioUrl = null;
+    }
+    activeListenButton.dataset.speaking = '0';
+    activeListenButton.textContent = '🔊 ASCOLTA';
+    activeListenButton.disabled = false;
+    activeListenButton = null;
+  }
 
-  button.onclick = stopPlayback;
+  const chunks = splitForSpeech(text);
+  let stopped = false;
+
+  button.dataset.speaking = '1';
+  button.disabled = false;
+  activeListenButton = button;
 
   try{
-    button.textContent = chunks.length > 1 ? '■ STOP · 1/' + chunks.length : '■ STOP';
-    button.disabled = false;
-
     for(let i=0;i<chunks.length;i++){
-      if(stopped) return;
-
-      if(chunks.length > 1){
-        button.textContent = '■ STOP · ' + (i+1) + '/' + chunks.length;
+      // Se un secondo tocco ha fermato questa lettura, esci.
+      if(activeListenButton !== button || button.dataset.speaking !== '1'){
+        stopped = true;
+        break;
       }
 
+      button.textContent = chunks.length > 1
+        ? '■ STOP · ' + (i+1) + '/' + chunks.length
+        : '■ STOP';
+
       const blob = await fetchSpeechChunk(chunks[i]);
-      if(stopped) return;
+
+      if(activeListenButton !== button || button.dataset.speaking !== '1'){
+        stopped = true;
+        break;
+      }
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
       }
+
       activeAudioUrl = URL.createObjectURL(blob);
       activeAudio = new Audio(activeAudioUrl);
 
@@ -346,16 +367,27 @@ async function speakSilver(text, button){
       activeAudio = null;
     }
 
-    button.textContent = '🔊 ASCOLTA';
-    button.disabled = false;
-    activeListenButton = null;
-    button.onclick = ()=>speakSilver(text,button);
+    // Se è terminata normalmente, torna sempre ad ASCOLTA.
+    if(!stopped && activeListenButton === button){
+      button.dataset.speaking = '0';
+      button.textContent = '🔊 ASCOLTA';
+      button.disabled = false;
+      activeListenButton = null;
+    }
 
   }catch(err){
+    if(activeAudio){
+      activeAudio.pause();
+      activeAudio = null;
+    }
+    if(activeAudioUrl){
+      URL.revokeObjectURL(activeAudioUrl);
+      activeAudioUrl = null;
+    }
+    button.dataset.speaking = '0';
     button.textContent = '🔊 ASCOLTA';
     button.disabled = false;
-    activeListenButton = null;
-    button.onclick = ()=>speakSilver(text,button);
+    if(activeListenButton === button) activeListenButton = null;
     console.error('Silver voce:',err);
   }
 }
@@ -381,6 +413,7 @@ function addMessage(text, who){
   listen.className='listen';
   listen.textContent='🔊 ASCOLTA';
   listen.setAttribute('aria-label','Ascolta la risposta di Silver');
+  listen.dataset.speaking = '0';
   listen.addEventListener('click',()=>speakSilver(text,listen));
 
   block.appendChild(el);
