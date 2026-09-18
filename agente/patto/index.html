@@ -10,7 +10,10 @@
 html,body{margin:0;min-height:100%;background:#f5f1e8;color:#24211d}
 body{font-family:Arial,sans-serif;display:flex;justify-content:center}
 .page{width:min(100%,760px);min-height:100svh;padding:calc(18px + env(safe-area-inset-top)) 22px calc(34px + env(safe-area-inset-bottom))}
-.back{display:inline-block;color:#6b6256;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.12em;padding:8px 0}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.back,.return-silver{display:inline-block;color:#6b6256;text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.12em;padding:8px 0}
+.return-silver{color:#2c2924;text-align:right}
+.back:focus-visible,.return-silver:focus-visible{outline:2px solid #a8833e;outline-offset:3px}
 .hero{text-align:center;padding:18px 0 18px}
 .symbol{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:22px/.72 Arial,sans-serif;margin-bottom:12px}
 .brand{font-size:12px;font-weight:800;letter-spacing:.20em;margin-bottom:22px}
@@ -37,7 +40,10 @@ h1{margin:0 0 22px;font-size:clamp(30px,8vw,46px);line-height:1.02;letter-spacin
 </head>
 <body>
 <main class="page">
+<nav class="nav" aria-label="Navigazione">
 <a class="back" href="/agente/prima-di-iniziare/">INDIETRO</a>
+<a class="return-silver" href="/agente/silver/">TORNA A SILVER →</a>
+</nav>
 
 <header class="hero">
 <div class="symbol" aria-label="Silver"><span>∞</span><span>△</span></div>
