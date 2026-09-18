@@ -159,10 +159,34 @@ const send = form.querySelector('.send');
 // Vive solo finché questa pagina resta aperta: nessun archivio locale permanente.
 const sessionMessages = [];
 
+function renderMessage(el, text, who){
+  // I messaggi dell'utente restano testo puro.
+  if(who !== 'silver'){
+    el.textContent = text;
+    return;
+  }
+
+  // Rendering sicuro del solo grassetto Markdown **testo**.
+  // Niente innerHTML: il testo resta trattato come testo, non come codice HTML.
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+
+  for(const part of parts){
+    if(!part) continue;
+
+    if(part.startsWith('**') && part.endsWith('**')){
+      const strong = document.createElement('strong');
+      strong.textContent = part.slice(2, -2);
+      el.appendChild(strong);
+    }else{
+      el.appendChild(document.createTextNode(part));
+    }
+  }
+}
+
 function addMessage(text, who){
   const el=document.createElement('div');
   el.className='msg '+who;
-  el.textContent=text;
+  renderMessage(el, text, who);
   conversation.appendChild(el);
   return el;
 }
