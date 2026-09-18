@@ -1,91 +1,75 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Test Cedar 2 · Silver</title>
-  <style>
-    :root{--bg:#f5f0e6;--ink:#24231f;--line:rgba(36,35,31,.16);--gold:#a8873f;--card:#fffdf8}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100svh;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;display:flex;justify-content:center}
-    main{width:min(720px,100%);padding:34px 22px 48px}
-    .mark{text-align:center;font-size:34px;line-height:.72;margin-bottom:10px}
-    .mark span{display:block}
-    h1{text-align:center;letter-spacing:.16em;font-size:22px;margin:14px 0 6px}
-    .sub{text-align:center;opacity:.68;margin:0 0 28px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px}
-    textarea{width:100%;min-height:120px;resize:vertical;border:1px solid var(--line);border-radius:16px;padding:16px;font:inherit;font-size:18px;background:white;color:var(--ink);outline:none}
-    textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(168,135,63,.14)}
-    .styles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
-    button{border:0;border-radius:16px;padding:15px 10px;background:var(--ink);color:white;font-weight:700;letter-spacing:.04em;cursor:pointer;font-size:14px}
-    button:disabled{opacity:.45;cursor:default}
-    .label{display:block;font-size:12px;opacity:.72;font-weight:500;margin-top:4px;letter-spacing:0}
-    .status{min-height:26px;margin:16px 4px 0;text-align:center;font-size:14px;opacity:.68}
-    audio{width:100%;margin-top:14px;display:none}
-    .note{font-size:13px;line-height:1.5;opacity:.6;margin-top:20px;text-align:center}
-    @media(max-width:520px){.styles{grid-template-columns:1fr}button{padding:16px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Test Cedar 2C+ · Silver</title>
+<style>
+:root{--bg:#f5f0e6;--ink:#24231f;--line:rgba(36,35,31,.16);--gold:#a8873f;--card:#fffdf8}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif;display:flex;justify-content:center}
+main{width:min(720px,100%);padding:34px 22px 48px}
+.mark{text-align:center;font-size:34px;line-height:.72;margin-bottom:10px}.mark span{display:block}
+h1{text-align:center;letter-spacing:.14em;font-size:22px;margin:14px 0 6px}.sub{text-align:center;opacity:.68;margin:0 0 28px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px}
+textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:16px;padding:16px;font:18px Arial;background:white;color:var(--ink);resize:vertical}
+.styles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+button{border:0;border-radius:16px;padding:16px;background:var(--ink);color:white;font-weight:700;cursor:pointer}
+.label{display:block;font-size:12px;opacity:.72;font-weight:500;margin-top:4px}
+.status{text-align:center;margin-top:16px;opacity:.68;min-height:24px}
+audio{width:100%;margin-top:14px;display:none}
+@media(max-width:520px){.styles{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <main>
-  <div class="mark" aria-label="Silver"><span>∞</span><span>△</span></div>
-  <h1>SILVER · CEDAR 2</h1>
-  <p class="sub">Tre gradi di calore. Stesso timbro.</p>
+<div class="mark"><span>∞</span><span>△</span></div>
+<h1>SILVER · CEDAR 2C+</h1>
+<p class="sub">Confronto finale: 2C vs 2C+.</p>
 
-  <section class="card">
-    <textarea id="text">Ciao, sono Silver. Sono qui con te. Da dove vuoi cominciare?</textarea>
+<section class="card">
+<textarea id="text">Ciao, piacere, sono Silver. Da dove vuoi cominciare?</textarea>
 
-    <div class="styles">
-      <button data-style="cedar2a">CEDAR 2A<span class="label">caldo · sobrio</span></button>
-      <button data-style="cedar2b">CEDAR 2B<span class="label">accogliente</span></button>
-      <button data-style="cedar2c">CEDAR 2C<span class="label">più caldo</span></button>
-    </div>
+<div class="styles">
+<button data-style="cedar2c">CEDAR 2C<span class="label">più caldo</span></button>
+<button data-style="cedar2cplus">CEDAR 2C+<span class="label">più umano · più accogliente</span></button>
+</div>
 
-    <div class="status" id="status">Scegli una variante.</div>
-    <audio id="player" controls></audio>
-  </section>
-
-  <p class="note">La voce resta Cedar. Cambiano soltanto calore, attacco, pause e intenzione.</p>
+<div class="status" id="status">Scegli una variante.</div>
+<audio id="player" controls></audio>
+</section>
 </main>
 
 <script>
 const ENDPOINT="https://silver-pao.paolizzi.workers.dev/speech";
-const textEl=document.getElementById("text");
-const player=document.getElementById("player");
-const statusEl=document.getElementById("status");
-const buttons=[...document.querySelectorAll("button[data-style]")];
-let currentUrl=null;
-
+const t=document.getElementById("text"),p=document.getElementById("player"),s=document.getElementById("status"),bs=[...document.querySelectorAll("button")];
+let u=null;
 async function speak(style){
-  const text=textEl.value.trim();
-  if(!text){statusEl.textContent="Scrivi una frase da provare.";return;}
-  buttons.forEach(b=>b.disabled=true);
-  statusEl.textContent="Genero "+style.toUpperCase()+"…";
+  const text=t.value.trim();
+  if(!text)return;
+  bs.forEach(b=>b.disabled=true);
+  s.textContent="Genero "+style.toUpperCase()+"…";
   try{
-    const res=await fetch(ENDPOINT,{
+    const r=await fetch(ENDPOINT,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({text,voice:"cedar",style})
     });
-    if(!res.ok){
-      let msg="Errore "+res.status;
-      try{const data=await res.json();if(data&&data.error)msg+=" · "+data.error;}catch(_){}
-      throw new Error(msg);
-    }
-    const blob=await res.blob();
-    if(currentUrl)URL.revokeObjectURL(currentUrl);
-    currentUrl=URL.createObjectURL(blob);
-    player.src=currentUrl;
-    player.style.display="block";
-    statusEl.textContent=style.toUpperCase()+" pronta.";
-    await player.play().catch(()=>{});
-  }catch(err){
-    statusEl.textContent=err.message||"Errore durante il test.";
+    if(!r.ok)throw new Error("Errore "+r.status);
+    const b=await r.blob();
+    if(u)URL.revokeObjectURL(u);
+    u=URL.createObjectURL(b);
+    p.src=u;
+    p.style.display="block";
+    s.textContent=style.toUpperCase()+" pronta.";
+    await p.play().catch(()=>{});
+  }catch(e){
+    s.textContent=e.message;
   }finally{
-    buttons.forEach(b=>b.disabled=false);
+    bs.forEach(b=>b.disabled=false);
   }
 }
-buttons.forEach(btn=>btn.addEventListener("click",()=>speak(btn.dataset.style)));
+bs.forEach(b=>b.onclick=()=>speak(b.dataset.style));
 </script>
 </body>
 </html>
