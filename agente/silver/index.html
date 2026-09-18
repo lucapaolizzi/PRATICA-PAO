@@ -176,13 +176,23 @@ let activeAudio = null;
 let activeAudioUrl = null;
 let activeListenButton = null;
 
+function cleanDisplayText(text){
+  return String(text)
+    .replace(/^\s*#{1,6}\s+/gm,'')
+    .replace(/(^|[\s(])\*(?=\S)/g,'$1')
+    .replace(/(?<=\S)\*(?=[\s).,;:!?]|$)/g,'');
+}
+
 function renderMessage(el, text, who){
+  const cleaned = cleanDisplayText(text);
+
   if(who !== 'silver'){
-    el.textContent = text;
+    el.textContent = cleaned;
     return;
   }
 
-  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+  // Rendering sicuro del solo grassetto Markdown **testo**.
+  const parts = cleaned.split(/(\*\*[^*]+\*\*)/g);
 
   for(const part of parts){
     if(!part) continue;
@@ -195,6 +205,71 @@ function renderMessage(el, text, who){
       el.appendChild(document.createTextNode(part));
     }
   }
+}
+
+function splitForSpeech(text, maxLen=650){
+  const cleaned = cleanDisplayText(text)
+    .replace(/\*\*/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+
+  if(cleaned.length <= maxLen) return [cleaned];
+
+  const sentences = cleaned.match(/[^.!?;:]+[.!?;:]?|[^.!?;:]+$/g) || [cleaned];
+  const chunks = [];
+  let current = '';
+
+  for(const sentenceRaw of sentences){
+    const sentence = sentenceRaw.trim();
+    if(!sentence) continue;
+
+    if((current + ' ' + sentence).trim().length <= maxLen){
+      current = (current + ' ' + sentence).trim();
+      continue;
+    }
+
+    if(current){
+      chunks.push(current);
+      current = '';
+    }
+
+    if(sentence.length <= maxLen){
+      current = sentence;
+    }else{
+      const words = sentence.split(/\s+/);
+      let piece = '';
+      for(const word of words){
+        if((piece + ' ' + word).trim().length > maxLen){
+          if(piece) chunks.push(piece);
+          piece = word;
+        }else{
+          piece = (piece + ' ' + word).trim();
+        }
+      }
+      if(piece) current = piece;
+    }
+  }
+
+  if(current) chunks.push(current);
+  return chunks.filter(Boolean);
+}
+
+async function fetchSpeechChunk(text){
+  const response = await fetch(SPEECH_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      text,
+      voice:'cedar',
+      style:'cedar2cplus'
+    })
+  });
+
+  if(!response.ok){
+    throw new Error('Voce non disponibile');
+  }
+
+  return await response.blob();
 }
 
 async function speakSilver(text, button){
@@ -215,54 +290,69 @@ async function speakSilver(text, button){
   button.textContent = '…';
   activeListenButton = button;
 
-  try{
-    const response = await fetch(SPEECH_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        text:text,
-        voice:'cedar',
-        style:'cedar2cplus'
-      })
-    });
+  const chunks = splitForSpeech(text);
+  let stopped = false;
 
-    if(!response.ok){
-      throw new Error('Voce non disponibile');
+  const stopPlayback = ()=>{
+    stopped = true;
+    if(activeAudio){
+      activeAudio.pause();
+      activeAudio = null;
     }
+    if(activeAudioUrl){
+      URL.revokeObjectURL(activeAudioUrl);
+      activeAudioUrl = null;
+    }
+    button.textContent = '🔊 ASCOLTA';
+    button.disabled = false;
+    activeListenButton = null;
+  };
 
-    const blob = await response.blob();
-    activeAudioUrl = URL.createObjectURL(blob);
-    activeAudio = new Audio(activeAudioUrl);
+  button.onclick = stopPlayback;
 
-    button.textContent = '■ STOP';
+  try{
+    button.textContent = chunks.length > 1 ? '■ STOP · 1/' + chunks.length : '■ STOP';
     button.disabled = false;
 
-    activeAudio.addEventListener('ended',()=>{
-      button.textContent = '🔊 ASCOLTA';
-      activeListenButton = null;
+    for(let i=0;i<chunks.length;i++){
+      if(stopped) return;
+
+      if(chunks.length > 1){
+        button.textContent = '■ STOP · ' + (i+1) + '/' + chunks.length;
+      }
+
+      const blob = await fetchSpeechChunk(chunks[i]);
+      if(stopped) return;
+
+      if(activeAudioUrl){
+        URL.revokeObjectURL(activeAudioUrl);
+      }
+      activeAudioUrl = URL.createObjectURL(blob);
+      activeAudio = new Audio(activeAudioUrl);
+
+      await new Promise((resolve,reject)=>{
+        activeAudio.addEventListener('ended',resolve,{once:true});
+        activeAudio.addEventListener('error',()=>reject(new Error('Errore riproduzione voce')),{once:true});
+        activeAudio.play().catch(reject);
+      });
+
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
         activeAudioUrl = null;
       }
       activeAudio = null;
-    },{once:true});
+    }
 
-    button.onclick = ()=>{
-      if(activeAudio && !activeAudio.paused){
-        activeAudio.pause();
-        button.textContent = '🔊 ASCOLTA';
-        activeListenButton = null;
-      }else{
-        speakSilver(text,button);
-      }
-    };
-
-    await activeAudio.play();
+    button.textContent = '🔊 ASCOLTA';
+    button.disabled = false;
+    activeListenButton = null;
+    button.onclick = ()=>speakSilver(text,button);
 
   }catch(err){
     button.textContent = '🔊 ASCOLTA';
     button.disabled = false;
     activeListenButton = null;
+    button.onclick = ()=>speakSilver(text,button);
     console.error('Silver voce:',err);
   }
 }
