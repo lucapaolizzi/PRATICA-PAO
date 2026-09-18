@@ -190,6 +190,9 @@ const sessionMessages = [];
 let activeAudio = null;
 let activeAudioUrl = null;
 let activeListenButton = null;
+let activePaused = false;
+let activeAudioDone = null;
+let playbackRunId = 0;
 
 function cleanDisplayText(text){
   return String(text)
@@ -288,94 +291,118 @@ async function fetchSpeechChunk(text){
 }
 
 async function speakSilver(text, button){
-  // Se questo stesso messaggio sta già parlando, il tocco significa STOP.
-  if(activeListenButton === button){
-    if(activeAudio){
+  // Se stiamo già ascoltando QUESTO messaggio:
+  // primo tocco = PAUSA, tocco successivo = RIPRENDI dallo stesso punto.
+  if(activeListenButton === button && activeAudio){
+    if(activePaused){
+      activePaused = false;
+      button.textContent = 'Ⅱ PAUSA';
+      try{
+        await activeAudio.play();
+      }catch(err){
+        console.error('Ripresa voce:',err);
+      }
+    }else{
+      activePaused = true;
       activeAudio.pause();
-      activeAudio = null;
+      button.textContent = '▶ RIPRENDI';
     }
-    if(activeAudioUrl){
-      URL.revokeObjectURL(activeAudioUrl);
-      activeAudioUrl = null;
-    }
-    button.dataset.speaking = '0';
-    button.textContent = '🔊 ASCOLTA';
-    button.disabled = false;
-    activeListenButton = null;
     return;
   }
 
-  // Se sta parlando un altro messaggio, fermalo e ripristina il suo pulsante.
+  // Se era attiva un'altra lettura, la chiudiamo e ripristiniamo il suo pulsante.
   if(activeListenButton && activeListenButton !== button){
+    playbackRunId++;
+
     if(activeAudio){
       activeAudio.pause();
       activeAudio = null;
+    }
+    if(activeAudioDone){
+      activeAudioDone();
+      activeAudioDone = null;
     }
     if(activeAudioUrl){
       URL.revokeObjectURL(activeAudioUrl);
       activeAudioUrl = null;
     }
-    activeListenButton.dataset.speaking = '0';
+
     activeListenButton.textContent = '🔊 ASCOLTA';
     activeListenButton.disabled = false;
     activeListenButton = null;
+    activePaused = false;
   }
 
   const chunks = splitForSpeech(text);
-  let stopped = false;
+  const myRunId = ++playbackRunId;
 
-  button.dataset.speaking = '1';
-  button.disabled = false;
   activeListenButton = button;
+  activePaused = false;
+  button.disabled = false;
 
   try{
     for(let i=0;i<chunks.length;i++){
-      // Se un secondo tocco ha fermato questa lettura, esci.
-      if(activeListenButton !== button || button.dataset.speaking !== '1'){
-        stopped = true;
-        break;
-      }
+      if(myRunId !== playbackRunId) return;
 
       button.textContent = chunks.length > 1
-        ? '■ STOP · ' + (i+1) + '/' + chunks.length
-        : '■ STOP';
+        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + chunks.length
+        : 'Ⅱ PAUSA';
 
       const blob = await fetchSpeechChunk(chunks[i]);
-
-      if(activeListenButton !== button || button.dataset.speaking !== '1'){
-        stopped = true;
-        break;
-      }
+      if(myRunId !== playbackRunId) return;
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
+        activeAudioUrl = null;
       }
 
       activeAudioUrl = URL.createObjectURL(blob);
       activeAudio = new Audio(activeAudioUrl);
+      activePaused = false;
 
       await new Promise((resolve,reject)=>{
-        activeAudio.addEventListener('ended',resolve,{once:true});
-        activeAudio.addEventListener('error',()=>reject(new Error('Errore riproduzione voce')),{once:true});
+        let settled = false;
+
+        const finish = ()=>{
+          if(settled) return;
+          settled = true;
+          activeAudioDone = null;
+          resolve();
+        };
+
+        activeAudioDone = finish;
+        activeAudio.addEventListener('ended',finish,{once:true});
+        activeAudio.addEventListener('error',()=>{
+          if(settled) return;
+          settled = true;
+          activeAudioDone = null;
+          reject(new Error('Errore riproduzione voce'));
+        },{once:true});
+
         activeAudio.play().catch(reject);
       });
+
+      if(myRunId !== playbackRunId) return;
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
         activeAudioUrl = null;
       }
       activeAudio = null;
+      activePaused = false;
     }
 
-    // Se è terminata normalmente, torna sempre ad ASCOLTA.
-    if(!stopped && activeListenButton === button){
-      button.dataset.speaking = '0';
+    if(myRunId === playbackRunId && activeListenButton === button){
       button.textContent = '🔊 ASCOLTA';
       button.disabled = false;
       activeListenButton = null;
+      activePaused = false;
+      activeAudio = null;
     }
 
   }catch(err){
+    if(myRunId !== playbackRunId) return;
+
     if(activeAudio){
       activeAudio.pause();
       activeAudio = null;
@@ -384,10 +411,14 @@ async function speakSilver(text, button){
       URL.revokeObjectURL(activeAudioUrl);
       activeAudioUrl = null;
     }
-    button.dataset.speaking = '0';
+    if(activeAudioDone){
+      activeAudioDone = null;
+    }
+
     button.textContent = '🔊 ASCOLTA';
     button.disabled = false;
-    if(activeListenButton === button) activeListenButton = null;
+    activeListenButton = null;
+    activePaused = false;
     console.error('Silver voce:',err);
   }
 }
