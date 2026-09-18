@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Test voce Silver</title>
+  <style>
+    :root{
+      --bg:#f5f0e6;
+      --ink:#24231f;
+      --line:rgba(36,35,31,.16);
+      --gold:#a8873f;
+      --card:#fffdf8;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100svh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      display:flex;
+      justify-content:center;
+    }
+    main{
+      width:min(720px,100%);
+      padding:34px 22px 48px;
+    }
+    .mark{
+      text-align:center;
+      font-size:34px;
+      line-height:.72;
+      margin-bottom:10px;
+    }
+    .mark span{display:block}
+    h1{
+      text-align:center;
+      letter-spacing:.22em;
+      font-size:22px;
+      margin:14px 0 6px;
+    }
+    .sub{
+      text-align:center;
+      opacity:.68;
+      margin:0 0 28px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:20px;
+    }
+    textarea{
+      width:100%;
+      min-height:120px;
+      resize:vertical;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      font:inherit;
+      font-size:18px;
+      background:white;
+      color:var(--ink);
+      outline:none;
+    }
+    textarea:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(168,135,63,.14)}
+    .voices{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    button{
+      border:0;
+      border-radius:16px;
+      padding:15px 10px;
+      background:var(--ink);
+      color:white;
+      font-weight:700;
+      letter-spacing:.08em;
+      cursor:pointer;
+      font-size:15px;
+    }
+    button:disabled{opacity:.45;cursor:default}
+    .status{
+      min-height:26px;
+      margin:16px 4px 0;
+      text-align:center;
+      font-size:14px;
+      opacity:.68;
+    }
+    audio{
+      width:100%;
+      margin-top:14px;
+      display:none;
+    }
+    .note{
+      font-size:13px;
+      line-height:1.5;
+      opacity:.6;
+      margin-top:20px;
+      text-align:center;
+    }
+    @media(max-width:520px){
+      .voices{grid-template-columns:1fr}
+      button{padding:16px}
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="mark" aria-label="Silver"><span>∞</span><span>△</span></div>
+  <h1>SILVER · TEST VOCE</h1>
+  <p class="sub">Stessa frase, tre voci.</p>
+
+  <section class="card">
+    <textarea id="text">Ciao, sono Silver. Sono qui con te. Da dove vuoi cominciare?</textarea>
+
+    <div class="voices">
+      <button data-voice="cedar">CEDAR</button>
+      <button data-voice="marin">MARIN</button>
+      <button data-voice="sage">SAGE</button>
+    </div>
+
+    <div class="status" id="status">Scegli una voce.</div>
+    <audio id="player" controls></audio>
+  </section>
+
+  <p class="note">Il testo viene inviato al Worker Silver solo per generare l'audio di prova.</p>
+</main>
+
+<script>
+const ENDPOINT = "https://silver-pao.paolizzi.workers.dev/speech";
+const textEl = document.getElementById("text");
+const player = document.getElementById("player");
+const statusEl = document.getElementById("status");
+const buttons = [...document.querySelectorAll("button[data-voice]")];
+let currentUrl = null;
+
+async function speak(voice){
+  const text = textEl.value.trim();
+  if(!text){
+    statusEl.textContent = "Scrivi una frase da provare.";
+    return;
+  }
+
+  buttons.forEach(b => b.disabled = true);
+  statusEl.textContent = "Genero la voce " + voice + "…";
+
+  try{
+    const res = await fetch(ENDPOINT,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text, voice})
+    });
+
+    if(!res.ok){
+      let msg = "Errore " + res.status;
+      try{
+        const data = await res.json();
+        if(data && data.error) msg += " · " + data.error;
+      }catch(_){}
+      throw new Error(msg);
+    }
+
+    const blob = await res.blob();
+    if(currentUrl) URL.revokeObjectURL(currentUrl);
+    currentUrl = URL.createObjectURL(blob);
+
+    player.src = currentUrl;
+    player.style.display = "block";
+    statusEl.textContent = "Voce " + voice + " pronta.";
+    await player.play().catch(()=>{});
+  }catch(err){
+    statusEl.textContent = err.message || "Errore durante il test.";
+  }finally{
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+
+buttons.forEach(btn=>{
+  btn.addEventListener("click",()=>speak(btn.dataset.voice));
+});
+</script>
+</body>
+</html>
