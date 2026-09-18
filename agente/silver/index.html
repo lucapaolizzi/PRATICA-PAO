@@ -225,7 +225,7 @@ function renderMessage(el, text, who){
   }
 }
 
-function splitForSpeech(text, maxLen=650){
+function splitForSpeech(text, maxLen=320){
   const cleaned = cleanDisplayText(text)
     .replace(/\*\*/g,'')
     .replace(/\s+/g,' ')
