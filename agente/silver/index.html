@@ -32,20 +32,12 @@ body{
   color:var(--muted); text-decoration:none; font-size:11px; letter-spacing:.12em;
   text-transform:uppercase; padding:7px 0;
 }
-.back:focus-visible,.send:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.back:focus-visible,.send:focus-visible,.listen:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--gold);outline-offset:3px
+}
 .identity{text-align:center;padding:4px 0 10px;transform:translateY(-58px)}
-.symbol{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-family:Arial,sans-serif; font-size:26px; line-height:.72; gap:4px;
-  margin-bottom:11px;
-}
-.symbol span{display:block}
-.brand{font-size:11px;letter-spacing:.30em;margin-left:.30em;color:var(--muted)}
 .silver{font-size:14px;letter-spacing:.26em;margin-left:.26em;margin-top:8px;font-weight:600}
-.mascot-wrap{
-  text-align:center;
-  margin:0 auto 4px;
-}
+.mascot-wrap{text-align:center;margin:0 auto 4px}
 .mascot{
   display:block;
   width:min(235px,62vw);
@@ -67,7 +59,6 @@ body{
   font-family:Georgia,"Times New Roman",serif;
   font-size:clamp(21px,5.6vw,31px); line-height:1.28; margin:0;
 }
-.question + .question{margin-top:5px}
 .gentle{
   margin:8px 0 0;
   color:var(--muted);
@@ -80,8 +71,35 @@ body{
   max-width:88%; padding:12px 14px; border-radius:16px; line-height:1.45;
   font-size:15px; white-space:pre-wrap;
 }
-.msg.user{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:5px}
-.msg.silver{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:5px;letter-spacing:normal;margin:0;font-weight:400}
+.msg.user{
+  align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:5px
+}
+.silver-block{
+  align-self:flex-start;
+  max-width:88%;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+.silver-block .msg.silver{
+  max-width:100%;
+}
+.msg.silver{
+  align-self:flex-start;background:var(--paper);border:1px solid var(--line);
+  border-bottom-left-radius:5px;letter-spacing:normal;margin:0;font-weight:400
+}
+.listen{
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  padding:2px 4px;
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;
+  cursor:pointer;
+}
+.listen:hover{color:var(--ink)}
+.listen[disabled]{opacity:.45;cursor:default}
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
@@ -98,10 +116,6 @@ textarea::placeholder{color:#918b80}
   min-height:66px;border:1px solid var(--ink);border-radius:15px;
   padding:0 14px;background:var(--ink);color:#fff;font-weight:700;
   font-size:11px;letter-spacing:.12em;cursor:pointer;
-}
-.note{
-  text-align:center;color:var(--muted);font-size:10px;line-height:1.35;
-  margin:10px auto 0;max-width:520px;
 }
 @media(max-height:760px){
   .mascot{width:min(205px,54vw)}
@@ -132,7 +146,7 @@ textarea::placeholder{color:#918b80}
 
   <section class="stage">
     <div class="opening" id="opening">
-      <h1 class="hello">Ciao, sono Silver.</h1>
+      <h1 class="hello">Ciao, piacere, sono Silver.</h1>
       <p class="question">Da dove vuoi cominciare?</p>
       <p class="gentle">Puoi scrivermi anche solo una parola…</p>
     </div>
@@ -148,6 +162,7 @@ textarea::placeholder{color:#918b80}
 
 <script>
 const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
+const SPEECH_URL = WORKER_URL + 'speech';
 
 const form = document.getElementById('composer');
 const input = document.getElementById('input');
@@ -155,19 +170,18 @@ const opening = document.getElementById('opening');
 const conversation = document.getElementById('conversation');
 const send = form.querySelector('.send');
 
-// Memoria temporanea della conversazione.
-// Vive solo finché questa pagina resta aperta: nessun archivio locale permanente.
 const sessionMessages = [];
 
+let activeAudio = null;
+let activeAudioUrl = null;
+let activeListenButton = null;
+
 function renderMessage(el, text, who){
-  // I messaggi dell'utente restano testo puro.
   if(who !== 'silver'){
     el.textContent = text;
     return;
   }
 
-  // Rendering sicuro del solo grassetto Markdown **testo**.
-  // Niente innerHTML: il testo resta trattato come testo, non come codice HTML.
   const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
 
   for(const part of parts){
@@ -183,12 +197,104 @@ function renderMessage(el, text, who){
   }
 }
 
+async function speakSilver(text, button){
+  if(activeAudio){
+    activeAudio.pause();
+    activeAudio = null;
+  }
+  if(activeAudioUrl){
+    URL.revokeObjectURL(activeAudioUrl);
+    activeAudioUrl = null;
+  }
+  if(activeListenButton && activeListenButton !== button){
+    activeListenButton.textContent = '🔊 ASCOLTA';
+    activeListenButton.disabled = false;
+  }
+
+  button.disabled = true;
+  button.textContent = '…';
+  activeListenButton = button;
+
+  try{
+    const response = await fetch(SPEECH_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        text:text,
+        voice:'cedar',
+        style:'cedar2cplus'
+      })
+    });
+
+    if(!response.ok){
+      throw new Error('Voce non disponibile');
+    }
+
+    const blob = await response.blob();
+    activeAudioUrl = URL.createObjectURL(blob);
+    activeAudio = new Audio(activeAudioUrl);
+
+    button.textContent = '■ STOP';
+    button.disabled = false;
+
+    activeAudio.addEventListener('ended',()=>{
+      button.textContent = '🔊 ASCOLTA';
+      activeListenButton = null;
+      if(activeAudioUrl){
+        URL.revokeObjectURL(activeAudioUrl);
+        activeAudioUrl = null;
+      }
+      activeAudio = null;
+    },{once:true});
+
+    button.onclick = ()=>{
+      if(activeAudio && !activeAudio.paused){
+        activeAudio.pause();
+        button.textContent = '🔊 ASCOLTA';
+        activeListenButton = null;
+      }else{
+        speakSilver(text,button);
+      }
+    };
+
+    await activeAudio.play();
+
+  }catch(err){
+    button.textContent = '🔊 ASCOLTA';
+    button.disabled = false;
+    activeListenButton = null;
+    console.error('Silver voce:',err);
+  }
+}
+
 function addMessage(text, who){
+  if(who !== 'silver'){
+    const el=document.createElement('div');
+    el.className='msg '+who;
+    renderMessage(el,text,who);
+    conversation.appendChild(el);
+    return el;
+  }
+
+  const block=document.createElement('div');
+  block.className='silver-block';
+
   const el=document.createElement('div');
-  el.className='msg '+who;
-  renderMessage(el, text, who);
-  conversation.appendChild(el);
-  return el;
+  el.className='msg silver';
+  renderMessage(el,text,'silver');
+
+  const listen=document.createElement('button');
+  listen.type='button';
+  listen.className='listen';
+  listen.textContent='🔊 ASCOLTA';
+  listen.setAttribute('aria-label','Ascolta la risposta di Silver');
+  listen.addEventListener('click',()=>speakSilver(text,listen));
+
+  block.appendChild(el);
+  block.appendChild(listen);
+  conversation.appendChild(block);
+
+  return block;
 }
 
 function resize(){
@@ -236,8 +342,6 @@ form.addEventListener('submit', async e=>{
     addMessage(reply,'silver');
     sessionMessages.push({role:'assistant', content:reply});
 
-    // Evita che una sessione molto lunga cresca senza limite.
-    // Conserviamo gli ultimi 20 messaggi (10 scambi circa).
     if(sessionMessages.length > 20){
       sessionMessages.splice(0, sessionMessages.length - 20);
     }
