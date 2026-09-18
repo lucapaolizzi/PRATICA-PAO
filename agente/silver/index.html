@@ -306,6 +306,9 @@ async function speakSilver(text, button){
     button.textContent = '🔊 ASCOLTA';
     button.disabled = false;
     activeListenButton = null;
+
+    // Dopo STOP, il pulsante torna ad avviare da capo la lettura.
+    button.onclick = ()=>speakSilver(text,button);
   };
 
   button.onclick = stopPlayback;
