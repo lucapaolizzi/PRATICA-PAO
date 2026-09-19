@@ -36,7 +36,7 @@ body{
   position:relative; z-index:21;
   touch-action:manipulation;
 }
-.back:focus-visible,.send:focus-visible,.listen:focus-visible,textarea:focus-visible{
+.back:focus-visible,.send:focus-visible,.mic:focus-visible,.listen:focus-visible,textarea:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px
 }
 .identity{text-align:center;padding:4px 0 10px;transform:translateY(-58px)}
@@ -107,7 +107,7 @@ body{
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
-  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;
+  display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:end;
 }
 textarea{
   width:100%; resize:none; min-height:66px; max-height:150px;
@@ -120,6 +120,24 @@ textarea::placeholder{color:#918b80}
   min-height:66px;border:1px solid var(--ink);border-radius:15px;
   padding:0 14px;background:var(--ink);color:#fff;font-weight:700;
   font-size:11px;letter-spacing:.12em;cursor:pointer;
+}
+.mic{
+  width:58px;min-height:66px;border:1.5px solid rgba(36,35,31,.30);
+  border-radius:15px;background:#fff;color:var(--ink);
+  font:700 19px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  touch-action:manipulation;
+}
+.mic.recording{
+  font-size:10px;letter-spacing:.08em;
+}
+.mic[disabled]{opacity:.50;cursor:default}
+.mic-status{
+  grid-column:1/-1;
+  min-height:15px;
+  margin:-3px 2px 0;
+  color:var(--muted);
+  font:11px/1.25 Arial,Helvetica,sans-serif;
+  letter-spacing:.02em;
 }
 @media(max-height:760px){
   .mascot{width:min(205px,54vw)}
@@ -158,15 +176,19 @@ textarea::placeholder{color:#918b80}
   </section>
 
   <form class="composer" id="composer">
+    <button class="mic" id="micButton" type="button"
+      aria-label="Detta un messaggio" title="Detta un messaggio">🎤</button>
     <textarea id="input" rows="1" maxlength="3000"
-      placeholder="Scrivi qui quello che vuoi…" aria-label="Messaggio per Silver" autofocus></textarea>
+      placeholder="Scrivi o parla…" aria-label="Messaggio per Silver" autofocus></textarea>
     <button class="send" type="submit">INVIA</button>
+    <div class="mic-status" id="micStatus" aria-live="polite"></div>
   </form>
 </main>
 
 <script>
 const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
 const SPEECH_URL = WORKER_URL + 'speech';
+const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 
 
 const backLink = document.getElementById('backLink');
@@ -184,6 +206,15 @@ const input = document.getElementById('input');
 const opening = document.getElementById('opening');
 const conversation = document.getElementById('conversation');
 const send = form.querySelector('.send');
+const micButton = document.getElementById('micButton');
+const micStatus = document.getElementById('micStatus');
+
+let mediaRecorder = null;
+let micStream = null;
+let micChunks = [];
+let micMimeType = '';
+let micBusy = false;
+let micTimer = null;
 
 const sessionMessages = [];
 
@@ -209,6 +240,7 @@ function renderMessage(el, text, who){
     return;
   }
 
+  // Rendering sicuro del solo grassetto Markdown **testo**.
   const parts = cleaned.split(/(\*\*[^*]+\*\*)/g);
 
   for(const part of parts){
@@ -290,6 +322,8 @@ async function fetchSpeechChunk(text){
 }
 
 async function speakSilver(text, button){
+  // Se stiamo già ascoltando QUESTO messaggio:
+  // tocco = PAUSA / RIPRENDI dallo stesso punto.
   if(activeListenButton === button && activeAudio){
     if(activePaused){
       activePaused = false;
@@ -307,6 +341,7 @@ async function speakSilver(text, button){
     return;
   }
 
+  // Ferma un'eventuale altra lettura.
   if(activeListenButton && activeListenButton !== button){
     playbackRunId++;
 
@@ -330,36 +365,40 @@ async function speakSilver(text, button){
   activeListenButton = button;
   activePaused = false;
   button.disabled = false;
-  button.textContent = '…';
+  button.textContent = chunks.length > 1 ? '… PREPARO AUDIO' : '…';
 
   try{
-    // Il primo blocco parte appena è pronto. I successivi vengono preparati
-    // in anticipo mentre Silver sta già parlando, evitando l'attesa 1/12…12/12.
-    const blobPromises = new Array(chunks.length);
-    const getBlob = i => {
-      if(!blobPromises[i]) blobPromises[i] = fetchSpeechChunk(chunks[i]);
-      return blobPromises[i];
-    };
-
-    let currentBlob = await getBlob(0);
-
+    // PRECARICA TUTTI I BLOCCHI prima di iniziare.
+    // Su iPhone evita che la lettura si interrompa tra un blocco e il successivo.
+    const blobs = [];
     for(let i=0;i<chunks.length;i++){
       if(myRunId !== playbackRunId) return;
 
-      // Precarica subito il prossimo pezzo durante la riproduzione corrente.
-      if(i + 1 < chunks.length) getBlob(i + 1);
+      button.textContent = chunks.length > 1
+        ? '… PREPARO ' + (i+1) + '/' + chunks.length
+        : '…';
+
+      const blob = await fetchSpeechChunk(chunks[i]);
+      blobs.push(blob);
+    }
+
+    if(myRunId !== playbackRunId) return;
+
+    // Riproduzione continua dei blocchi già pronti.
+    for(let i=0;i<blobs.length;i++){
+      if(myRunId !== playbackRunId) return;
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
         activeAudioUrl = null;
       }
 
-      activeAudioUrl = URL.createObjectURL(currentBlob);
+      activeAudioUrl = URL.createObjectURL(blobs[i]);
       activeAudio = new Audio(activeAudioUrl);
       activePaused = false;
 
-      button.textContent = chunks.length > 1
-        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + chunks.length
+      button.textContent = blobs.length > 1
+        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + blobs.length
         : 'Ⅱ PAUSA';
 
       await new Promise((resolve,reject)=>{
@@ -382,10 +421,6 @@ async function speakSilver(text, button){
       });
 
       if(myRunId !== playbackRunId) return;
-
-      if(i + 1 < chunks.length){
-        currentBlob = await getBlob(i + 1);
-      }
     }
 
     if(activeAudioUrl){
@@ -451,6 +486,190 @@ function addMessage(text, who){
 
   return block;
 }
+
+function preferredAudioType(){
+  if(!window.MediaRecorder) return '';
+
+  const types = [
+    'audio/mp4',
+    'audio/webm;codecs=opus',
+    'audio/webm'
+  ];
+
+  for(const type of types){
+    if(MediaRecorder.isTypeSupported(type)) return type;
+  }
+
+  return '';
+}
+
+function extensionForMime(type){
+  if(String(type).includes('mp4')) return 'm4a';
+  if(String(type).includes('webm')) return 'webm';
+  return 'audio';
+}
+
+function resetMicUi(){
+  micBusy = false;
+  micButton.disabled = false;
+  micButton.classList.remove('recording');
+  micButton.textContent = '🎤';
+  micButton.setAttribute('aria-label','Detta un messaggio');
+  micButton.title = 'Detta un messaggio';
+  micStatus.textContent = '';
+}
+
+function stopMicTracks(){
+  if(micStream){
+    for(const track of micStream.getTracks()){
+      track.stop();
+    }
+    micStream = null;
+  }
+}
+
+async function transcribeRecording(blob){
+  micBusy = true;
+  micButton.disabled = true;
+  micButton.classList.remove('recording');
+  micButton.textContent = '…';
+  micStatus.textContent = 'Trascrivo quello che hai detto…';
+
+  try{
+    const data = new FormData();
+    const ext = extensionForMime(blob.type || micMimeType);
+    data.append('audio', blob, 'registrazione.' + ext);
+
+    const response = await fetch(TRANSCRIBE_URL,{
+      method:'POST',
+      body:data
+    });
+
+    const result = await response.json();
+
+    if(!response.ok || !result.ok){
+      throw new Error(result.error || 'Trascrizione non disponibile');
+    }
+
+    const spokenText = String(result.text || '').trim();
+
+    if(spokenText){
+      const existing = input.value.trim();
+      input.value = existing
+        ? existing + ' ' + spokenText
+        : spokenText;
+
+      resize();
+      input.focus();
+      input.setSelectionRange(input.value.length,input.value.length);
+      micStatus.textContent = 'Testo pronto: controllalo e poi premi INVIA.';
+      setTimeout(()=>{
+        if(!micBusy) micStatus.textContent = '';
+      },3500);
+    }
+
+  }catch(err){
+    console.error('Microfono Silver:',err);
+    micStatus.textContent = 'Non sono riuscito a trascrivere. Puoi riprovare.';
+  }finally{
+    micBusy = false;
+    micButton.disabled = false;
+    micButton.classList.remove('recording');
+    micButton.textContent = '🎤';
+    micButton.setAttribute('aria-label','Detta un messaggio');
+    micButton.title = 'Detta un messaggio';
+  }
+}
+
+async function startMicrophone(){
+  if(micBusy) return;
+
+  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder){
+    micStatus.textContent = 'Il microfono non è disponibile in questo browser.';
+    return;
+  }
+
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio:{
+        echoCancellation:true,
+        noiseSuppression:true
+      }
+    });
+
+    micChunks = [];
+    micMimeType = preferredAudioType();
+
+    mediaRecorder = micMimeType
+      ? new MediaRecorder(micStream,{mimeType:micMimeType})
+      : new MediaRecorder(micStream);
+
+    mediaRecorder.addEventListener('dataavailable',event=>{
+      if(event.data && event.data.size > 0){
+        micChunks.push(event.data);
+      }
+    });
+
+    mediaRecorder.addEventListener('stop',async ()=>{
+      clearTimeout(micTimer);
+      stopMicTracks();
+
+      const finalType =
+        mediaRecorder?.mimeType ||
+        micMimeType ||
+        'audio/webm';
+
+      const blob = new Blob(micChunks,{type:finalType});
+      mediaRecorder = null;
+      micChunks = [];
+
+      if(blob.size < 400){
+        micStatus.textContent = 'Non ho ricevuto abbastanza audio. Riprova.';
+        resetMicUi();
+        return;
+      }
+
+      await transcribeRecording(blob);
+    },{once:true});
+
+    mediaRecorder.start();
+
+    micButton.classList.add('recording');
+    micButton.textContent = 'STOP';
+    micButton.setAttribute('aria-label','Ferma registrazione');
+    micButton.title = 'Ferma registrazione';
+    micStatus.textContent = 'Ti ascolto… premi STOP quando hai finito.';
+
+    // Evita registrazioni lasciate aperte accidentalmente.
+    micTimer = setTimeout(()=>{
+      if(mediaRecorder && mediaRecorder.state === 'recording'){
+        mediaRecorder.stop();
+      }
+    },60000);
+
+  }catch(err){
+    console.error('Permesso microfono:',err);
+    stopMicTracks();
+    resetMicUi();
+
+    if(err?.name === 'NotAllowedError'){
+      micStatus.textContent = 'Per usare il microfono devi consentirne l’accesso al browser.';
+    }else{
+      micStatus.textContent = 'Non riesco ad aprire il microfono. Riprova.';
+    }
+  }
+}
+
+micButton.addEventListener('click',()=>{
+  if(mediaRecorder && mediaRecorder.state === 'recording'){
+    micButton.disabled = true;
+    micStatus.textContent = 'Un momento…';
+    mediaRecorder.stop();
+    return;
+  }
+
+  startMicrophone();
+});
 
 function resize(){
   input.style.height='auto';
