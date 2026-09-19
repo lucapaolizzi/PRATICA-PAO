@@ -226,10 +226,24 @@ let activeAudioDone = null;
 let playbackRunId = 0;
 
 function cleanDisplayText(text){
-  return String(text)
-    .replace(/^\s*#{1,6}\s+/gm,'')
-    .replace(/(^|[\s(])\*(?=\S)/g,'$1')
-    .replace(/(?<=\S)\*(?=[\s).,;:!?]|$)/g,'');
+  let s = String(text)
+    .replace(/^\s*#{1,6}\s+/gm,'');
+
+  // Conserva il grassetto **testo**, ma rimuove in modo affidabile
+  // gli asterischi del corsivo singolo, per esempio *Stop* -> Stop.
+  const bold = [];
+  s = s.replace(/\*\*([^*]+)\*\*/g,(_,inner)=>{
+    const i = bold.push(inner) - 1;
+    return `@@SILVER_BOLD_${i}@@`;
+  });
+
+  s = s.replace(/\*([^*\n]+)\*/g,'$1');
+
+  s = s.replace(/@@SILVER_BOLD_(\d+)@@/g,(_,i)=>{
+    return `**${bold[Number(i)]}**`;
+  });
+
+  return s;
 }
 
 function renderMessage(el, text, who){
@@ -635,10 +649,10 @@ async function startMicrophone(){
     mediaRecorder.start();
 
     micButton.classList.add('recording');
-    micButton.textContent = 'STOP';
+    micButton.textContent = '⏹ FINE';
     micButton.setAttribute('aria-label','Ferma registrazione');
     micButton.title = 'Ferma registrazione';
-    micStatus.textContent = 'Ti ascolto… premi STOP quando hai finito.';
+    micStatus.textContent = 'Ti ascolto… premi FINE quando hai finito.';
 
     // Evita registrazioni lasciate aperte accidentalmente.
     micTimer = setTimeout(()=>{
