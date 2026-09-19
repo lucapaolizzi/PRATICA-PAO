@@ -122,9 +122,9 @@ textarea::placeholder{color:#918b80}
   font-size:11px;letter-spacing:.12em;cursor:pointer;
 }
 .mic{
-  width:58px;min-height:66px;border:1.5px solid rgba(36,35,31,.30);
+  min-width:88px;min-height:66px;border:1.5px solid rgba(36,35,31,.30);
   border-radius:15px;background:#fff;color:var(--ink);
-  font:700 19px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  font:700 11px/1 Arial,Helvetica,sans-serif;letter-spacing:.04em;cursor:pointer;
   touch-action:manipulation;
 }
 .mic.recording{
@@ -177,7 +177,7 @@ textarea::placeholder{color:#918b80}
 
   <form class="composer" id="composer">
     <button class="mic" id="micButton" type="button"
-      aria-label="Detta un messaggio" title="Detta un messaggio">🎤</button>
+      aria-label="Detta un messaggio" title="Detta un messaggio">🎤 PARLA</button>
     <textarea id="input" rows="1" maxlength="3000"
       placeholder="Scrivi o parla…" aria-label="Messaggio per Silver" autofocus></textarea>
     <button class="send" type="submit">INVIA</button>
@@ -527,7 +527,7 @@ function resetMicUi(){
   micBusy = false;
   micButton.disabled = false;
   micButton.classList.remove('recording');
-  micButton.textContent = '🎤';
+  micButton.textContent = '🎤 PARLA';
   micButton.setAttribute('aria-label','Detta un messaggio');
   micButton.title = 'Detta un messaggio';
   micStatus.textContent = '';
@@ -546,7 +546,7 @@ async function transcribeRecording(blob){
   micBusy = true;
   micButton.disabled = true;
   micButton.classList.remove('recording');
-  micButton.textContent = '…';
+  micButton.textContent = '… TRASCRIVO';
   micStatus.textContent = 'Trascrivo quello che hai detto…';
 
   try{
@@ -589,7 +589,7 @@ async function transcribeRecording(blob){
     micBusy = false;
     micButton.disabled = false;
     micButton.classList.remove('recording');
-    micButton.textContent = '🎤';
+    micButton.textContent = '🎤 PARLA';
     micButton.setAttribute('aria-label','Detta un messaggio');
     micButton.title = 'Detta un messaggio';
   }
