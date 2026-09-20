@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Test voce Marin — Silver</title>
+<style>
+  :root{--bg:#f5f0e6;--ink:#24231f;--line:rgba(36,35,31,.16)}
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100svh;background:var(--bg);color:var(--ink);
+    font-family:Arial,Helvetica,sans-serif;display:grid;place-items:center;padding:24px
+  }
+  .card{
+    width:min(520px,100%);background:#fff;border:1px solid var(--line);
+    border-radius:28px;padding:28px;text-align:center
+  }
+  h1{margin:0 0 10px;font:700 24px/1.2 Arial,Helvetica,sans-serif}
+  p{margin:0 0 22px;font:17px/1.45 Georgia,"Times New Roman",serif}
+  button{
+    border:0;border-radius:999px;background:var(--ink);color:#fff;
+    padding:16px 24px;font:700 14px/1 Arial,Helvetica,sans-serif;cursor:pointer
+  }
+  .status{margin-top:16px;color:#777;font-size:13px;min-height:18px}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Test voce MARIN</h1>
+    <p>“Ciao, piacere, sono Silver. Da dove vuoi cominciare?”</p>
+    <button id="play">▶ ASCOLTA MARIN</button>
+    <div class="status" id="status"></div>
+  </main>
+
+<script>
+const WORKER = "https://silver-pao.paolizzi.workers.dev/speech";
+const play = document.getElementById("play");
+const status = document.getElementById("status");
+let audio = null;
+let audioUrl = null;
+
+play.addEventListener("click", async () => {
+  try{
+    play.disabled = true;
+    status.textContent = "Preparo la voce…";
+
+    const r = await fetch(WORKER,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        text:"Ciao, piacere, sono Silver. Da dove vuoi cominciare?",
+        voice:"marin",
+        style:"cedar2cplus"
+      })
+    });
+
+    if(!r.ok) throw new Error("Errore voce");
+    const blob = await r.blob();
+
+    if(audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = URL.createObjectURL(blob);
+    audio = new Audio(audioUrl);
+
+    status.textContent = "MARIN";
+    await audio.play();
+
+    audio.addEventListener("ended",()=>{
+      status.textContent = "";
+      play.disabled = false;
+    },{once:true});
+
+  }catch(e){
+    status.textContent = "Non riesco a riprodurre la voce.";
+    play.disabled = false;
+    console.error(e);
+  }
+});
+</script>
+</body>
+</html>
