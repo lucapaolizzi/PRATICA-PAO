@@ -9,16 +9,13 @@
 <style>
 :root{--paper:#f4efe5;--paper2:#ebe2d2;--ink:#211d18;--muted:#756b5f;--gold:#a88b56;--line:rgba(63,51,36,.20)}
 *{box-sizing:border-box} html{background:var(--paper)}
-body{margin:0;min-height:100svh;width:100%;color:var(--ink);background:radial-gradient(circle at 50% -10%,#fff,transparent 35rem),linear-gradient(180deg,var(--paper),#f8f4ed 55%,var(--paper2));font-family:Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
+body{margin:0;min-height:100svh;color:var(--ink);background:radial-gradient(circle at 50% -10%,#fff,transparent 35rem),linear-gradient(180deg,var(--paper),#f8f4ed 55%,var(--paper2));font-family:Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
 main{width:min(100%,760px);margin:auto;padding:calc(24px + env(safe-area-inset-top)) 16px calc(42px + env(safe-area-inset-bottom))}
-.home-link{position:relative;display:flex;width:max-content;margin:0 auto 14px;display:flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(244,239,229,.90);color:var(--muted);text-decoration:none;font:11px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;box-shadow:0 4px 16px rgba(56,43,28,.05);-webkit-tap-highlight-color:transparent}
-.home-link .home-icon{font-size:16px;line-height:1;color:var(--gold)}
-.home-link:active{transform:scale(.98)}
 .head{text-align:center;margin:0 auto 22px;max-width:620px}
 .agent-mark{height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gold);font-family:Arial,sans-serif;line-height:.68;margin-bottom:4px}
 .agent-mark .eyes{font-size:38px;font-weight:300;transform:scaleX(1.08)}
 .agent-mark .body{font-size:33px;font-weight:300;margin-top:2px}
-.brand{font-family:Arial,sans-serif;font-size:12px;letter-spacing:.30em;text-transform:uppercase;color:var(--muted);margin:6px 0 13px;transform:translateX(2px)}
+.brand{font-family:Arial,sans-serif;font-size:12px;letter-spacing:.30em;text-transform:uppercase;color:var(--muted);margin:6px 0 13px}
 h1{margin:0;font-size:clamp(31px,8vw,52px);line-height:1.03;font-weight:500;letter-spacing:-.025em}
 .lead{margin:13px auto 0;color:var(--muted);font-size:clamp(16px,4vw,19px);line-height:1.42}
 .doors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -28,6 +25,8 @@ h1{margin:0;font-size:clamp(31px,8vw,52px);line-height:1.03;font-weight:500;lett
 .silver{display:block;margin-top:7px;font:12px/1 Arial,sans-serif;letter-spacing:.16em;color:var(--muted)}
 .desc{margin:0;color:var(--muted);font-size:14px;line-height:1.38}
 .arrow{font:18px/1 Arial,sans-serif;color:var(--gold);padding-top:4px}
+.human-link{display:block;width:max-content;max-width:100%;margin:18px auto 0;padding:9px 14px;border:1px solid rgba(168,139,86,.34);border-radius:999px;color:var(--muted);text-decoration:none;font:700 10px/1 Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.28)}
+.human-link:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .foot{text-align:center;color:var(--muted);font-size:13px;line-height:1.5;margin:25px auto 0;padding-bottom:8px}
 .rule{width:46px;height:1px;background:var(--gold);margin:0 auto 15px;opacity:.8}
 .site{font:10px/1.2 Arial,sans-serif;letter-spacing:.28em;margin-top:15px;text-transform:uppercase;color:var(--muted)}
@@ -41,7 +40,6 @@ h1{margin:0;font-size:clamp(31px,8vw,52px);line-height:1.03;font-weight:500;lett
 </style>
 </head>
 <body>
-<a class="home-link" href="/" aria-label="Torna alla locandina principale"><span class="home-icon">⌂</span><span>Home</span></a>
 <main>
 <header class="head">
   <div class="agent-mark" aria-label="Simbolo di Silver: infinito sopra, triangolo sotto">
@@ -58,6 +56,8 @@ h1{margin:0;font-size:clamp(31px,8vw,52px);line-height:1.03;font-weight:500;lett
 <a class="door" href="/quaderno/"><div><h2 class="name">Quaderno</h2><p class="desc">Scrivo.<br>Lascio parlare ciò che emerge.</p></div><span class="arrow">→</span></a>
 <a class="door" href="/agente/"><div><h2 class="name">Agente P.A.O.<span class="silver">SILVER</span></h2><p class="desc">Ho una mappa.<br>Il territorio è il tuo.</p></div><span class="arrow">→</span></a>
 </nav>
+
+<a class="human-link" href="/agente/luca/">PARLA CON PAO →</a>
 
 <footer class="foot">
  <div class="rule"></div>
