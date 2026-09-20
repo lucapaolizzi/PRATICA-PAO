@@ -490,7 +490,7 @@ function saveConversationToDevice(){
   // Lascia un piccolo tempo al browser per avviare il download,
   // poi esce davvero dalla Stanza Silver.
   setTimeout(()=>{
-    window.location.href = '/agente/';
+    window.location.href = '/entra/';
   },700);
 }
 
@@ -599,7 +599,7 @@ deleteConversationButton.addEventListener('click',()=>{
   resetConversationUi();
 
   // Chiusura reale della sessione: si esce dalla Stanza Silver.
-  window.location.href = '/agente/';
+  window.location.href = '/entra/';
 });
 
 function cleanDisplayText(text){
