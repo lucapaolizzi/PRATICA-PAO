@@ -36,7 +36,7 @@ body{
   position:relative; z-index:21;
   touch-action:manipulation;
 }
-.back:focus-visible,.send:focus-visible,.mic:focus-visible,.listen:focus-visible,textarea:focus-visible{
+.back:focus-visible,.send:focus-visible,.plus:focus-visible,.mic:focus-visible,.clear-input:focus-visible,.listen:focus-visible,.session-end:focus-visible,.sheet-action:focus-visible,textarea:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px
 }
 .identity{text-align:center;padding:4px 0 10px;transform:translateY(-58px)}
@@ -107,15 +107,15 @@ body{
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
-  display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;
+  display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;
   background:#fff;border:1.5px solid rgba(36,35,31,.24);border-radius:30px;
   padding:7px 8px;box-shadow:0 1px 0 rgba(36,35,31,.03);position:relative;
 }
 textarea{
-  width:100%; resize:none; min-height:66px; max-height:150px;
-  border:1.5px solid rgba(36,35,31,.30); border-radius:15px; background:#fff;
+  width:100%; resize:none; min-height:44px; max-height:150px;
+  border:0; border-radius:20px; background:transparent;
   color:var(--ink); font:16px/1.4 Arial,Helvetica,sans-serif;
-  padding:14px 15px; box-shadow:none;
+  padding:10px 8px; box-shadow:none; outline:none;
 }
 textarea::placeholder{color:#918b80}
 .send{
@@ -132,21 +132,24 @@ textarea::placeholder{color:#918b80}
   background:#1687f8;border-color:#1687f8;
 }
 
-.mic,.cancel-rec,.stop-rec{
+.mic,.clear-input,.cancel-rec,.stop-rec{
   width:46px;height:46px;min-width:46px;min-height:46px;border:0;
   border-radius:23px;background:#f0f0f0;color:var(--ink);
   font:700 18px/1 Arial,Helvetica,sans-serif;cursor:pointer;
   touch-action:manipulation;display:flex;align-items:center;justify-content:center;
 }
 .mic{background:transparent}
-.mic[disabled],.cancel-rec[disabled],.stop-rec[disabled]{opacity:.50;cursor:default}
+.clear-input{display:none}
+.composer.has-text:not(.voice-mode) .mic{display:none}
+.composer.has-text:not(.voice-mode) .clear-input{display:flex}
+.mic[disabled],.clear-input[disabled],.cancel-rec[disabled],.stop-rec[disabled]{opacity:.50;cursor:default}
 .cancel-rec,.stop-rec{display:none}
 .stop-rec::before{
   content:"";
   width:17px;height:17px;border-radius:4px;background:var(--ink);display:block;
 }
 .composer.voice-mode textarea{display:none}
-.composer.voice-mode .mic{display:none}
+.composer.voice-mode .mic,.composer.voice-mode .clear-input{display:none}
 .composer.voice-mode .cancel-rec,
 .composer.voice-mode .stop-rec{display:flex}
 .voice-wave{
@@ -173,6 +176,81 @@ textarea::placeholder{color:#918b80}
   font:11px/1.25 Arial,Helvetica,sans-serif;
   letter-spacing:.02em;
 }
+
+.plus{
+  width:44px;height:44px;min-width:44px;min-height:44px;
+  border:0;border-radius:22px;background:#f0f0f0;color:var(--ink);
+  font:400 28px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;touch-action:manipulation;
+}
+.composer.voice-mode .plus{display:none}
+
+.session-row{
+  display:none;
+  justify-content:center;
+  margin:-50px 0 8px;
+  position:relative;
+  z-index:5;
+}
+.session-row.visible{display:flex}
+.session-end{
+  border:0;background:transparent;color:var(--muted);
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.12em;padding:8px 10px;cursor:pointer;
+}
+
+.sheet-backdrop{
+  position:fixed;inset:0;background:rgba(20,19,17,.28);
+  display:none;align-items:flex-end;justify-content:center;
+  z-index:100;padding:0 12px calc(10px + env(safe-area-inset-bottom));
+}
+.sheet-backdrop.open{display:flex}
+.sheet{
+  width:min(620px,100%);
+  background:#fff;border-radius:26px;
+  padding:10px 12px 14px;
+  box-shadow:0 -10px 34px rgba(20,19,17,.18);
+}
+.sheet-handle{
+  width:40px;height:4px;border-radius:4px;background:#d5d2cc;
+  margin:2px auto 12px;
+}
+.sheet-title{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:20px;font-weight:400;margin:2px 6px 12px;
+}
+.sheet-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+.sheet-action{
+  border:1px solid var(--line);border-radius:18px;background:var(--paper);
+  color:var(--ink);padding:14px 12px;text-align:left;cursor:pointer;
+  min-height:76px;
+}
+.sheet-action strong{
+  display:block;font-size:12px;letter-spacing:.04em;margin-bottom:5px;
+}
+.sheet-action span{
+  display:block;color:var(--muted);font-size:12px;line-height:1.3;
+}
+.sheet-action.primary{background:var(--ink);color:#fff}
+.sheet-action.primary span{color:rgba(255,255,255,.72)}
+.sheet-action.danger{border-color:rgba(145,48,42,.25)}
+.sheet-note{
+  color:var(--muted);font-size:11px;line-height:1.35;
+  margin:12px 6px 2px;
+}
+.sheet-close{
+  width:100%;margin-top:10px;border:0;background:transparent;
+  color:var(--muted);font:700 11px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;padding:10px;cursor:pointer;
+}
+.hidden-file{display:none}
+@media(max-width:520px){
+  .sheet-grid{grid-template-columns:1fr 1fr}
+  .sheet-action{min-height:72px;padding:12px 10px}
+}
+
 @media(max-height:760px){
   .mascot{width:min(205px,54vw)}
   .identity{padding-bottom:4px}
@@ -209,9 +287,18 @@ textarea::placeholder{color:#918b80}
     <div class="conversation" id="conversation" aria-live="polite"></div>
   </section>
 
+  <div class="session-row" id="sessionRow">
+    <button class="session-end" id="sessionEndButton" type="button">FINE SESSIONE</button>
+  </div>
+
   <form class="composer" id="composer">
+    <button class="plus" id="plusButton" type="button"
+      aria-label="Apri strumenti" title="Apri strumenti">＋</button>
     <button class="mic" id="micButton" type="button"
       aria-label="Detta un messaggio" title="Detta un messaggio">🎤</button>
+
+    <button class="clear-input" id="clearInputButton" type="button"
+      aria-label="Cancella il messaggio" title="Cancella il messaggio">✕</button>
 
     <button class="cancel-rec" id="cancelRecButton" type="button"
       aria-label="Annulla registrazione" title="Annulla registrazione">✕</button>
@@ -231,6 +318,59 @@ textarea::placeholder{color:#918b80}
     <button class="send" type="submit">INVIA</button>
     <div class="mic-status" id="micStatus" aria-live="polite"></div>
   </form>
+
+  <input class="hidden-file" id="resumeFileInput" type="file"
+    accept=".json,application/json">
+
+  <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="toolsTitle">Strumenti</h2>
+      <div class="sheet-grid">
+        <button class="sheet-action primary" id="resumeButton" type="button">
+          <strong>RIPRENDI</strong>
+          <span>Carica una conversazione Silver salvata.</span>
+        </button>
+        <button class="sheet-action" id="documentButton" type="button">
+          <strong>DOCUMENTO / PDF</strong>
+          <span>Per appunti, pagine o materiali.</span>
+        </button>
+        <button class="sheet-action" id="scanButton" type="button">
+          <strong>SCANSIONA</strong>
+          <span>Prepara una pagina da allegare.</span>
+        </button>
+        <button class="sheet-action" id="photoButton" type="button">
+          <strong>FOTO</strong>
+          <span>Immagini utili alla conversazione.</span>
+        </button>
+      </div>
+      <p class="sheet-note" id="toolsNote">
+        In questa versione è attivo RIPRENDI. PDF, scansione e foto verranno collegati al Worker nel passaggio successivo.
+      </p>
+      <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" id="sessionBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="sessionTitle">Fine sessione</h2>
+      <div class="sheet-grid">
+        <button class="sheet-action primary" id="saveConversationButton" type="button">
+          <strong>SALVA CONVERSAZIONE</strong>
+          <span>Scarica un file sul tuo dispositivo per riprendere in futuro.</span>
+        </button>
+        <button class="sheet-action danger" id="deleteConversationButton" type="button">
+          <strong>ELIMINA DEFINITIVAMENTE</strong>
+          <span>Chiude e cancella questa sessione dalla pagina.</span>
+        </button>
+      </div>
+      <p class="sheet-note">
+        Silver non crea qui un archivio permanente della conversazione. Se scegli di salvarla, il file resta sotto il tuo controllo sul dispositivo.
+      </p>
+      <button class="sheet-close" id="sessionClose" type="button">TORNA ALLA CONVERSAZIONE</button>
+    </section>
+  </div>
 </main>
 
 <script>
@@ -250,15 +390,34 @@ backLink.addEventListener('click', e=>{
 });
 
 const form = document.getElementById('composer');
+const composer = form;
 const input = document.getElementById('input');
 const opening = document.getElementById('opening');
 const conversation = document.getElementById('conversation');
 const send = form.querySelector('.send');
+const plusButton = document.getElementById('plusButton');
 const micButton = document.getElementById('micButton');
+const clearInputButton = document.getElementById('clearInputButton');
 const cancelRecButton = document.getElementById('cancelRecButton');
 const stopRecButton = document.getElementById('stopRecButton');
 const voiceWave = document.getElementById('voiceWave');
 const micStatus = document.getElementById('micStatus');
+const sessionRow = document.getElementById('sessionRow');
+const sessionEndButton = document.getElementById('sessionEndButton');
+
+const toolsBackdrop = document.getElementById('toolsBackdrop');
+const toolsClose = document.getElementById('toolsClose');
+const resumeButton = document.getElementById('resumeButton');
+const documentButton = document.getElementById('documentButton');
+const scanButton = document.getElementById('scanButton');
+const photoButton = document.getElementById('photoButton');
+const toolsNote = document.getElementById('toolsNote');
+const resumeFileInput = document.getElementById('resumeFileInput');
+
+const sessionBackdrop = document.getElementById('sessionBackdrop');
+const sessionClose = document.getElementById('sessionClose');
+const saveConversationButton = document.getElementById('saveConversationButton');
+const deleteConversationButton = document.getElementById('deleteConversationButton');
 
 let mediaRecorder = null;
 let micStream = null;
@@ -267,7 +426,7 @@ let micMimeType = '';
 let micBusy = false;
 let micTimer = null;
 
-const sessionMessages = [];
+let sessionMessages = [];
 
 let activeAudio = null;
 let activeAudioUrl = null;
@@ -275,6 +434,198 @@ let activeListenButton = null;
 let activePaused = false;
 let activeAudioDone = null;
 let playbackRunId = 0;
+
+
+function openSheet(backdrop){
+  backdrop.classList.add('open');
+  backdrop.setAttribute('aria-hidden','false');
+}
+
+function closeSheet(backdrop){
+  backdrop.classList.remove('open');
+  backdrop.setAttribute('aria-hidden','true');
+}
+
+function updateSessionControls(){
+  sessionRow.classList.toggle('visible', sessionMessages.length > 0);
+}
+
+function showConversationMode(){
+  opening.style.display='none';
+  conversation.style.display='flex';
+  document.querySelector('.mascot').style.width='92px';
+  document.querySelector('.identity').style.paddingBottom='2px';
+}
+
+function resetConversationUi(){
+  sessionMessages = [];
+  conversation.innerHTML = '';
+  conversation.style.display='none';
+  opening.style.display='';
+  document.querySelector('.mascot').style.width='';
+  document.querySelector('.identity').style.paddingBottom='';
+  input.value='';
+  resize();
+  updateComposerState();
+  updateSessionControls();
+
+  if(activeAudio){
+    try{ activeAudio.pause(); }catch(e){}
+  }
+  if(activeAudioUrl){
+    URL.revokeObjectURL(activeAudioUrl);
+  }
+  activeAudio = null;
+  activeAudioUrl = null;
+  activeListenButton = null;
+  activePaused = false;
+  playbackRunId++;
+}
+
+function safeFileDate(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
+}
+
+function saveConversationToDevice(){
+  if(!sessionMessages.length) return;
+
+  const payload = {
+    format: 'silver-pao-conversation',
+    version: 1,
+    savedAt: new Date().toISOString(),
+    messages: sessionMessages.map(m=>({
+      role:m.role,
+      content:String(m.content || '')
+    }))
+  };
+
+  const blob = new Blob(
+    [JSON.stringify(payload,null,2)],
+    {type:'application/json;charset=utf-8'}
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Silver_conversazione_${safeFileDate()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  closeSheet(sessionBackdrop);
+  micStatus.textContent = 'Conversazione salvata sul dispositivo.';
+  setTimeout(()=>{ micStatus.textContent=''; },3500);
+}
+
+function normalizeSavedMessages(data){
+  if(
+    !data ||
+    data.format !== 'silver-pao-conversation' ||
+    !Array.isArray(data.messages)
+  ){
+    throw new Error('File Silver non riconosciuto');
+  }
+
+  return data.messages
+    .filter(m =>
+      m &&
+      (m.role === 'user' || m.role === 'assistant') &&
+      typeof m.content === 'string' &&
+      m.content.trim()
+    )
+    .map(m=>({
+      role:m.role,
+      content:m.content.trim()
+    }));
+}
+
+function renderRestoredConversation(messages){
+  conversation.innerHTML = '';
+  showConversationMode();
+
+  for(const m of messages){
+    addMessage(m.content, m.role === 'assistant' ? 'silver' : 'user');
+  }
+
+  // Il Worker 1.5 usa gli ultimi 20 messaggi come contesto operativo.
+  sessionMessages = messages.slice(-20);
+  updateSessionControls();
+
+  requestAnimationFrame(()=>{
+    conversation.lastElementChild?.scrollIntoView({
+      behavior:'smooth',
+      block:'nearest'
+    });
+  });
+}
+
+plusButton.addEventListener('click',()=>openSheet(toolsBackdrop));
+toolsClose.addEventListener('click',()=>closeSheet(toolsBackdrop));
+
+toolsBackdrop.addEventListener('click',e=>{
+  if(e.target === toolsBackdrop) closeSheet(toolsBackdrop);
+});
+
+sessionEndButton.addEventListener('click',()=>openSheet(sessionBackdrop));
+sessionClose.addEventListener('click',()=>closeSheet(sessionBackdrop));
+
+sessionBackdrop.addEventListener('click',e=>{
+  if(e.target === sessionBackdrop) closeSheet(sessionBackdrop);
+});
+
+resumeButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  resumeFileInput.value='';
+  resumeFileInput.click();
+});
+
+resumeFileInput.addEventListener('change',async ()=>{
+  const file = resumeFileInput.files?.[0];
+  if(!file) return;
+
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const messages = normalizeSavedMessages(data);
+
+    if(!messages.length){
+      throw new Error('Conversazione vuota');
+    }
+
+    renderRestoredConversation(messages);
+    micStatus.textContent = 'Conversazione ripresa. Puoi continuare da qui.';
+    setTimeout(()=>{ micStatus.textContent=''; },3500);
+  }catch(err){
+    console.error('Riprendi conversazione:',err);
+    micStatus.textContent = 'Questo file non è una conversazione Silver valida.';
+  }
+});
+
+function notYetAvailable(label){
+  toolsNote.textContent =
+    `${label}: lo colleghiamo nel prossimo aggiornamento del Worker.`;
+}
+
+documentButton.addEventListener('click',()=>notYetAvailable('Documento / PDF'));
+scanButton.addEventListener('click',()=>notYetAvailable('Scansione'));
+photoButton.addEventListener('click',()=>notYetAvailable('Foto'));
+
+saveConversationButton.addEventListener('click',saveConversationToDevice);
+
+deleteConversationButton.addEventListener('click',()=>{
+  const ok = window.confirm(
+    'Vuoi eliminare questa sessione senza salvarla? Questa azione non può essere annullata.'
+  );
+  if(!ok) return;
+
+  closeSheet(sessionBackdrop);
+  resetConversationUi();
+  micStatus.textContent = 'Sessione eliminata.';
+  setTimeout(()=>{ micStatus.textContent=''; },2500);
+});
 
 function cleanDisplayText(text){
   let s = String(text)
@@ -527,6 +878,7 @@ function addMessage(text, who){
     el.className='msg '+who;
     renderMessage(el,text,who);
     conversation.appendChild(el);
+    updateSessionControls();
     return el;
   }
 
@@ -548,9 +900,22 @@ function addMessage(text, who){
   block.appendChild(el);
   block.appendChild(listen);
   conversation.appendChild(block);
+  updateSessionControls();
 
   return block;
 }
+
+function updateComposerState(){
+  const hasText = input.value.trim().length > 0;
+  composer.classList.toggle('has-text', hasText);
+}
+
+clearInputButton.addEventListener('click',()=>{
+  input.value = '';
+  resize();
+  updateComposerState();
+  input.focus();
+});
 
 function preferredAudioType(){
   if(!window.MediaRecorder) return '';
@@ -629,6 +994,7 @@ async function transcribeRecording(blob){
         : spokenText;
 
       resize();
+      updateComposerState();
       input.focus();
       input.setSelectionRange(input.value.length,input.value.length);
       micStatus.textContent = 'Testo pronto: controllalo e poi premi INVIA.';
@@ -761,7 +1127,10 @@ function resize(){
   input.style.height=Math.min(input.scrollHeight,150)+'px';
 }
 
-input.addEventListener('input',resize);
+input.addEventListener('input',()=>{
+  resize();
+  updateComposerState();
+});
 
 form.addEventListener('submit', async e=>{
   e.preventDefault();
@@ -775,9 +1144,11 @@ form.addEventListener('submit', async e=>{
 
   addMessage(text,'user');
   sessionMessages.push({role:'user', content:text});
+  updateSessionControls();
 
   input.value='';
   resize();
+  updateComposerState();
 
   send.disabled=true;
   send.textContent='…';
@@ -800,6 +1171,7 @@ form.addEventListener('submit', async e=>{
     const reply = data.reply || 'Ti ho ricevuto.';
     addMessage(reply,'silver');
     sessionMessages.push({role:'assistant', content:reply});
+    updateSessionControls();
 
     if(sessionMessages.length > 20){
       sessionMessages.splice(0, sessionMessages.length - 20);
@@ -814,6 +1186,9 @@ form.addEventListener('submit', async e=>{
     conversation.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
 });
+
+updateComposerState();
+updateSessionControls();
 </script>
 </body>
 </html>
