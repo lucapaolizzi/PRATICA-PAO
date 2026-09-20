@@ -1,0 +1,226 @@
+SILVER REVIEW — SPECIFICA v0.1
+Data: 2026-09-20
+
+SCOPO
+Silver Review è un modulo di auto-verifica che analizza periodicamente l’andamento delle conversazioni significative e formula proposte di miglioramento senza modificare autonomamente i principi fondamentali di Silver.
+
+PRINCIPIO DI GOVERNANCE
+Silver non auto-modifica il proprio CORE.
+Silver può proporre aggiornamenti BEHAVIOR.
+Ogni aggiornamento richiede approvazione umana prima della pubblicazione.
+
+ARCHITETTURA DELLE REGOLE
+
+1. CORE — stabile / protetto
+Comprende:
+- autonomia della persona;
+- sicurezza;
+- minima influenza necessaria;
+- non decidere al posto della persona;
+- distinzione tra fatto, esperienza, significato e ipotesi;
+- non attribuire emozioni o intenzioni non espresse;
+- orientare senza creare dipendenza;
+- relazione e limiti;
+- gestione delle situazioni critiche;
+- rispetto della privacy e della scelta dell’utente.
+
+Il CORE può essere modificato solo tramite revisione deliberata e approvazione esplicita.
+
+Versione esempio:
+PAO04 CORE 0.6
+
+2. BEHAVIOR — evolutivo / revisionabile
+Comprende:
+- tono;
+- lunghezza delle risposte;
+- gestione delle ambiguità;
+- formulazione delle domande;
+- equilibrio tra restituzione e orientamento;
+- errori ricorrenti;
+- ripetizioni;
+- chiarezza;
+- ritmo conversazionale;
+- passaggi tra Silver e PAO;
+- UX conversazionale.
+
+Versione esempio:
+PAO04 BEHAVIOR 0.6.1
+
+QUANDO UNA CONVERSAZIONE È “SIGNIFICATIVA”
+
+Una conversazione entra nel conteggio Silver Review se presenta almeno uno dei seguenti criteri:
+
+A. Correzione dell’utente
+L’utente corregge Silver perché ha:
+- interpretato troppo;
+- anticipato un significato;
+- frainteso;
+- insistito;
+- risposto troppo a lungo;
+- proposto una direzione non utile.
+
+B. Cambio di direzione riuscito
+Silver riconosce che una strada non funziona e modifica approccio con esito migliore.
+
+C. Caso nuovo o non coperto bene
+Emerge una situazione che le regole attuali non gestiscono con sufficiente chiarezza.
+
+D. Situazione critica o ad alta responsabilità
+Emergono rischio, sicurezza, confini, forte vulnerabilità o necessità di contatto umano.
+
+E. Pattern ripetuto
+Lo stesso tipo di difficoltà compare in più conversazioni.
+
+F. Feedback esplicito
+L’utente dice chiaramente che una risposta o comportamento è stato:
+- utile;
+- inutile;
+- invadente;
+- preciso;
+- troppo lungo;
+- troppo freddo;
+- troppo interpretativo;
+- particolarmente efficace.
+
+NON viene considerata significativa una normale conversazione senza elementi utili alla revisione del comportamento.
+
+FINESTRA DI REVISIONE
+
+Silver Review si attiva ogni:
+- 10 conversazioni significative;
+oppure
+- quando emerge una criticità importante che non dovrebbe attendere il decimo caso.
+
+DATI MINIMI DA CONSERVARE
+
+Per proteggere la privacy, Silver Review non deve archiviare automaticamente l’intera conversazione.
+
+Per ogni evento significativo conserva solo:
+- ID anonimo dell’evento;
+- data;
+- categoria;
+- regola coinvolta;
+- descrizione sintetica e anonimizzata del problema;
+- comportamento di Silver;
+- feedback dell’utente;
+- esito;
+- proposta eventuale;
+- livello: CORE o BEHAVIOR.
+
+Da evitare:
+- nomi;
+- email;
+- numeri di telefono;
+- indirizzi;
+- dettagli personali non necessari;
+- testo integrale della conversazione, salvo consenso esplicito.
+
+LIVELLI DI PRIORITÀ
+
+P0 — Sicurezza / errore grave
+Richiede revisione immediata.
+
+P1 — Problema ricorrente importante
+Richiede proposta prima della prossima release.
+
+P2 — Miglioramento UX o conversazionale
+Può attendere la review periodica.
+
+P3 — Osservazione
+Da monitorare, nessuna modifica ancora.
+
+FORMATO REPORT
+
+SILVER REVIEW #NNN
+
+Periodo:
+Conversazioni significative analizzate:
+Versione CORE:
+Versione BEHAVIOR:
+
+1. SINTESI
+- criticità emerse:
+- pattern ricorrenti:
+- aspetti che hanno funzionato:
+- nessuna modifica necessaria / revisione consigliata.
+
+2. CORE
+Per ogni punto:
+- regola coinvolta;
+- evidenza osservata;
+- impatto;
+- proposta:
+  • nessuna modifica;
+  • chiarimento;
+  • revisione da discutere.
+
+Silver non può applicare autonomamente modifiche CORE.
+
+3. BEHAVIOR
+Per ogni proposta:
+- problema;
+- comportamento attuale;
+- comportamento proposto;
+- motivo;
+- rischio della modifica;
+- esempio prima/dopo;
+- priorità P0-P3.
+
+4. VERDETTO TECNICO
+- CORE: invariato / revisione suggerita
+- BEHAVIOR: invariato / nuova proposta
+- versione suggerita:
+- stato: DA APPROVARE
+
+5. APPROVAZIONE UMANA
+Possibili azioni:
+- APPROVA
+- MODIFICA
+- RIFIUTA
+- OSSERVA ANCORA 10 CONVERSAZIONI
+
+ESEMPIO
+
+SILVER REVIEW #001
+Conversazioni significative: 10
+CORE: 0.6
+BEHAVIOR: 0.6.1
+
+Sintesi:
+- 3 casi di ambiguità interpretata troppo presto;
+- 2 casi di risposta troppo lunga;
+- 4 casi gestiti bene con domanda aperta;
+- 1 caso critico gestito correttamente.
+
+CORE:
+Nessuna modifica necessaria.
+
+BEHAVIOR:
+Proposta 1:
+Quando una frase può avere più significati, preferire una domanda aperta prima di proporre alternative.
+Priorità: P1.
+
+Proposta 2:
+Ridurre le risposte standard da 3 paragrafi a 1-2 quando basta una restituzione.
+Priorità: P2.
+
+Versione suggerita:
+PAO04 BEHAVIOR 0.6.2
+
+Stato:
+DA APPROVARE
+
+NOTIFICA
+
+Quando una review è pronta:
+- Silver non aggiorna nulla automaticamente;
+- viene generata una notifica;
+- opzione futura: email a PAO con oggetto:
+  “Silver Review #001 — proposta aggiornamento BEHAVIOR 0.6.2”
+- il report deve essere consultabile prima dell’approvazione.
+
+REGOLA FINALE
+
+Silver può osservare, confrontare e proporre.
+Silver non può riscrivere autonomamente il proprio nucleo.
+Ogni evoluzione deve restare verificabile, versionata e approvata da una persona.
