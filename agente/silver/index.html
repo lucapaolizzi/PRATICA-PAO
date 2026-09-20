@@ -213,6 +213,7 @@ textarea::placeholder{color:#918b80}
   display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
 }
 .sheet-action{
+  text-decoration:none;
   border:1px solid var(--line);border-radius:18px;background:var(--paper);
   color:var(--ink);padding:14px 12px;text-align:left;cursor:pointer;
   min-height:76px;
@@ -322,6 +323,11 @@ textarea::placeholder{color:#918b80}
           <strong>FOTO</strong>
           <span>Immagini utili alla conversazione.</span>
         </button>
+
+        <a class="sheet-action" id="lucaButton" href="/agente/luca/">
+          <strong>PARLA CON LUCA</strong>
+          <span>Email, video-call, incontro individuale e canali ufficiali.</span>
+        </a>
       </div>
       <p class="sheet-note" id="toolsNote">
         In questa versione è attivo RIPRENDI. PDF, scansione e foto verranno collegati al Worker nel passaggio successivo.
@@ -347,6 +353,9 @@ textarea::placeholder{color:#918b80}
       <p class="sheet-note">
         La conversazione non viene archiviata qui in modo permanente. Puoi salvarla sul tuo dispositivo oppure eliminarla e terminare la sessione.
       </p>
+      <a class="sheet-close" href="/agente/luca/" style="display:block;text-decoration:none;text-align:center;margin-top:10px;">
+        CONTINUA CON LUCA
+      </a>
       <button class="sheet-close" id="sessionClose" type="button">CONTINUA LA CONVERSAZIONE</button>
     </section>
   </div>
