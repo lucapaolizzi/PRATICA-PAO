@@ -178,9 +178,14 @@ textarea::placeholder{color:#918b80}
 }
 .session-row.visible{display:flex}
 .session-end{
-  border:0;background:transparent;color:var(--muted);
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.55);
+  color:var(--muted);
+  border-radius:999px;
   font:700 10px/1.2 Arial,Helvetica,sans-serif;
-  letter-spacing:.12em;padding:8px 12px;cursor:pointer;
+  letter-spacing:.12em;
+  padding:8px 14px;
+  cursor:pointer;
   text-align:center;
 }
 
@@ -331,12 +336,12 @@ textarea::placeholder{color:#918b80}
       <h2 class="sheet-title" id="sessionTitle">Fine sessione</h2>
       <div class="sheet-grid">
         <button class="sheet-action primary" id="saveConversationButton" type="button">
-          <strong>SALVA CONVERSAZIONE</strong>
-          <span>Scarica un file sul tuo dispositivo per riprendere in futuro.</span>
+          <strong>SALVA E CHIUDI</strong>
+          <span>Scarica il file sul dispositivo e chiude la sessione corrente.</span>
         </button>
         <button class="sheet-action danger" id="deleteConversationButton" type="button">
-          <strong>ELIMINA DEFINITIVAMENTE</strong>
-          <span>Chiude e cancella questa sessione dalla pagina.</span>
+          <strong>ELIMINA E CHIUDI</strong>
+          <span>Cancella la sessione corrente senza salvarla e torna all'inizio.</span>
         </button>
       </div>
       <p class="sheet-note">
@@ -479,9 +484,12 @@ function saveConversationToDevice(){
   a.remove();
 
   setTimeout(()=>URL.revokeObjectURL(url),1500);
+
   closeSheet(sessionBackdrop);
-  micStatus.textContent = 'Conversazione salvata sul dispositivo.';
-  setTimeout(()=>{ micStatus.textContent=''; },3500);
+  resetConversationUi();
+
+  micStatus.textContent = 'Conversazione salvata. Sessione chiusa.';
+  setTimeout(()=>{ micStatus.textContent=''; },3000);
 }
 
 function normalizeSavedMessages(data){
@@ -581,13 +589,13 @@ saveConversationButton.addEventListener('click',saveConversationToDevice);
 
 deleteConversationButton.addEventListener('click',()=>{
   const ok = window.confirm(
-    'Vuoi eliminare questa sessione senza salvarla? Questa azione non può essere annullata.'
+    'Vuoi eliminare e chiudere questa sessione senza salvarla? Questa azione non può essere annullata.'
   );
   if(!ok) return;
 
   closeSheet(sessionBackdrop);
   resetConversationUi();
-  micStatus.textContent = 'Sessione eliminata.';
+  micStatus.textContent = 'Sessione eliminata e chiusa.';
   setTimeout(()=>{ micStatus.textContent=''; },2500);
 });
 
