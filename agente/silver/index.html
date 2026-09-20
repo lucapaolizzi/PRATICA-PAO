@@ -295,7 +295,7 @@ textarea::placeholder{color:#918b80}
   </form>
 
   <div class="session-row" id="sessionRow">
-    <button class="session-end" id="sessionEndButton" type="button">FINE SESSIONE</button>
+    <button class="session-end" id="sessionEndButton" type="button">SESSIONE</button>
   </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
@@ -333,21 +333,21 @@ textarea::placeholder{color:#918b80}
   <div class="sheet-backdrop" id="sessionBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
       <div class="sheet-handle"></div>
-      <h2 class="sheet-title" id="sessionTitle">Fine sessione</h2>
+      <h2 class="sheet-title" id="sessionTitle">Gestisci sessione</h2>
       <div class="sheet-grid">
         <button class="sheet-action primary" id="saveConversationButton" type="button">
-          <strong>SALVA E CHIUDI</strong>
-          <span>Scarica il file sul dispositivo e chiude la sessione corrente.</span>
+          <strong>SALVA E TERMINA</strong>
+          <span>Scarica la conversazione sul dispositivo e termina la sessione.</span>
         </button>
         <button class="sheet-action danger" id="deleteConversationButton" type="button">
-          <strong>ELIMINA E CHIUDI</strong>
-          <span>Cancella la sessione corrente senza salvarla e torna all'inizio.</span>
+          <strong>ELIMINA E TERMINA</strong>
+          <span>Elimina la conversazione corrente senza salvarla e termina la sessione.</span>
         </button>
       </div>
       <p class="sheet-note">
-        Silver non crea qui un archivio permanente della conversazione. Se scegli di salvarla, il file resta sotto il tuo controllo sul dispositivo.
+        La conversazione non viene archiviata qui in modo permanente. Puoi salvarla sul tuo dispositivo oppure eliminarla e terminare la sessione.
       </p>
-      <button class="sheet-close" id="sessionClose" type="button">CONTINUA LA SESSIONE</button>
+      <button class="sheet-close" id="sessionClose" type="button">CONTINUA LA CONVERSAZIONE</button>
     </section>
   </div>
 </main>
@@ -486,10 +486,12 @@ function saveConversationToDevice(){
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 
   closeSheet(sessionBackdrop);
-  resetConversationUi();
 
-  micStatus.textContent = 'Conversazione salvata. Sessione chiusa.';
-  setTimeout(()=>{ micStatus.textContent=''; },3000);
+  // Lascia un piccolo tempo al browser per avviare il download,
+  // poi esce davvero dalla Stanza Silver.
+  setTimeout(()=>{
+    window.location.href = '/agente/';
+  },700);
 }
 
 function normalizeSavedMessages(data){
@@ -595,8 +597,9 @@ deleteConversationButton.addEventListener('click',()=>{
 
   closeSheet(sessionBackdrop);
   resetConversationUi();
-  micStatus.textContent = 'Sessione eliminata e chiusa.';
-  setTimeout(()=>{ micStatus.textContent=''; },2500);
+
+  // Chiusura reale della sessione: si esce dalla Stanza Silver.
+  window.location.href = '/agente/';
 });
 
 function cleanDisplayText(text){
