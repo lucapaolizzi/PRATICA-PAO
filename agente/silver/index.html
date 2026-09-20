@@ -36,9 +36,10 @@ body{
   position:relative; z-index:21;
   touch-action:manipulation;
 }
-.back:focus-visible,.send:focus-visible,.plus:focus-visible,.clear-input:focus-visible,.listen:focus-visible,.session-end:focus-visible,.sheet-action:focus-visible,textarea:focus-visible{
+.back:focus-visible,.send:focus-visible,.plus:focus-visible,.clear-input:focus-visible,.listen:focus-visible,.session-end:focus-visible,.sheet-action:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px
 }
+textarea:focus-visible{outline:none}
 .identity{text-align:center;padding:4px 0 10px;transform:translateY(-58px)}
 .silver{font-size:14px;letter-spacing:.26em;margin-left:.26em;margin-top:8px;font-weight:600}
 .mascot-wrap{text-align:center;margin:0 auto 4px}
@@ -107,7 +108,7 @@ body{
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
-  display:grid;grid-template-columns:auto minmax(0,1fr) 48px;gap:8px;align-items:center;
+  display:grid;grid-template-columns:48px minmax(0,1fr) 48px;gap:8px;align-items:center;
   background:#fff;border:1.5px solid rgba(36,35,31,.24);border-radius:28px;
   padding:5px 7px;box-shadow:0 1px 0 rgba(36,35,31,.03);position:relative;
 }
@@ -130,12 +131,6 @@ textarea::placeholder{color:#918b80}
   display:block;
   font:700 21px/1 Arial,Helvetica,sans-serif;
 }
-.composer.voice-mode .send{
-  background:#1687f8;border-color:#1687f8;
-}
-
-50%{height:34px;opacity:1}
-}
 .mic-status{
   grid-column:1/-1;
   min-height:14px;
@@ -146,18 +141,26 @@ textarea::placeholder{color:#918b80}
 }
 
 .composer-left{
+  width:48px;
+  min-width:48px;
   display:flex;
   align-items:center;
-  justify-content:flex-start;
-  gap:6px;
+  justify-content:center;
+  position:relative;
 }
 .clear-input{
-  width:40px;height:40px;min-width:40px;min-height:40px;
-  border:0;border-radius:20px;background:#f0f0f0;color:var(--ink);
-  font:700 18px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  width:32px;height:32px;min-width:32px;min-height:32px;
+  border:0;border-radius:16px;background:#f0f0f0;color:var(--ink);
+  font:700 16px/1 Arial,Helvetica,sans-serif;cursor:pointer;
   display:none;align-items:center;justify-content:center;touch-action:manipulation;
+  position:absolute;
+  left:64px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:3;
 }
 .composer.has-text .clear-input{display:flex}
+.composer.has-text textarea{padding-left:46px}
 .clear-input[disabled]{opacity:.50;cursor:default}
 .plus{
   width:40px;height:40px;min-width:40px;min-height:40px;
@@ -277,7 +280,6 @@ textarea::placeholder{color:#918b80}
 
       <button class="clear-input" id="clearInputButton" type="button"
         aria-label="Cancella il messaggio" title="Cancella il messaggio">✕</button>
-    </div>
     </div>
 
     <textarea id="input" rows="1" maxlength="3000"
