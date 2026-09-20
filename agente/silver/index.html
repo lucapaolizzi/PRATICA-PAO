@@ -108,34 +108,35 @@ body{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
   display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;
-  background:#fff;border:1.5px solid rgba(36,35,31,.24);border-radius:30px;
-  padding:7px 8px;box-shadow:0 1px 0 rgba(36,35,31,.03);position:relative;
+  background:#fff;border:1.5px solid rgba(36,35,31,.24);border-radius:28px;
+  padding:5px 7px;box-shadow:0 1px 0 rgba(36,35,31,.03);position:relative;
 }
 textarea{
-  width:100%; resize:none; min-height:44px; max-height:150px;
-  border:0; border-radius:20px; background:transparent;
-  color:var(--ink); font:16px/1.4 Arial,Helvetica,sans-serif;
-  padding:10px 8px; box-shadow:none; outline:none;
+  width:100%; resize:none; min-height:42px; max-height:132px;
+  border:0; border-radius:18px; background:transparent;
+  color:var(--ink); font:16px/1.25 Arial,Helvetica,sans-serif;
+  padding:10px 4px; box-shadow:none; outline:none;
+  overflow-y:auto;
 }
 textarea::placeholder{color:#918b80}
 .send{
-  width:48px;height:48px;min-width:48px;min-height:48px;border:1px solid var(--ink);
-  border-radius:24px;padding:0;background:var(--ink);color:#fff;font-weight:700;
+  width:42px;height:42px;min-width:42px;min-height:42px;border:1px solid var(--ink);
+  border-radius:21px;padding:0;background:var(--ink);color:#fff;font-weight:700;
   font-size:0;letter-spacing:0;cursor:pointer;
 }
 .send::before{
   content:"↑";
   display:block;
-  font:700 24px/1 Arial,Helvetica,sans-serif;
+  font:700 21px/1 Arial,Helvetica,sans-serif;
 }
 .composer.voice-mode .send{
   background:#1687f8;border-color:#1687f8;
 }
 
 .mic,.clear-input,.cancel-rec,.stop-rec{
-  width:46px;height:46px;min-width:46px;min-height:46px;border:0;
-  border-radius:23px;background:#f0f0f0;color:var(--ink);
-  font:700 18px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  width:40px;height:40px;min-width:40px;min-height:40px;border:0;
+  border-radius:20px;background:#f0f0f0;color:var(--ink);
+  font:700 16px/1 Arial,Helvetica,sans-serif;cursor:pointer;
   touch-action:manipulation;display:flex;align-items:center;justify-content:center;
 }
 .mic{background:transparent}
@@ -178,9 +179,9 @@ textarea::placeholder{color:#918b80}
 }
 
 .plus{
-  width:44px;height:44px;min-width:44px;min-height:44px;
-  border:0;border-radius:22px;background:#f0f0f0;color:var(--ink);
-  font:400 28px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  width:40px;height:40px;min-width:40px;min-height:40px;
+  border:0;border-radius:20px;background:#f0f0f0;color:var(--ink);
+  font:400 26px/1 Arial,Helvetica,sans-serif;cursor:pointer;
   display:flex;align-items:center;justify-content:center;touch-action:manipulation;
 }
 .composer.voice-mode .plus{display:none}
@@ -310,7 +311,7 @@ textarea::placeholder{color:#918b80}
     </div>
 
     <textarea id="input" rows="1" maxlength="3000"
-      placeholder="Scrivi un messaggio…" aria-label="Messaggio per Silver" autofocus></textarea>
+      placeholder="Scrivi…" aria-label="Messaggio per Silver" autofocus></textarea>
 
     <button class="stop-rec" id="stopRecButton" type="button"
       aria-label="Ferma registrazione" title="Ferma registrazione"></button>
