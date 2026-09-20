@@ -189,15 +189,16 @@ textarea::placeholder{color:#918b80}
 .session-row{
   display:none;
   justify-content:center;
-  margin:0 0 10px;
+  margin:-48px 0 12px;
   position:relative;
-  z-index:5;
+  z-index:4;
 }
 .session-row.visible{display:flex}
 .session-end{
   border:0;background:transparent;color:var(--muted);
   font:700 10px/1.2 Arial,Helvetica,sans-serif;
-  letter-spacing:.12em;padding:6px 10px;cursor:pointer;
+  letter-spacing:.12em;padding:8px 12px;cursor:pointer;
+  text-align:center;
 }
 
 .sheet-backdrop{
@@ -242,9 +243,10 @@ textarea::placeholder{color:#918b80}
   margin:12px 6px 2px;
 }
 .sheet-close{
-  width:100%;margin-top:10px;border:0;background:transparent;
-  color:var(--muted);font:700 11px/1 Arial,Helvetica,sans-serif;
-  letter-spacing:.10em;padding:10px;cursor:pointer;
+  width:100%;margin-top:10px;border:1px solid var(--line);border-radius:16px;
+  background:var(--paper);color:var(--ink);
+  font:700 11px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;padding:13px 10px;cursor:pointer;
 }
 .hidden-file{display:none}
 @media(max-width:520px){
@@ -288,10 +290,6 @@ textarea::placeholder{color:#918b80}
     <div class="conversation" id="conversation" aria-live="polite"></div>
   </section>
 
-  <div class="session-row" id="sessionRow">
-    <button class="session-end" id="sessionEndButton" type="button">FINE SESSIONE</button>
-  </div>
-
   <form class="composer" id="composer">
     <button class="plus" id="plusButton" type="button"
       aria-label="Apri strumenti" title="Apri strumenti">＋</button>
@@ -319,6 +317,10 @@ textarea::placeholder{color:#918b80}
     <button class="send" type="submit">INVIA</button>
     <div class="mic-status" id="micStatus" aria-live="polite"></div>
   </form>
+
+  <div class="session-row" id="sessionRow">
+    <button class="session-end" id="sessionEndButton" type="button">FINE SESSIONE</button>
+  </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
     accept=".json,application/json">
@@ -369,7 +371,7 @@ textarea::placeholder{color:#918b80}
       <p class="sheet-note">
         Silver non crea qui un archivio permanente della conversazione. Se scegli di salvarla, il file resta sotto il tuo controllo sul dispositivo.
       </p>
-      <button class="sheet-close" id="sessionClose" type="button">TORNA ALLA CONVERSAZIONE</button>
+      <button class="sheet-close" id="sessionClose" type="button">CONTINUA LA SESSIONE</button>
     </section>
   </div>
 </main>
