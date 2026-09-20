@@ -36,7 +36,7 @@ body{
   position:relative; z-index:21;
   touch-action:manipulation;
 }
-.back:focus-visible,.send:focus-visible,.plus:focus-visible,.mic:focus-visible,.clear-input:focus-visible,.listen:focus-visible,.session-end:focus-visible,.sheet-action:focus-visible,textarea:focus-visible{
+.back:focus-visible,.send:focus-visible,.plus:focus-visible,.clear-input:focus-visible,.listen:focus-visible,.session-end:focus-visible,.sheet-action:focus-visible,textarea:focus-visible{
   outline:2px solid var(--gold);outline-offset:3px
 }
 .identity{text-align:center;padding:4px 0 10px;transform:translateY(-58px)}
@@ -107,7 +107,7 @@ body{
 .composer{
   border-top:1px solid var(--line); padding-top:10px;
   transform:translateY(-58px);
-  display:grid;grid-template-columns:86px minmax(0,1fr) 48px;gap:6px;align-items:center;
+  display:grid;grid-template-columns:auto minmax(0,1fr) 48px;gap:8px;align-items:center;
   background:#fff;border:1.5px solid rgba(36,35,31,.24);border-radius:28px;
   padding:5px 7px;box-shadow:0 1px 0 rgba(36,35,31,.03);position:relative;
 }
@@ -134,41 +134,7 @@ textarea::placeholder{color:#918b80}
   background:#1687f8;border-color:#1687f8;
 }
 
-.mic,.clear-input,.cancel-rec,.stop-rec{
-  width:40px;height:40px;min-width:40px;min-height:40px;border:0;
-  border-radius:20px;background:#f0f0f0;color:var(--ink);
-  font:700 16px/1 Arial,Helvetica,sans-serif;cursor:pointer;
-  touch-action:manipulation;display:flex;align-items:center;justify-content:center;
-}
-.mic{background:transparent}
-.clear-input{display:none}
-.composer.has-text:not(.voice-mode) .mic{display:none}
-.composer.has-text:not(.voice-mode) .clear-input{display:flex}
-.mic[disabled],.clear-input[disabled],.cancel-rec[disabled],.stop-rec[disabled]{opacity:.50;cursor:default}
-.cancel-rec,.stop-rec{display:none}
-.stop-rec::before{
-  content:"";
-  width:17px;height:17px;border-radius:4px;background:var(--ink);display:block;
-}
-.composer.voice-mode textarea{display:none}
-.composer.voice-mode .mic,.composer.voice-mode .clear-input{display:none}
-.composer.voice-mode .cancel-rec,
-.composer.voice-mode .stop-rec{display:flex}
-.voice-wave{
-  display:none;align-items:center;justify-content:center;gap:4px;
-  min-height:44px;overflow:hidden;padding:0 6px;
-}
-.composer.voice-mode .voice-wave{display:flex}
-.voice-wave span{
-  width:4px;height:12px;border-radius:3px;background:rgba(36,35,31,.62);
-  animation:silverWave .9s ease-in-out infinite;
-}
-.voice-wave span:nth-child(2n){animation-delay:.12s}
-.voice-wave span:nth-child(3n){animation-delay:.24s}
-.voice-wave span:nth-child(4n){animation-delay:.36s}
-@keyframes silverWave{
-  0%,100%{height:10px;opacity:.45}
-  50%{height:34px;opacity:1}
+50%{height:34px;opacity:1}
 }
 .mic-status{
   grid-column:1/-1;
@@ -183,20 +149,22 @@ textarea::placeholder{color:#918b80}
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  gap:4px;
-  width:86px;
-  min-width:86px;
+  gap:6px;
 }
-.composer.voice-mode .composer-left{
-  justify-content:flex-start;
+.clear-input{
+  width:40px;height:40px;min-width:40px;min-height:40px;
+  border:0;border-radius:20px;background:#f0f0f0;color:var(--ink);
+  font:700 18px/1 Arial,Helvetica,sans-serif;cursor:pointer;
+  display:none;align-items:center;justify-content:center;touch-action:manipulation;
 }
+.composer.has-text .clear-input{display:flex}
+.clear-input[disabled]{opacity:.50;cursor:default}
 .plus{
   width:40px;height:40px;min-width:40px;min-height:40px;
   border:0;border-radius:20px;background:#f0f0f0;color:var(--ink);
   font:400 26px/1 Arial,Helvetica,sans-serif;cursor:pointer;
   display:flex;align-items:center;justify-content:center;touch-action:manipulation;
 }
-.composer.voice-mode .plus{display:none}
 
 .session-row{
   display:none;
@@ -306,28 +274,14 @@ textarea::placeholder{color:#918b80}
     <div class="composer-left">
       <button class="plus" id="plusButton" type="button"
         aria-label="Apri strumenti" title="Apri strumenti">＋</button>
-      <button class="mic" id="micButton" type="button"
-        aria-label="Detta un messaggio" title="Detta un messaggio">🎤</button>
 
       <button class="clear-input" id="clearInputButton" type="button"
         aria-label="Cancella il messaggio" title="Cancella il messaggio">✕</button>
     </div>
-
-      <button class="cancel-rec" id="cancelRecButton" type="button"
-        aria-label="Annulla registrazione" title="Annulla registrazione">✕</button>
-    </div>
-
-    <div class="voice-wave" id="voiceWave" aria-hidden="true">
-      <span></span><span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span><span></span>
-      <span></span><span></span><span></span><span></span><span></span>
     </div>
 
     <textarea id="input" rows="1" maxlength="3000"
       placeholder="" aria-label="Messaggio per Silver" autofocus></textarea>
-
-    <button class="stop-rec" id="stopRecButton" type="button"
-      aria-label="Ferma registrazione" title="Ferma registrazione"></button>
 
     <button class="send" type="submit">INVIA</button>
     <div class="mic-status" id="micStatus" aria-live="polite"></div>
@@ -414,11 +368,7 @@ const opening = document.getElementById('opening');
 const conversation = document.getElementById('conversation');
 const send = form.querySelector('.send');
 const plusButton = document.getElementById('plusButton');
-const micButton = document.getElementById('micButton');
 const clearInputButton = document.getElementById('clearInputButton');
-const cancelRecButton = document.getElementById('cancelRecButton');
-const stopRecButton = document.getElementById('stopRecButton');
-const voiceWave = document.getElementById('voiceWave');
 const micStatus = document.getElementById('micStatus');
 const sessionRow = document.getElementById('sessionRow');
 const sessionEndButton = document.getElementById('sessionEndButton');
@@ -437,12 +387,6 @@ const sessionClose = document.getElementById('sessionClose');
 const saveConversationButton = document.getElementById('saveConversationButton');
 const deleteConversationButton = document.getElementById('deleteConversationButton');
 
-let mediaRecorder = null;
-let micStream = null;
-let micChunks = [];
-let micMimeType = '';
-let micBusy = false;
-let micTimer = null;
 
 let sessionMessages = [];
 
@@ -933,211 +877,6 @@ clearInputButton.addEventListener('click',()=>{
   resize();
   updateComposerState();
   input.focus();
-});
-
-function preferredAudioType(){
-  if(!window.MediaRecorder) return '';
-
-  const types = [
-    'audio/mp4',
-    'audio/webm;codecs=opus',
-    'audio/webm'
-  ];
-
-  for(const type of types){
-    if(MediaRecorder.isTypeSupported(type)) return type;
-  }
-
-  return '';
-}
-
-function extensionForMime(type){
-  if(String(type).includes('mp4')) return 'm4a';
-  if(String(type).includes('webm')) return 'webm';
-  return 'audio';
-}
-
-function resetMicUi(){
-  micBusy = false;
-  composer.classList.remove('voice-mode');
-  micButton.disabled = false;
-  cancelRecButton.disabled = false;
-  stopRecButton.disabled = false;
-  micButton.classList.remove('recording');
-  micButton.textContent = '🎤';
-  micButton.setAttribute('aria-label','Detta un messaggio');
-  micButton.title = 'Detta un messaggio';
-  micStatus.textContent = '';
-}
-
-function stopMicTracks(){
-  if(micStream){
-    for(const track of micStream.getTracks()){
-      track.stop();
-    }
-    micStream = null;
-  }
-}
-
-async function transcribeRecording(blob){
-  micBusy = true;
-  composer.classList.remove('voice-mode');
-  micButton.disabled = true;
-  micButton.classList.remove('recording');
-  micButton.textContent = '…';
-  micStatus.textContent = 'Trascrivo quello che hai detto…';
-
-  try{
-    const data = new FormData();
-    const ext = extensionForMime(blob.type || micMimeType);
-    data.append('audio', blob, 'registrazione.' + ext);
-
-    const response = await fetch(TRANSCRIBE_URL,{
-      method:'POST',
-      body:data
-    });
-
-    const result = await response.json();
-
-    if(!response.ok || !result.ok){
-      throw new Error(result.error || 'Trascrizione non disponibile');
-    }
-
-    const spokenText = String(result.text || '').trim();
-
-    if(spokenText){
-      const existing = input.value.trim();
-      input.value = existing
-        ? existing + ' ' + spokenText
-        : spokenText;
-
-      resize();
-      updateComposerState();
-      input.focus();
-      input.setSelectionRange(input.value.length,input.value.length);
-      micStatus.textContent = 'Testo pronto: controllalo e poi premi INVIA.';
-      setTimeout(()=>{
-        if(!micBusy) micStatus.textContent = '';
-      },3500);
-    }
-
-  }catch(err){
-    console.error('Microfono Silver:',err);
-    micStatus.textContent = 'Non sono riuscito a trascrivere. Puoi riprovare.';
-  }finally{
-    micBusy = false;
-    composer.classList.remove('voice-mode');
-    micButton.disabled = false;
-    cancelRecButton.disabled = false;
-    stopRecButton.disabled = false;
-    micButton.classList.remove('recording');
-    micButton.textContent = '🎤';
-    micButton.setAttribute('aria-label','Detta un messaggio');
-    micButton.title = 'Detta un messaggio';
-  }
-}
-
-async function startMicrophone(){
-  if(micBusy) return;
-
-  if(!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder){
-    micStatus.textContent = 'Il microfono non è disponibile in questo browser.';
-    return;
-  }
-
-  try{
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio:{
-        echoCancellation:true,
-        noiseSuppression:true
-      }
-    });
-
-    micChunks = [];
-    micMimeType = preferredAudioType();
-
-    mediaRecorder = micMimeType
-      ? new MediaRecorder(micStream,{mimeType:micMimeType})
-      : new MediaRecorder(micStream);
-
-    mediaRecorder.addEventListener('dataavailable',event=>{
-      if(event.data && event.data.size > 0){
-        micChunks.push(event.data);
-      }
-    });
-
-    mediaRecorder.addEventListener('stop',async ()=>{
-      clearTimeout(micTimer);
-      stopMicTracks();
-
-      const finalType =
-        mediaRecorder?.mimeType ||
-        micMimeType ||
-        'audio/webm';
-
-      const blob = new Blob(micChunks,{type:finalType});
-      mediaRecorder = null;
-      micChunks = [];
-
-      if(blob.size < 400){
-        micStatus.textContent = 'Non ho ricevuto abbastanza audio. Riprova.';
-        resetMicUi();
-        return;
-      }
-
-      await transcribeRecording(blob);
-    },{once:true});
-
-    mediaRecorder.start();
-
-    composer.classList.add('voice-mode');
-    micButton.classList.add('recording');
-    micStatus.textContent = 'Ti ascolto…';
-
-    // Evita registrazioni lasciate aperte accidentalmente.
-    micTimer = setTimeout(()=>{
-      if(mediaRecorder && mediaRecorder.state === 'recording'){
-        mediaRecorder.stop();
-      }
-    },60000);
-
-  }catch(err){
-    console.error('Permesso microfono:',err);
-    stopMicTracks();
-    resetMicUi();
-
-    if(err?.name === 'NotAllowedError'){
-      micStatus.textContent = 'Per usare il microfono devi consentirne l’accesso al browser.';
-    }else{
-      micStatus.textContent = 'Non riesco ad aprire il microfono. Riprova.';
-    }
-  }
-}
-
-micButton.addEventListener('click',()=>{
-  startMicrophone();
-});
-
-stopRecButton.addEventListener('click',()=>{
-  if(mediaRecorder && mediaRecorder.state === 'recording'){
-    stopRecButton.disabled = true;
-    cancelRecButton.disabled = true;
-    micStatus.textContent = 'Un momento…';
-    mediaRecorder.stop();
-  }
-});
-
-cancelRecButton.addEventListener('click',()=>{
-  if(mediaRecorder && mediaRecorder.state === 'recording'){
-    clearTimeout(micTimer);
-    mediaRecorder.onstop = null;
-    try{ mediaRecorder.stop(); }catch(e){}
-    stopMicTracks();
-    mediaRecorder = null;
-    micChunks = [];
-    resetMicUi();
-    input.focus();
-  }
 });
 
 function resize(){
