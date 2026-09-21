@@ -158,17 +158,17 @@ textarea::placeholder{color:#918b80}
 .dictation-popover{
   position:absolute;
   left:0;
-  bottom:54px;
-  width:245px;
+  bottom:48px;
+  width:260px;
   max-width:calc(100vw - 48px);
   display:none;
   background:#fff;
   color:var(--ink);
   border:1px solid var(--line);
   border-radius:14px;
-  padding:10px 12px;
-  box-shadow:0 8px 24px rgba(36,35,31,.12);
-  font:12px/1.35 Arial,Helvetica,sans-serif;
+  padding:11px 13px;
+  box-shadow:0 8px 24px rgba(36,35,31,.14);
+  font:12px/1.4 Arial,Helvetica,sans-serif;
   z-index:30;
 }
 .composer-left.show-dictation-help .dictation-popover{display:block}
@@ -484,6 +484,29 @@ const saveConversationButton = document.getElementById('saveConversationButton')
 const deleteConversationButton = document.getElementById('deleteConversationButton');
 const dictationHelpButton = document.getElementById('dictationHelpButton');
 const dictationPopover = document.getElementById('dictationPopover');
+
+
+dictationHelpButton.addEventListener('pointerdown',e=>{
+  // Su iPhone il tap sul ? non deve togliere il focus al textarea:
+  // così la tastiera resta aperta.
+  e.preventDefault();
+  e.stopPropagation();
+
+  const left = document.querySelector('.composer-left');
+  left.classList.toggle('show-dictation-help');
+
+  requestAnimationFrame(()=>{
+    try{ input.focus({preventScroll:true}); }
+    catch(err){ input.focus(); }
+  });
+});
+
+document.addEventListener('pointerdown',e=>{
+  const left = document.querySelector('.composer-left');
+  if(!left.contains(e.target)){
+    left.classList.remove('show-dictation-help');
+  }
+});
 
 function updateKeyboardLayout(){
   const vv = window.visualViewport;
