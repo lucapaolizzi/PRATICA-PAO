@@ -1074,7 +1074,7 @@ function renderMessage(el, text, who){
   }
 }
 
-function splitForSpeech(text, maxLen=320){
+function splitForSpeech(text, maxLen=260){
   const cleaned = cleanDisplayText(text)
     .replace(/\*\*/g,'')
     .replace(/\s+/g,' ')
@@ -1127,7 +1127,7 @@ async function fetchSpeechChunk(text){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       text,
-      voice:'cedar',
+      voice:'marin',
       style:'cedar2cplus'
     })
   });
@@ -1186,37 +1186,40 @@ async function speakSilver(text, button){
   button.textContent = chunks.length > 1 ? '… PREPARO AUDIO' : '…';
 
   try{
-    // PRECARICA TUTTI I BLOCCHI prima di iniziare.
-    // Su iPhone evita che la lettura si interrompa tra un blocco e il successivo.
-    const blobs = [];
+    // AVVIO RAPIDO:
+    // prepara solo il primo blocco, lo riproduce subito e,
+    // mentre Silver parla, prepara già il blocco successivo.
+    let nextBlobPromise = fetchSpeechChunk(chunks[0]);
+
     for(let i=0;i<chunks.length;i++){
       if(myRunId !== playbackRunId) return;
 
-      button.textContent = chunks.length > 1
-        ? '… PREPARO ' + (i+1) + '/' + chunks.length
-        : '…';
+      button.textContent = i === 0
+        ? '… PREPARO LA VOCE'
+        : `… PREPARO ${i+1}/${chunks.length}`;
 
-      const blob = await fetchSpeechChunk(chunks[i]);
-      blobs.push(blob);
-    }
+      const blob = await nextBlobPromise;
 
-    if(myRunId !== playbackRunId) return;
-
-    // Riproduzione continua dei blocchi già pronti.
-    for(let i=0;i<blobs.length;i++){
       if(myRunId !== playbackRunId) return;
+
+      // Avvia in anticipo la richiesta del blocco successivo
+      // mentre quello corrente sta per essere riprodotto.
+      nextBlobPromise =
+        i + 1 < chunks.length
+          ? fetchSpeechChunk(chunks[i+1])
+          : null;
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
         activeAudioUrl = null;
       }
 
-      activeAudioUrl = URL.createObjectURL(blobs[i]);
+      activeAudioUrl = URL.createObjectURL(blob);
       activeAudio = new Audio(activeAudioUrl);
       activePaused = false;
 
-      button.textContent = blobs.length > 1
-        ? 'Ⅱ PAUSA · ' + (i+1) + '/' + blobs.length
+      button.textContent = chunks.length > 1
+        ? `Ⅱ PAUSA · ${i+1}/${chunks.length}`
         : 'Ⅱ PAUSA';
 
       await new Promise((resolve,reject)=>{
