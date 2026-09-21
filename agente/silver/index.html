@@ -444,16 +444,31 @@ textarea::placeholder{color:#918b80}
           <span>Contatto umano con PAO: email, video-call, incontro individuale e canali ufficiali.</span>
         </a>
 
-        <a class="sheet-action" id="helpButton"
-          href="mailto:info@praticapao.it?subject=Problema%20con%20Silver">
+        <button class="sheet-action" id="helpButton" type="button">
           <strong>HELP / PROBLEMI</strong>
           <span>Segnala bug, problemi dell’interfaccia o difficoltà nell’uso di Silver.</span>
-        </a>
+        </button>
       </div>
       <p class="sheet-note" id="toolsNote">
         Con ALLEGA puoi scegliere una foto, scattarne una o selezionare un file. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" id="helpBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="helpTitle">Hai un problema con Silver?</h2>
+      <p class="sheet-note" style="font-size:13px;line-height:1.5;margin-top:4px;">
+        Puoi segnalare bug, problemi dell’interfaccia o difficoltà d’uso.
+      </p>
+      <a class="sheet-close"
+         href="mailto:info@praticapao.it?subject=Problema%20con%20Silver"
+         style="display:block;text-decoration:none;text-align:center;margin-top:12px;">
+        SCRIVI A info@praticapao.it
+      </a>
+      <button class="sheet-close" id="helpClose" type="button">CHIUDI</button>
     </section>
   </div>
 
@@ -515,6 +530,9 @@ const resumeButton = document.getElementById('resumeButton');
 const attachmentButton = document.getElementById('attachmentButton');
 const toolsNote = document.getElementById('toolsNote');
 const resumeFileInput = document.getElementById('resumeFileInput');
+const helpButton = document.getElementById('helpButton');
+const helpBackdrop = document.getElementById('helpBackdrop');
+const helpClose = document.getElementById('helpClose');
 const attachmentFileInput = document.getElementById('attachmentFileInput');
 
 const sessionBackdrop = document.getElementById('sessionBackdrop');
@@ -804,6 +822,17 @@ toolsClose.addEventListener('click',()=>closeSheet(toolsBackdrop));
 
 toolsBackdrop.addEventListener('click',e=>{
   if(e.target === toolsBackdrop) closeSheet(toolsBackdrop);
+});
+
+helpButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  openSheet(helpBackdrop);
+});
+
+helpClose.addEventListener('click',()=>closeSheet(helpBackdrop));
+
+helpBackdrop.addEventListener('click',e=>{
+  if(e.target === helpBackdrop) closeSheet(helpBackdrop);
 });
 
 sessionEndButton.addEventListener('click',()=>openSheet(sessionBackdrop));
