@@ -353,6 +353,10 @@ textarea::placeholder{color:#918b80}
   body.keyboard-open .dictation-popover{
     pointer-events:auto;
   }
+
+  body.keyboard-open .dictation-popover{
+    bottom:104px;
+  }
   body.keyboard-open .conversation{
     padding-bottom:128px;
   }
@@ -1356,6 +1360,7 @@ function appendStreamingSilverText(state,delta){
 
 function finishStreamingSilverMessage(state){
   const finalText = state.text.trim() || 'Ti ho ricevuto.';
+  state.el.textContent = '';
   renderMessage(state.el,finalText,'silver');
 
   state.listen.disabled=false;
@@ -1400,6 +1405,7 @@ input.addEventListener('input',()=>{
 
 form.addEventListener('submit', async e=>{
   e.preventDefault();
+  document.getElementById('dictationHelpRow')?.classList.remove('show-dictation-help');
   const text=input.value.trim();
   if(!text || send.disabled) return;
 
