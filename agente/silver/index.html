@@ -409,6 +409,15 @@ textarea::placeholder{color:#918b80}
   <input class="hidden-file" id="resumeFileInput" type="file"
     accept=".json,application/json">
 
+  <input class="hidden-file" id="documentFileInput" type="file"
+    accept=".pdf,.txt,.md,.json,application/pdf,text/plain,text/markdown,application/json">
+
+  <input class="hidden-file" id="photoFileInput" type="file"
+    accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif">
+
+  <input class="hidden-file" id="scanFileInput" type="file"
+    accept="image/jpeg,image/png" capture="environment">
+
   <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
       <div class="sheet-handle"></div>
@@ -424,7 +433,7 @@ textarea::placeholder{color:#918b80}
         </button>
         <button class="sheet-action" id="scanButton" type="button">
           <strong>SCANSIONA</strong>
-          <span>Prepara una pagina da allegare.</span>
+          <span>Fotografa una pagina con la fotocamera.</span>
         </button>
         <button class="sheet-action" id="photoButton" type="button">
           <strong>FOTO</strong>
@@ -437,7 +446,7 @@ textarea::placeholder{color:#918b80}
         </a>
       </div>
       <p class="sheet-note" id="toolsNote">
-        In questa versione è attivo RIPRENDI. PDF, scansione e foto verranno collegati al Worker nel passaggio successivo.
+        Attivi: RIPRENDI, DOCUMENTO / PDF, SCANSIONA e FOTO. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
     </section>
@@ -473,6 +482,7 @@ const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
 const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
+const ATTACHMENT_URL = WORKER_URL + 'attachment';
 
 
 const backLink = document.getElementById('backLink');
@@ -505,6 +515,9 @@ const scanButton = document.getElementById('scanButton');
 const photoButton = document.getElementById('photoButton');
 const toolsNote = document.getElementById('toolsNote');
 const resumeFileInput = document.getElementById('resumeFileInput');
+const documentFileInput = document.getElementById('documentFileInput');
+const photoFileInput = document.getElementById('photoFileInput');
+const scanFileInput = document.getElementById('scanFileInput');
 
 const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
@@ -807,14 +820,131 @@ resumeFileInput.addEventListener('change',async ()=>{
   }
 });
 
-function notYetAvailable(label){
-  toolsNote.textContent =
-    `${label}: lo colleghiamo nel prossimo aggiornamento del Worker.`;
+function attachmentLabel(file, kind){
+  const safeName = String(file?.name || 'allegato').trim() || 'allegato';
+  if(kind === 'photo') return `📷 ${safeName}`;
+  if(kind === 'scan') return `📄 Pagina acquisita: ${safeName}`;
+  return `📎 ${safeName}`;
 }
 
-documentButton.addEventListener('click',()=>notYetAvailable('Documento / PDF'));
-scanButton.addEventListener('click',()=>notYetAvailable('Scansione'));
-photoButton.addEventListener('click',()=>notYetAvailable('Foto'));
+async function sendAttachment(file, kind){
+  if(!file) return;
+
+  const MAX_FILE_BYTES = 8 * 1024 * 1024;
+  if(file.size > MAX_FILE_BYTES){
+    micStatus.textContent = 'Allegato troppo grande. Limite 8 MB.';
+    setTimeout(()=>{ micStatus.textContent=''; },4200);
+    return;
+  }
+
+  closeSheet(toolsBackdrop);
+  showConversationMode();
+
+  const label = attachmentLabel(file, kind);
+  addMessage(label,'user');
+
+  const contextText =
+    kind === 'scan'
+      ? `Ho acquisito una pagina: ${file.name || 'scansione'}`
+      : kind === 'photo'
+        ? `Ho allegato una foto: ${file.name || 'immagine'}`
+        : `Ho allegato un documento: ${file.name || 'documento'}`;
+
+  sessionMessages.push({role:'user', content:contextText});
+  reviewMessages.push({role:'user', content:contextText});
+  if(reviewMessages.length > 80){
+    reviewMessages.splice(0, reviewMessages.length - 80);
+  }
+  updateSessionControls();
+
+  micStatus.textContent = 'Silver sta leggendo l’allegato…';
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append(
+    'message',
+    kind === 'scan'
+      ? 'Osserva questa pagina acquisita e aiutami a comprenderla nel contesto della conversazione.'
+      : kind === 'photo'
+        ? 'Osserva questa immagine e aiutami a comprenderla nel contesto della conversazione.'
+        : 'Leggi questo documento e aiutami a comprenderlo nel contesto della conversazione.'
+  );
+  formData.append('history', JSON.stringify(sessionMessages.slice(-20)));
+
+  try{
+    const response = await fetch(ATTACHMENT_URL,{
+      method:'POST',
+      body:formData
+    });
+
+    const data = await response.json();
+
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || 'Allegato non disponibile');
+    }
+
+    const reply = data.reply || 'Ho ricevuto l’allegato.';
+    addMessage(reply,'silver');
+    sessionMessages.push({role:'assistant', content:reply});
+    reviewMessages.push({role:'assistant', content:reply});
+
+    if(reviewMessages.length > 80){
+      reviewMessages.splice(0, reviewMessages.length - 80);
+    }
+    if(sessionMessages.length > 20){
+      sessionMessages.splice(0, sessionMessages.length - 20);
+    }
+
+    updateSessionControls();
+    micStatus.textContent = '';
+    conversation.lastElementChild?.scrollIntoView({
+      behavior:'smooth',
+      block:'nearest'
+    });
+  }catch(err){
+    console.error('Allegato Silver:',err);
+    addMessage(
+      err?.message
+        ? `Non riesco a leggere questo allegato: ${err.message}`
+        : 'Non riesco a leggere questo allegato in questo momento.',
+      'silver'
+    );
+    micStatus.textContent = '';
+  }
+}
+
+documentButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  documentFileInput.value='';
+  documentFileInput.click();
+});
+
+photoButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  photoFileInput.value='';
+  photoFileInput.click();
+});
+
+scanButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  scanFileInput.value='';
+  scanFileInput.click();
+});
+
+documentFileInput.addEventListener('change',()=>{
+  const file = documentFileInput.files?.[0];
+  if(file) sendAttachment(file,'document');
+});
+
+photoFileInput.addEventListener('change',()=>{
+  const file = photoFileInput.files?.[0];
+  if(file) sendAttachment(file,'photo');
+});
+
+scanFileInput.addEventListener('change',()=>{
+  const file = scanFileInput.files?.[0];
+  if(file) sendAttachment(file,'scan');
+});
 
 saveConversationButton.addEventListener('click',saveConversationToDevice);
 
