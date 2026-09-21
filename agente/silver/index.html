@@ -140,6 +140,17 @@ textarea::placeholder{color:#918b80}
   letter-spacing:.02em;
 }
 
+.dictation-hint{
+  grid-column:1/-1;
+  display:none;
+  margin:0 8px 2px;
+  color:var(--muted);
+  font:10px/1.25 Arial,Helvetica,sans-serif;
+  letter-spacing:.01em;
+  opacity:.86;
+}
+.composer.keyboard-open .dictation-hint{display:block}
+
 .composer-left{
   width:48px;
   min-width:48px;
@@ -255,6 +266,36 @@ textarea::placeholder{color:#918b80}
   .hello{font-size:30px}
   .question{font-size:22px}
 }
+
+@media(max-width:760px){
+  body.keyboard-open .shell{
+    min-height:100dvh;
+    padding-bottom:calc(8px + var(--keyboard-offset, 0px));
+  }
+  body.keyboard-open .stage{
+    transform:none;
+    justify-content:flex-start;
+    padding-top:6px;
+  }
+  body.keyboard-open .identity{
+    display:none;
+  }
+  body.keyboard-open .composer{
+    position:fixed;
+    left:50%;
+    bottom:calc(8px + var(--keyboard-offset, 0px));
+    transform:translateX(-50%);
+    width:min(724px,calc(100% - 24px));
+    z-index:80;
+    margin:0;
+  }
+  body.keyboard-open .conversation{
+    padding-bottom:128px;
+  }
+  body.keyboard-open .opening{
+    margin-top:10px;
+  }
+}
 </style>
 </head>
 <body>
@@ -293,6 +334,7 @@ textarea::placeholder{color:#918b80}
 
     <button class="send" type="submit">INVIA</button>
     <div class="mic-status" id="micStatus" aria-live="polite"></div>
+    <div class="dictation-hint" id="dictationHint">🎤 Puoi anche dettare usando il microfono della tastiera</div>
   </form>
 
   <div class="session-row" id="sessionRow">
@@ -403,6 +445,47 @@ const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
 const saveConversationButton = document.getElementById('saveConversationButton');
 const deleteConversationButton = document.getElementById('deleteConversationButton');
+const dictationHint = document.getElementById('dictationHint');
+
+function updateKeyboardLayout(){
+  const vv = window.visualViewport;
+  if(!vv) return;
+
+  const keyboardOffset = Math.max(
+    0,
+    window.innerHeight - vv.height - vv.offsetTop
+  );
+
+  const isKeyboardOpen =
+    document.activeElement === input &&
+    keyboardOffset > 120;
+
+  document.body.classList.toggle('keyboard-open', isKeyboardOpen);
+  composer.classList.toggle('keyboard-open', isKeyboardOpen);
+
+  document.documentElement.style.setProperty(
+    '--keyboard-offset',
+    isKeyboardOpen ? `${keyboardOffset}px` : '0px'
+  );
+}
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', updateKeyboardLayout);
+  window.visualViewport.addEventListener('scroll', updateKeyboardLayout);
+}
+
+input.addEventListener('focus',()=>{
+  setTimeout(updateKeyboardLayout,80);
+  setTimeout(updateKeyboardLayout,260);
+});
+
+input.addEventListener('blur',()=>{
+  setTimeout(()=>{
+    document.body.classList.remove('keyboard-open');
+    composer.classList.remove('keyboard-open');
+    document.documentElement.style.setProperty('--keyboard-offset','0px');
+  },120);
+});
 
 
 let sessionMessages = [];
