@@ -498,6 +498,7 @@ textarea::placeholder{color:#918b80}
 
 <script>
 const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
+const STREAM_URL = WORKER_URL + 'stream';
 const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
@@ -1310,6 +1311,54 @@ function addMessage(text, who){
   return block;
 }
 
+function startStreamingSilverMessage(){
+  const block=document.createElement('div');
+  block.className='silver-block';
+
+  const el=document.createElement('div');
+  el.className='msg silver';
+  el.textContent='';
+
+  const listen=document.createElement('button');
+  listen.type='button';
+  listen.className='listen';
+  listen.textContent='…';
+  listen.disabled=true;
+  listen.setAttribute('aria-label','La risposta di Silver è in arrivo');
+
+  block.appendChild(el);
+  block.appendChild(listen);
+  conversation.appendChild(block);
+
+  return {block,el,listen,text:''};
+}
+
+function appendStreamingSilverText(state,delta){
+  state.text += delta;
+  // Durante lo streaming usiamo testo puro per evitare ricostruzioni costose
+  // a ogni singolo delta. Il Markdown viene renderizzato una sola volta alla fine.
+  state.el.textContent = state.text;
+
+  // Mantieni visibile la parte che sta arrivando senza animazioni pesanti.
+  conversation.lastElementChild?.scrollIntoView({
+    behavior:'auto',
+    block:'nearest'
+  });
+}
+
+function finishStreamingSilverMessage(state){
+  const finalText = state.text.trim() || 'Ti ho ricevuto.';
+  renderMessage(state.el,finalText,'silver');
+
+  state.listen.disabled=false;
+  state.listen.textContent='🔊 ASCOLTA';
+  state.listen.setAttribute('aria-label','Ascolta la risposta di Silver');
+  state.listen.dataset.speaking='0';
+  state.listen.addEventListener('click',()=>speakSilver(finalText,state.listen));
+
+  return finalText;
+}
+
 function updateComposerState(){
   const hasText = input.value.trim().length > 0;
   composer.classList.toggle('has-text', hasText);
@@ -1367,35 +1416,76 @@ form.addEventListener('submit', async e=>{
   send.textContent='…';
   micStatus.textContent='Silver sta rispondendo…';
 
+  let streamingState=null;
+
   try{
-    const response = await fetch(WORKER_URL,{
+    const response = await fetch(STREAM_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         message:text,
-        history:sessionMessages
+        history:sessionMessages.slice(-12)
       })
     });
 
-    const data = await response.json();
-    if(!response.ok || !data.ok){
-      throw new Error(data.error || 'Risposta non valida');
+    if(!response.ok || !response.body){
+      let errorMessage='Risposta non valida';
+      try{
+        const data=await response.json();
+        errorMessage=data.error || errorMessage;
+      }catch(_){}
+      throw new Error(errorMessage);
     }
 
-    const reply = data.reply || 'Ti ho ricevuto.';
-    addMessage(reply,'silver');
-    sessionMessages.push({role:'assistant', content:reply});
-    reviewMessages.push({role:'assistant', content:reply});
-    if(reviewMessages.length > 80){
-      reviewMessages.splice(0, reviewMessages.length - 80);
+    streamingState=startStreamingSilverMessage();
+    micStatus.textContent='';
+
+    const reader=response.body.getReader();
+    const decoder=new TextDecoder();
+    let firstChunk=true;
+
+    while(true){
+      const {value,done}=await reader.read();
+      if(done) break;
+
+      const delta=decoder.decode(value,{stream:true});
+      if(!delta) continue;
+
+      if(firstChunk){
+        firstChunk=false;
+        send.textContent='…';
+      }
+
+      appendStreamingSilverText(streamingState,delta);
     }
-    updateSessionControls();
+
+    const tail=decoder.decode();
+    if(tail){
+      appendStreamingSilverText(streamingState,tail);
+    }
+
+    const reply=finishStreamingSilverMessage(streamingState);
+
+    sessionMessages.push({role:'assistant',content:reply});
+    reviewMessages.push({role:'assistant',content:reply});
+
+    if(reviewMessages.length > 80){
+      reviewMessages.splice(0,reviewMessages.length - 80);
+    }
 
     if(sessionMessages.length > 20){
-      sessionMessages.splice(0, sessionMessages.length - 20);
+      sessionMessages.splice(0,sessionMessages.length - 20);
     }
+
+    updateSessionControls();
+
   }catch(err){
-    addMessage('In questo momento non riesco a collegarmi. Riprova tra poco.','silver');
+    if(streamingState && !streamingState.text.trim()){
+      streamingState.block.remove();
+    }
+    if(!streamingState || !streamingState.text.trim()){
+      addMessage('In questo momento non riesco a collegarmi. Riprova tra poco.','silver');
+    }
     console.error('Silver Worker:',err);
   }finally{
     send.disabled=false;
