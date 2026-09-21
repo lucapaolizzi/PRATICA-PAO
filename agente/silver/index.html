@@ -322,7 +322,7 @@ textarea::placeholder{color:#918b80}
   body.keyboard-open .composer{
     position:fixed;
     left:50%;
-    bottom:calc(8px + var(--keyboard-offset, 0px));
+    bottom:calc(46px + var(--keyboard-offset, 0px));
     transform:translateX(-50%);
     width:min(724px,calc(100% - 24px));
     z-index:80;
@@ -332,7 +332,7 @@ textarea::placeholder{color:#918b80}
   body.keyboard-open .dictation-help-row{
     position:fixed;
     left:50%;
-    bottom:calc(92px + var(--keyboard-offset, 0px));
+    bottom:calc(8px + var(--keyboard-offset, 0px));
     transform:translateX(-50%);
     width:100%;
     margin:0;
@@ -409,14 +409,8 @@ textarea::placeholder{color:#918b80}
   <input class="hidden-file" id="resumeFileInput" type="file"
     accept=".json,application/json">
 
-  <input class="hidden-file" id="documentFileInput" type="file"
-    accept=".pdf,.txt,.md,.json,application/pdf,text/plain,text/markdown,application/json">
-
-  <input class="hidden-file" id="photoFileInput" type="file"
-    accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif">
-
-  <input class="hidden-file" id="scanFileInput" type="file"
-    accept="image/jpeg,image/png" capture="environment">
+  <input class="hidden-file" id="attachmentFileInput" type="file"
+    accept=".pdf,.txt,.md,.json,.jpg,.jpeg,.png,.webp,.gif,application/pdf,text/plain,text/markdown,application/json,image/*">
 
   <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
@@ -427,26 +421,24 @@ textarea::placeholder{color:#918b80}
           <strong>RIPRENDI</strong>
           <span>Carica una conversazione Silver salvata.</span>
         </button>
-        <button class="sheet-action" id="documentButton" type="button">
-          <strong>DOCUMENTO / PDF</strong>
-          <span>Per appunti, pagine o materiali.</span>
-        </button>
-        <button class="sheet-action" id="scanButton" type="button">
-          <strong>SCANSIONA</strong>
-          <span>Fotografa una pagina con la fotocamera.</span>
-        </button>
-        <button class="sheet-action" id="photoButton" type="button">
-          <strong>FOTO</strong>
-          <span>Immagini utili alla conversazione.</span>
+        <button class="sheet-action" id="attachmentButton" type="button">
+          <strong>ALLEGA</strong>
+          <span>Foto, fotocamera, PDF o altri file.</span>
         </button>
 
         <a class="sheet-action" id="lucaButton" href="/agente/pao/">
           <strong>PARLA CON PAO</strong>
           <span>Contatto umano con PAO: email, video-call, incontro individuale e canali ufficiali.</span>
         </a>
+
+        <a class="sheet-action" id="helpButton"
+          href="mailto:info@praticapao.it?subject=Problema%20con%20Silver">
+          <strong>HELP / PROBLEMI</strong>
+          <span>Segnala bug, problemi dell’interfaccia o difficoltà nell’uso di Silver.</span>
+        </a>
       </div>
       <p class="sheet-note" id="toolsNote">
-        Attivi: RIPRENDI, DOCUMENTO / PDF, SCANSIONA e FOTO. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
+        Con ALLEGA puoi scegliere una foto, scattarne una o selezionare un file. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
     </section>
@@ -510,14 +502,10 @@ const sessionEndButton = document.getElementById('sessionEndButton');
 const toolsBackdrop = document.getElementById('toolsBackdrop');
 const toolsClose = document.getElementById('toolsClose');
 const resumeButton = document.getElementById('resumeButton');
-const documentButton = document.getElementById('documentButton');
-const scanButton = document.getElementById('scanButton');
-const photoButton = document.getElementById('photoButton');
+const attachmentButton = document.getElementById('attachmentButton');
 const toolsNote = document.getElementById('toolsNote');
 const resumeFileInput = document.getElementById('resumeFileInput');
-const documentFileInput = document.getElementById('documentFileInput');
-const photoFileInput = document.getElementById('photoFileInput');
-const scanFileInput = document.getElementById('scanFileInput');
+const attachmentFileInput = document.getElementById('attachmentFileInput');
 
 const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
@@ -572,8 +560,7 @@ function updateKeyboardLayout(){
 }
 
 if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', updateKeyboardLayout);
-  window.visualViewport.addEventListener('scroll', updateKeyboardLayout);
+  window.visualViewport.addEventListener('resize', updateKeyboardLayout, {passive:true});
 }
 
 input.addEventListener('focus',()=>{
@@ -913,37 +900,26 @@ async function sendAttachment(file, kind){
   }
 }
 
-documentButton.addEventListener('click',()=>{
+attachmentButton.addEventListener('click',()=>{
   closeSheet(toolsBackdrop);
-  documentFileInput.value='';
-  documentFileInput.click();
+  attachmentFileInput.value='';
+  attachmentFileInput.click();
 });
 
-photoButton.addEventListener('click',()=>{
-  closeSheet(toolsBackdrop);
-  photoFileInput.value='';
-  photoFileInput.click();
-});
+attachmentFileInput.addEventListener('change',()=>{
+  const file = attachmentFileInput.files?.[0];
+  if(!file) return;
 
-scanButton.addEventListener('click',()=>{
-  closeSheet(toolsBackdrop);
-  scanFileInput.value='';
-  scanFileInput.click();
-});
+  const type = String(file.type || '').toLowerCase();
+  const name = String(file.name || '').toLowerCase();
 
-documentFileInput.addEventListener('change',()=>{
-  const file = documentFileInput.files?.[0];
-  if(file) sendAttachment(file,'document');
-});
+  const kind =
+    type.startsWith('image/') ? 'photo' :
+    name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') ||
+    name.endsWith('.webp') || name.endsWith('.gif') ? 'photo' :
+    'document';
 
-photoFileInput.addEventListener('change',()=>{
-  const file = photoFileInput.files?.[0];
-  if(file) sendAttachment(file,'photo');
-});
-
-scanFileInput.addEventListener('change',()=>{
-  const file = scanFileInput.files?.[0];
-  if(file) sendAttachment(file,'scan');
+  sendAttachment(file,kind);
 });
 
 saveConversationButton.addEventListener('click',saveConversationToDevice);
@@ -1247,22 +1223,31 @@ function updateComposerState(){
   composer.classList.toggle('has-text', hasText);
 }
 
-clearInputButton.addEventListener('click',()=>{
+clearInputButton.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  e.stopPropagation();
+
   input.value = '';
-  resize();
-  updateComposerState();
-  input.focus();
+  input.style.height = '42px';
+  composer.classList.remove('has-text');
+
+  try{ input.focus({preventScroll:true}); }
+  catch(err){ input.focus(); }
 });
 
+let resizeFrame = 0;
 function resize(){
-  input.style.height='auto';
-  input.style.height=Math.min(input.scrollHeight,150)+'px';
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(()=>{
+    input.style.height='auto';
+    input.style.height=Math.min(input.scrollHeight,150)+'px';
+  });
 }
 
 input.addEventListener('input',()=>{
   resize();
   updateComposerState();
-});
+},{passive:true});
 
 form.addEventListener('submit', async e=>{
   e.preventDefault();
@@ -1288,6 +1273,7 @@ form.addEventListener('submit', async e=>{
 
   send.disabled=true;
   send.textContent='…';
+  micStatus.textContent='Silver sta rispondendo…';
 
   try{
     const response = await fetch(WORKER_URL,{
@@ -1322,6 +1308,7 @@ form.addEventListener('submit', async e=>{
   }finally{
     send.disabled=false;
     send.textContent='INVIA';
+    micStatus.textContent='';
     input.focus();
     conversation.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
