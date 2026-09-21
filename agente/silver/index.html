@@ -322,7 +322,8 @@ textarea::placeholder{color:#918b80}
   body.keyboard-open .composer{
     position:fixed;
     left:50%;
-    bottom:calc(46px + var(--keyboard-offset, 0px));
+    top:var(--composer-top, auto);
+    bottom:auto;
     transform:translateX(-50%);
     width:min(724px,calc(100% - 24px));
     z-index:80;
@@ -332,7 +333,8 @@ textarea::placeholder{color:#918b80}
   body.keyboard-open .dictation-help-row{
     position:fixed;
     left:50%;
-    bottom:calc(8px + var(--keyboard-offset, 0px));
+    top:var(--help-top, auto);
+    bottom:auto;
     transform:translateX(-50%);
     width:100%;
     margin:0;
@@ -566,32 +568,55 @@ document.addEventListener('pointerdown',e=>{
 });
 
 function updateKeyboardLayout(){
+  const focused = document.activeElement === input;
   const vv = window.visualViewport;
-  if(!vv) return;
 
-  const keyboardOffset = Math.max(
-    0,
-    window.innerHeight - vv.height - vv.offsetTop
+  document.body.classList.toggle('keyboard-open', focused);
+  composer.classList.toggle('keyboard-open', focused);
+
+  if(!focused){
+    document.documentElement.style.removeProperty('--composer-top');
+    document.documentElement.style.removeProperty('--help-top');
+    return;
+  }
+
+  const viewportTop = vv ? vv.offsetTop : 0;
+  const viewportHeight = vv ? vv.height : window.innerHeight;
+
+  // Posiziona il composer SEMPRE dentro la parte visibile dello schermo,
+  // indipendentemente da come Safari/WebView calcola l'altezza della tastiera.
+  const composerHeight = Math.max(composer.offsetHeight || 0, 58);
+  const helpHeight = 34;
+  const gap = 8;
+  const bottomSafe = 12;
+
+  const composerTop = Math.max(
+    viewportTop + 8,
+    viewportTop + viewportHeight - composerHeight - helpHeight - gap - bottomSafe
   );
 
-  const isKeyboardOpen =
-    document.activeElement === input &&
-    keyboardOffset > 120;
-
-  document.body.classList.toggle('keyboard-open', isKeyboardOpen);
-  composer.classList.toggle('keyboard-open', isKeyboardOpen);
+  document.documentElement.style.setProperty(
+    '--composer-top',
+    `${Math.round(composerTop)}px`
+  );
 
   document.documentElement.style.setProperty(
-    '--keyboard-offset',
-    isKeyboardOpen ? `${keyboardOffset}px` : '0px'
+    '--help-top',
+    `${Math.round(composerTop + composerHeight + gap)}px`
   );
 }
 
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize', updateKeyboardLayout, {passive:true});
+  window.visualViewport.addEventListener('scroll', updateKeyboardLayout, {passive:true});
 }
 
 input.addEventListener('focus',()=>{
+  // La classe viene attivata subito: non dipende più da una soglia
+  // che su alcuni iPhone/WebView può risultare zero.
+  document.body.classList.add('keyboard-open');
+  composer.classList.add('keyboard-open');
+  requestAnimationFrame(updateKeyboardLayout);
   setTimeout(updateKeyboardLayout,80);
   setTimeout(updateKeyboardLayout,260);
 });
@@ -600,7 +625,8 @@ input.addEventListener('blur',()=>{
   setTimeout(()=>{
     document.body.classList.remove('keyboard-open');
     composer.classList.remove('keyboard-open');
-    document.documentElement.style.setProperty('--keyboard-offset','0px');
+    document.documentElement.style.removeProperty('--composer-top');
+    document.documentElement.style.removeProperty('--help-top');
   },120);
 });
 
