@@ -365,6 +365,7 @@ textarea::placeholder{color:#918b80}
 const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
 const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
+const REVIEW_URL = WORKER_URL + 'review';
 
 
 const backLink = document.getElementById('backLink');
@@ -405,6 +406,7 @@ const deleteConversationButton = document.getElementById('deleteConversationButt
 
 
 let sessionMessages = [];
+let reviewMessages = [];
 
 let activeAudio = null;
 let activeAudioUrl = null;
@@ -437,6 +439,7 @@ function showConversationMode(){
 
 function resetConversationUi(){
   sessionMessages = [];
+  reviewMessages = [];
   conversation.innerHTML = '';
   conversation.style.display='none';
   opening.style.display='';
@@ -466,8 +469,48 @@ function safeFileDate(){
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
 }
 
-function saveConversationToDevice(){
+async function sendSessionReview(){
+  const history = reviewMessages.length ? reviewMessages : sessionMessages;
+
+  if(history.length < 2){
+    return {ok:true,event:false,reason:'sessione troppo breve'};
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(),12000);
+
+  try{
+    const response = await fetch(REVIEW_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        history:history.map(m=>({
+          role:m.role,
+          content:String(m.content || '')
+        }))
+      }),
+      signal:controller.signal
+    });
+
+    const data = await response.json();
+
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || 'Silver Review non disponibile');
+    }
+
+    return data;
+  }catch(err){
+    console.error('Silver Review:',err);
+    return {ok:false,error:String(err?.message || err)};
+  }finally{
+    clearTimeout(timeout);
+  }
+}
+
+async function saveConversationToDevice(){
   if(!sessionMessages.length) return;
+
+  await sendSessionReview();
 
   const payload = {
     format: 'silver-pao-conversation',
@@ -533,8 +576,13 @@ function renderRestoredConversation(messages){
     addMessage(m.content, m.role === 'assistant' ? 'silver' : 'user');
   }
 
-  // Il Worker 1.5 usa gli ultimi 20 messaggi come contesto operativo.
+  // Il dialogo operativo usa gli ultimi 20 messaggi come contesto.
   sessionMessages = messages.slice(-20);
+
+  // Silver Review conserva solo in memoria, per la sessione corrente,
+  // una copia più ampia del dialogo da verificare alla chiusura.
+  reviewMessages = messages.slice(-80);
+
   updateSessionControls();
 
   requestAnimationFrame(()=>{
@@ -598,13 +646,16 @@ photoButton.addEventListener('click',()=>notYetAvailable('Foto'));
 
 saveConversationButton.addEventListener('click',saveConversationToDevice);
 
-deleteConversationButton.addEventListener('click',()=>{
+deleteConversationButton.addEventListener('click',async ()=>{
   const ok = window.confirm(
     'Vuoi eliminare e chiudere questa sessione senza salvarla? Questa azione non può essere annullata.'
   );
   if(!ok) return;
 
   closeSheet(sessionBackdrop);
+
+  await sendSessionReview();
+
   resetConversationUi();
 
   // Chiusura reale della sessione: si esce dalla Stanza Silver.
@@ -923,6 +974,10 @@ form.addEventListener('submit', async e=>{
 
   addMessage(text,'user');
   sessionMessages.push({role:'user', content:text});
+  reviewMessages.push({role:'user', content:text});
+  if(reviewMessages.length > 80){
+    reviewMessages.splice(0, reviewMessages.length - 80);
+  }
   updateSessionControls();
 
   input.value='';
@@ -950,6 +1005,10 @@ form.addEventListener('submit', async e=>{
     const reply = data.reply || 'Ti ho ricevuto.';
     addMessage(reply,'silver');
     sessionMessages.push({role:'assistant', content:reply});
+    reviewMessages.push({role:'assistant', content:reply});
+    if(reviewMessages.length > 80){
+      reviewMessages.splice(0, reviewMessages.length - 80);
+    }
     updateSessionControls();
 
     if(sessionMessages.length > 20){
