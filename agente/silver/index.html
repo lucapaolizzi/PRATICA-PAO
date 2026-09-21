@@ -307,6 +307,14 @@ textarea::placeholder{color:#918b80}
 }
 
 @media(max-width:760px){
+  /* Mobile: non spingere il ritratto di Silver fuori dalla parte alta dello schermo. */
+  .identity{
+    transform:none;
+    padding-top:2px;
+  }
+  .stage{
+    transform:translateY(-10px);
+  }
   body.keyboard-open .shell{
     min-height:100dvh;
     padding-bottom:calc(8px + var(--keyboard-offset, 0px));
