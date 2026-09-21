@@ -353,6 +353,19 @@ textarea::placeholder{color:#918b80}
     display:none !important;
   }
 }
+
+@media(min-width:761px){
+  .identity{
+    transform:translateY(-22px);
+  }
+  .stage{
+    transform:translateY(-22px);
+  }
+  .composer{
+    transform:translateY(-22px);
+  }
+}
+
 </style>
 </head>
 <body>
@@ -461,9 +474,6 @@ textarea::placeholder{color:#918b80}
       <p class="sheet-note">
         La conversazione non viene archiviata qui in modo permanente. Puoi salvarla sul tuo dispositivo oppure eliminarla e terminare la sessione.
       </p>
-      <a class="sheet-close" href="/agente/pao/" style="display:block;text-decoration:none;text-align:center;margin-top:10px;">
-        PARLA CON PAO
-      </a>
       <button class="sheet-close" id="sessionClose" type="button">CONTINUA LA CONVERSAZIONE</button>
     </section>
   </div>
@@ -679,10 +689,33 @@ async function sendSessionReview(){
   }
 }
 
-async function saveConversationToDevice(){
+function sendSessionReviewInBackground(){
+  const history = reviewMessages.length ? reviewMessages : sessionMessages;
+  if(history.length < 2) return;
+
+  try{
+    fetch(REVIEW_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        history:history.map(m=>({
+          role:m.role,
+          content:String(m.content || '')
+        }))
+      }),
+      keepalive:true
+    }).catch(err=>console.error('Silver Review background:',err));
+  }catch(err){
+    console.error('Silver Review background:',err);
+  }
+}
+
+function saveConversationToDevice(){
   if(!sessionMessages.length) return;
 
-  await sendSessionReview();
+  saveConversationButton.disabled = true;
+  const strong = saveConversationButton.querySelector('strong');
+  if(strong) strong.textContent = 'SALVATAGGIO…';
 
   const payload = {
     format: 'silver-pao-conversation',
@@ -709,13 +742,14 @@ async function saveConversationToDevice(){
 
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 
+  // Review in background: non blocca l'utente.
+  sendSessionReviewInBackground();
+
   closeSheet(sessionBackdrop);
 
-  // Lascia un piccolo tempo al browser per avviare il download,
-  // poi esce davvero dalla Stanza Silver.
   setTimeout(()=>{
     window.location.href = '/entra/';
-  },700);
+  },180);
 }
 
 function normalizeSavedMessages(data){
