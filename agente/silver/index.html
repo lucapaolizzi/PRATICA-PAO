@@ -710,14 +710,17 @@ body.mode-selected .mode-chooser{
 }
 
 .resume-from-opening{
-  margin:12px auto 0;
-  border:0;
-  background:transparent;
-  color:var(--muted);
-  text-decoration:underline;
-  font:700 10px/1.2 Arial,Helvetica,sans-serif;
-  letter-spacing:.05em;
+  margin:16px auto 0;
+  border:1.5px solid rgba(36,35,31,.22);
+  border-radius:999px;
+  background:#fff;
+  color:var(--ink);
+  text-decoration:none;
+  font:700 11px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.08em;
+  padding:11px 16px;
   cursor:pointer;
+  box-shadow:0 2px 8px rgba(36,35,31,.05);
 }
 
 @media(max-width:560px){
@@ -770,14 +773,14 @@ body.mode-selected .mode-chooser{
 
         <button class="mode-door practice" id="practiceDoor" type="button">
           <strong>CHAT IN PRATICA</strong>
-          <span>Crescita personale P.A.O.: parti, polarità, Gestalt, metafore, intensità e presenza.<br><small>Qui la voce di una parte non viene confusa automaticamente con la volontà dell’intera persona.</small></span>
+          <span>Crescita personale P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Qui la voce di una parte non viene confusa automaticamente con la volontà dell’intera persona.</small></span>
         </button>
       </div>
 
       <p class="gentle" id="openingGentle">Scegli la porta più adatta a ciò che vuoi portare.</p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
-        RIPRENDI UNA SESSIONE SALVATA
+        ↻ RIPRENDI UNA TUA SESSIONE
       </button>
     </div>
     <div class="conversation" id="conversation" aria-live="polite"></div>
@@ -871,6 +874,35 @@ body.mode-selected .mode-chooser{
     </section>
   </div>
 
+
+  <div class="sheet-backdrop" id="exitBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="exitTitle">Vuoi uscire da Silver?</h2>
+
+      <p class="sheet-note" style="font-size:13px;line-height:1.5;margin-top:4px;">
+        La sessione corrente non è ancora stata salvata. Se esci adesso, potresti perdere la conversazione.
+      </p>
+
+      <div class="sheet-grid" style="margin-top:12px;">
+        <button class="sheet-action primary" id="exitContinueButton" type="button">
+          <strong>CONTINUA CON SILVER</strong>
+          <span>Torna alla conversazione senza perdere nulla.</span>
+        </button>
+
+        <button class="sheet-action" id="exitSaveButton" type="button">
+          <strong>SALVA E TERMINA</strong>
+          <span>Scarica la sessione sul dispositivo prima di uscire.</span>
+        </button>
+
+        <button class="sheet-action danger" id="exitWithoutSaveButton" type="button">
+          <strong>ESCI SENZA SALVARE</strong>
+          <span>Chiudi Silver senza conservare questa sessione.</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
   <div class="sheet-backdrop" id="sessionBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
       <div class="sheet-handle"></div>
@@ -905,11 +937,14 @@ const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const backLink = document.getElementById('backLink');
 backLink.addEventListener('click', e=>{
   e.preventDefault();
-  if(window.history.length > 1){
-    window.history.back();
-  }else{
-    window.location.href = '/agente/patto/';
-  }
+
+  requestSilverExit(()=>{
+    if(window.history.length > 1){
+      window.history.back();
+    }else{
+      window.location.href = '/agente/patto/';
+    }
+  });
 });
 
 const form = document.getElementById('composer');
@@ -944,6 +979,34 @@ const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
 const saveConversationButton = document.getElementById('saveConversationButton');
 const deleteConversationButton = document.getElementById('deleteConversationButton');
+
+const exitBackdrop = document.getElementById('exitBackdrop');
+const exitContinueButton = document.getElementById('exitContinueButton');
+const exitSaveButton = document.getElementById('exitSaveButton');
+const exitWithoutSaveButton = document.getElementById('exitWithoutSaveButton');
+
+let allowPageExit = false;
+let pendingExitAction = null;
+
+function hasUnsavedSilverWork(){
+  return (
+    sessionMessages.length > 0 ||
+    input.value.trim().length > 0 ||
+    pendingAttachments.length > 0
+  );
+}
+
+function requestSilverExit(action){
+  if(!hasUnsavedSilverWork()){
+    allowPageExit = true;
+    action();
+    return;
+  }
+
+  pendingExitAction = action;
+  openSheet(exitBackdrop);
+}
+
 const dictationHelpButton = document.getElementById('dictationHelpButton');
 const dictationPopover = document.getElementById('dictationPopover');
 
@@ -1247,6 +1310,7 @@ function saveConversationToDevice(){
   sendSessionReviewInBackground();
 
   closeSheet(sessionBackdrop);
+  allowPageExit = true;
 
   setTimeout(()=>{
     window.location.href = '/entra/';
@@ -1319,9 +1383,69 @@ helpButton.addEventListener('click',()=>{
 
 helpClose.addEventListener('click',()=>closeSheet(helpBackdrop));
 
+
 helpBackdrop.addEventListener('click',e=>{
   if(e.target === helpBackdrop) closeSheet(helpBackdrop);
 });
+
+/* Protezione uscita accidentale */
+exitContinueButton.addEventListener('click',()=>{
+  pendingExitAction = null;
+  closeSheet(exitBackdrop);
+});
+
+exitSaveButton.addEventListener('click',()=>{
+  pendingExitAction = null;
+  closeSheet(exitBackdrop);
+  saveConversationToDevice();
+});
+
+exitWithoutSaveButton.addEventListener('click',()=>{
+  const action = pendingExitAction;
+  pendingExitAction = null;
+  allowPageExit = true;
+  closeSheet(exitBackdrop);
+
+  if(typeof action === 'function'){
+    action();
+  }else{
+    window.location.href = '/entra/';
+  }
+});
+
+exitBackdrop.addEventListener('click',e=>{
+  if(e.target === exitBackdrop){
+    pendingExitAction = null;
+    closeSheet(exitBackdrop);
+  }
+});
+
+/* Anche "PARLA CON PAO" esce da Silver: proteggiamo la sessione. */
+const lucaButton = document.getElementById('lucaButton');
+lucaButton.addEventListener('click',e=>{
+  if(!hasUnsavedSilverWork()) return;
+
+  e.preventDefault();
+  const href = lucaButton.getAttribute('href') || '/agente/pao/';
+  closeSheet(toolsBackdrop);
+
+  requestSilverExit(()=>{
+    window.location.href = href;
+  });
+});
+
+/*
+  Ultima rete di sicurezza per refresh, chiusura scheda, tasto indietro
+  del browser o altri abbandoni non gestiti dalla UI.
+  I browser decidono se mostrare il proprio avviso e non consentono
+  testo personalizzato.
+*/
+window.addEventListener('beforeunload',e=>{
+  if(allowPageExit || !hasUnsavedSilverWork()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
 
 sessionEndButton.addEventListener('click',()=>openSheet(sessionBackdrop));
 sessionClose.addEventListener('click',()=>closeSheet(sessionBackdrop));
@@ -1654,6 +1778,7 @@ deleteConversationButton.addEventListener('click',async ()=>{
   await sendSessionReview();
 
   resetConversationUi();
+  allowPageExit = true;
 
   // Chiusura reale della sessione: si esce dalla Stanza Silver.
   window.location.href = '/entra/';
