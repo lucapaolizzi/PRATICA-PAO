@@ -733,6 +733,14 @@ body.mode-selected .mode-chooser{
   }
 }
 
+
+.mode-door small{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font:11px/1.35 Arial,Helvetica,sans-serif;
+}
+
 </style>
 </head>
 <body>
@@ -756,13 +764,13 @@ body.mode-selected .mode-chooser{
 
       <div class="mode-chooser" id="modeChooser" aria-label="Scegli la modalità di Silver">
         <button class="mode-door" id="chatDoor" type="button">
-          <strong>CHAT</strong>
+          <strong>CHAT GENERICA</strong>
           <span>Domande, informazioni, problemi pratici e conversazione generale.</span>
         </button>
 
         <button class="mode-door practice" id="practiceDoor" type="button">
-          <strong>PRATICA</strong>
-          <span>Crescita personale P.A.O.: parti, polarità, Gestalt, metafore e presenza.</span>
+          <strong>CHAT IN PRATICA</strong>
+          <span>Crescita personale P.A.O.: parti, polarità, Gestalt, metafore, intensità e presenza.<br><small>Qui la voce di una parte non viene confusa automaticamente con la volontà dell’intera persona.</small></span>
         </button>
       </div>
 
@@ -963,8 +971,8 @@ function chooseSilverMode(mode){
 
   modeBadge.hidden = false;
   modeBadge.textContent = selectedMode === 'practice'
-    ? 'PRATICA P.A.O.'
-    : 'CHAT';
+    ? 'CHAT IN PRATICA'
+    : 'CHAT GENERICA';
 
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
   openingGentle.textContent = selectedMode === 'practice'
@@ -2024,7 +2032,7 @@ form.addEventListener('submit', async e=>{
   const hasAttachments=pendingAttachments.length > 0;
 
   if(!selectedMode){
-    openingQuestion.textContent = 'Scegli prima CHAT oppure PRATICA.';
+    openingQuestion.textContent = 'Scegli prima CHAT GENERICA oppure CHAT IN PRATICA.';
     return;
   }
 
