@@ -354,20 +354,19 @@ textarea::placeholder{color:#918b80}
 }
 
 
-/* Silver resta visibile anche durante la conversazione */
+/* Silver resta visibile anche durante la conversazione, senza sovrapporsi */
 body.conversation-mode .identity{
-  display:block;
-  position:sticky;
-  top:calc(6px + env(safe-area-inset-top));
-  z-index:35;
+  display:block !important;
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  z-index:2;
   width:max-content;
-  margin:0 auto 8px;
+  margin:0 auto 14px;
   padding:5px 9px 6px;
   border:1px solid rgba(36,35,31,.12);
   border-radius:16px;
   background:rgba(245,240,230,.94);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
   transform:none !important;
 }
 
@@ -382,25 +381,39 @@ body.conversation-mode .identity .silver{
   letter-spacing:.20em !important;
 }
 
-/* Anche con la tastiera aperta, Silver resta riconoscibile in forma compatta */
+
+/* In chat il composer resta in fondo al contenuto e non copre le risposte */
+body.conversation-mode:not(.keyboard-open) .composer{
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  margin:18px auto 10px !important;
+  width:min(724px,calc(100% - 24px));
+  z-index:5;
+}
+
+body.conversation-mode:not(.keyboard-open) .dictation-help-row{
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  margin:0 auto 10px !important;
+  width:100%;
+  z-index:5;
+}
+
+body.conversation-mode .conversation{
+  padding-bottom:18px;
+}
+
 @media(max-width:760px){
+  body.keyboard-open .identity,
   body.keyboard-open.conversation-mode .identity{
-    display:block !important;
-    position:fixed;
-    top:calc(4px + env(safe-area-inset-top));
-    left:50%;
-    transform:translateX(-50%) !important;
-    z-index:90;
-    margin:0;
-    padding:4px 7px 5px;
-  }
-
-  body.keyboard-open.conversation-mode .identity .mascot{
-    width:42px !important;
-  }
-
-  body.keyboard-open.conversation-mode .identity .silver{
-    font-size:9px !important;
+    display:none !important;
   }
 }
 
@@ -484,6 +497,13 @@ body.conversation-mode .identity .silver{
   }
   .composer{
     transform:translateY(-22px);
+  }
+}
+
+
+@media(max-width:760px){
+  body.keyboard-open .identity{
+    display:none !important;
   }
 }
 
