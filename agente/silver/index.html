@@ -307,14 +307,6 @@ textarea::placeholder{color:#918b80}
 }
 
 @media(max-width:760px){
-  /* Mobile: non spingere il ritratto di Silver fuori dalla parte alta dello schermo. */
-  .identity{
-    transform:none;
-    padding-top:2px;
-  }
-  .stage{
-    transform:translateY(-10px);
-  }
   body.keyboard-open .shell{
     min-height:100dvh;
     padding-bottom:calc(8px + var(--keyboard-offset, 0px));
@@ -328,34 +320,30 @@ textarea::placeholder{color:#918b80}
     display:none;
   }
   body.keyboard-open .composer{
-    position:fixed;
-    left:50%;
-    top:var(--composer-top, auto);
-    bottom:auto;
-    transform:translateX(-50%);
-    width:min(724px,calc(100% - 24px));
-    z-index:80;
-    margin:0;
-  }
+  position:fixed;
+  left:50%;
+  top:auto;
+  bottom:calc(var(--keyboard-height, 0px) + 52px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  width:min(724px,calc(100% - 24px));
+  z-index:80;
+  margin:0;
+}
 
-  body.keyboard-open .dictation-help-row{
-    position:fixed;
-    left:50%;
-    top:var(--help-top, auto);
-    bottom:auto;
-    transform:translateX(-50%);
-    width:100%;
-    margin:0;
-    z-index:81;
-    pointer-events:none;
-  }
+body.keyboard-open .dictation-help-row{
+  position:fixed;
+  left:50%;
+  top:auto;
+  bottom:calc(var(--keyboard-height, 0px) + 10px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  width:100%;
+  margin:0;
+  z-index:81;
+  pointer-events:none;
+}
   body.keyboard-open .dictation-help,
   body.keyboard-open .dictation-popover{
     pointer-events:auto;
-  }
-
-  body.keyboard-open .dictation-popover{
-    bottom:104px;
   }
   body.keyboard-open .conversation{
     padding-bottom:128px;
@@ -415,7 +403,7 @@ textarea::placeholder{color:#918b80}
     </div>
 
     <textarea id="input" rows="1" maxlength="3000"
-      placeholder="" aria-label="Messaggio per Silver"></textarea>
+      placeholder="" aria-label="Messaggio per Silver" autofocus></textarea>
 
     <button class="send" type="submit">INVIA</button>
     <div class="mic-status" id="micStatus" aria-live="polite"></div>
@@ -425,7 +413,7 @@ textarea::placeholder{color:#918b80}
     <button class="dictation-help" id="dictationHelpButton" type="button"
       aria-label="Come dettare un messaggio" title="Come dettare un messaggio">?</button>
     <div class="dictation-popover" id="dictationPopover">
-      🎤 Per dettare, usa il microfono in basso a destra della tastiera dell’iPhone.
+      🎤 Per dettare, usa il microfono della tastiera del tuo dispositivo. La posizione può cambiare tra iPhone e Android.
     </div>
   </div>
 
@@ -581,41 +569,35 @@ document.addEventListener('pointerdown',e=>{
 });
 
 function updateKeyboardLayout(){
-  const focused = document.activeElement === input;
   const vv = window.visualViewport;
+  const focused = document.activeElement === input;
 
   document.body.classList.toggle('keyboard-open', focused);
   composer.classList.toggle('keyboard-open', focused);
 
   if(!focused){
-    document.documentElement.style.removeProperty('--composer-top');
-    document.documentElement.style.removeProperty('--help-top');
+    document.documentElement.style.setProperty('--keyboard-height','0px');
     return;
   }
 
-  const viewportTop = vv ? vv.offsetTop : 0;
-  const viewportHeight = vv ? vv.height : window.innerHeight;
+  let keyboardHeight = 0;
 
-  // Posiziona il composer SEMPRE dentro la parte visibile dello schermo,
-  // indipendentemente da come Safari/WebView calcola l'altezza della tastiera.
-  const composerHeight = Math.max(composer.offsetHeight || 0, 58);
-  const helpHeight = 34;
-  const gap = 8;
-  const bottomSafe = 12;
+  if(vv){
+    keyboardHeight = Math.max(
+      0,
+      window.innerHeight - vv.height - vv.offsetTop
+    );
+  }
 
-  const composerTop = Math.max(
-    viewportTop + 8,
-    viewportTop + viewportHeight - composerHeight - helpHeight - gap - bottomSafe
-  );
-
-  document.documentElement.style.setProperty(
-    '--composer-top',
-    `${Math.round(composerTop)}px`
-  );
+  if(keyboardHeight < 80){
+    const usable = vv ? vv.height : window.innerHeight;
+    const estimated = Math.max(0, window.screen.height - usable);
+    if(estimated > 120) keyboardHeight = estimated;
+  }
 
   document.documentElement.style.setProperty(
-    '--help-top',
-    `${Math.round(composerTop + composerHeight + gap)}px`
+    '--keyboard-height',
+    `${Math.round(keyboardHeight)}px`
   );
 }
 
@@ -624,9 +606,9 @@ if(window.visualViewport){
   window.visualViewport.addEventListener('scroll', updateKeyboardLayout, {passive:true});
 }
 
+window.addEventListener('resize', updateKeyboardLayout, {passive:true});
+
 input.addEventListener('focus',()=>{
-  // La classe viene attivata subito: non dipende più da una soglia
-  // che su alcuni iPhone/WebView può risultare zero.
   document.body.classList.add('keyboard-open');
   composer.classList.add('keyboard-open');
   requestAnimationFrame(updateKeyboardLayout);
@@ -638,98 +620,9 @@ input.addEventListener('blur',()=>{
   setTimeout(()=>{
     document.body.classList.remove('keyboard-open');
     composer.classList.remove('keyboard-open');
-    document.documentElement.style.removeProperty('--composer-top');
-    document.documentElement.style.removeProperty('--help-top');
+    document.documentElement.style.setProperty('--keyboard-height','0px');
   },120);
 });
-
-
-let sessionMessages = [];
-let reviewMessages = [];
-
-let activeAudio = null;
-let activeAudioUrl = null;
-let activeListenButton = null;
-let activePaused = false;
-let activeAudioDone = null;
-let playbackRunId = 0;
-
-
-function openSheet(backdrop){
-  backdrop.classList.add('open');
-  backdrop.setAttribute('aria-hidden','false');
-}
-
-function closeSheet(backdrop){
-  backdrop.classList.remove('open');
-  backdrop.setAttribute('aria-hidden','true');
-}
-
-function updateSessionControls(){
-  sessionRow.classList.toggle('visible', sessionMessages.length > 0);
-}
-
-function showConversationMode(){
-  opening.style.display='none';
-  conversation.style.display='flex';
-  document.querySelector('.mascot').style.width='92px';
-  document.querySelector('.identity').style.paddingBottom='2px';
-}
-
-function resetConversationUi(){
-  sessionMessages = [];
-  reviewMessages = [];
-  conversation.innerHTML = '';
-  conversation.style.display='none';
-  opening.style.display='';
-  document.querySelector('.mascot').style.width='';
-  document.querySelector('.identity').style.paddingBottom='';
-  input.value='';
-  resize();
-  updateComposerState();
-  updateSessionControls();
-
-  if(activeAudio){
-    try{ activeAudio.pause(); }catch(e){}
-  }
-  if(activeAudioUrl){
-    URL.revokeObjectURL(activeAudioUrl);
-  }
-  activeAudio = null;
-  activeAudioUrl = null;
-  activeListenButton = null;
-  activePaused = false;
-  playbackRunId++;
-}
-
-function safeFileDate(){
-  const d = new Date();
-  const p = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
-}
-
-async function sendSessionReview(){
-  const history = reviewMessages.length ? reviewMessages : sessionMessages;
-
-  if(history.length < 2){
-    return {ok:true,event:false,reason:'sessione troppo breve'};
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(),12000);
-
-  try{
-    const response = await fetch(REVIEW_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        history:history.map(m=>({
-          role:m.role,
-          content:String(m.content || '')
-        }))
-      }),
-      signal:controller.signal
-    });
 
     const data = await response.json();
 
@@ -1360,7 +1253,6 @@ function appendStreamingSilverText(state,delta){
 
 function finishStreamingSilverMessage(state){
   const finalText = state.text.trim() || 'Ti ho ricevuto.';
-  state.el.textContent = '';
   renderMessage(state.el,finalText,'silver');
 
   state.listen.disabled=false;
@@ -1405,7 +1297,6 @@ input.addEventListener('input',()=>{
 
 form.addEventListener('submit', async e=>{
   e.preventDefault();
-  document.getElementById('dictationHelpRow')?.classList.remove('show-dictation-help');
   const text=input.value.trim();
   if(!text || send.disabled) return;
 
