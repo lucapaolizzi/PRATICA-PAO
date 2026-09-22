@@ -1002,11 +1002,11 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <div class="sheet-grid">
         <button class="sheet-action primary" id="saveConversationButton" type="button">
           <strong>SALVA E TERMINA</strong>
-          <span>Scarica la conversazione sul dispositivo e termina la sessione.</span>
+          <span>Scarica la conversazione sul dispositivo e torna all’ingresso di Silver.</span>
         </button>
         <button class="sheet-action danger" id="deleteConversationButton" type="button">
           <strong>ELIMINA E TERMINA</strong>
-          <span>Elimina la conversazione corrente senza salvarla e termina la sessione.</span>
+          <span>Elimina la conversazione corrente senza salvarla e torna all’ingresso di Silver.</span>
         </button>
       </div>
       <p class="sheet-note">
@@ -1374,9 +1374,11 @@ function closeSheet(backdrop){
   backdrop.setAttribute('aria-hidden','true');
 }
 
-function updateSessionControls(){
+function updateSessionControls(persistRecovery=true){
   sessionRow.classList.toggle('visible', sessionMessages.length > 0);
-  saveRecoveryDraft();
+  if(persistRecovery){
+    saveRecoveryDraft();
+  }
 }
 
 function showConversationMode(){
@@ -1486,7 +1488,7 @@ function sendSessionReviewInBackground(){
   }
 }
 
-function saveConversationToDevice(){
+function saveConversationToDevice(exitAction=null){
   if(!sessionMessages.length) return;
 
   saveConversationButton.disabled = true;
@@ -1524,10 +1526,24 @@ function saveConversationToDevice(){
 
   clearRecoveryDraft();
   closeSheet(sessionBackdrop);
-  allowPageExit = true;
 
   setTimeout(()=>{
-    window.location.href = '/entra/';
+    saveConversationButton.disabled = false;
+    if(strong) strong.textContent = 'SALVA E TERMINA';
+
+    // Se il salvataggio nasce dal popup "Vuoi uscire da Silver?",
+    // dopo aver salvato esegue davvero l'uscita richiesta.
+    if(typeof exitAction === 'function'){
+      allowPageExit = true;
+      exitAction();
+      return;
+    }
+
+    // Se invece l'utente sta semplicemente terminando la conversazione,
+    // resta dentro Silver e torna alle due porte iniziali.
+    allowPageExit = false;
+    resetConversationUi();
+    window.scrollTo({top:0,behavior:'smooth'});
   },180);
 }
 
@@ -1630,9 +1646,10 @@ exitContinueButton.addEventListener('click',()=>{
 });
 
 exitSaveButton.addEventListener('click',()=>{
+  const action = pendingExitAction;
   pendingExitAction = null;
   closeSheet(exitBackdrop);
-  saveConversationToDevice();
+  saveConversationToDevice(action);
 });
 
 exitWithoutSaveButton.addEventListener('click',()=>{
@@ -2063,7 +2080,7 @@ attachmentFileInput.addEventListener('change',async ()=>{
   try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
 });
 
-saveConversationButton.addEventListener('click',saveConversationToDevice);
+saveConversationButton.addEventListener('click',()=>saveConversationToDevice());
 
 deleteConversationButton.addEventListener('click',async ()=>{
   const ok = window.confirm(
@@ -2077,10 +2094,11 @@ deleteConversationButton.addEventListener('click',async ()=>{
 
   clearRecoveryDraft();
   resetConversationUi();
-  allowPageExit = true;
+  allowPageExit = false;
 
-  // Chiusura reale della sessione: si esce dalla Stanza Silver.
-  window.location.href = '/entra/';
+  // È terminata la conversazione, non Silver:
+  // torniamo alle due porte CHAT GENERICA / CHAT IN PRATICA.
+  window.scrollTo({top:0,behavior:'smooth'});
 });
 
 function cleanDisplayText(text){
@@ -2582,7 +2600,7 @@ form.addEventListener('submit', async e=>{
 });
 
 updateComposerState();
-updateSessionControls();
+updateSessionControls(false);
 
 requestAnimationFrame(()=>{
   const recovery=readRecoveryDraft();
