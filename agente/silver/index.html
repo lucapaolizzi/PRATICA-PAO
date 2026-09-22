@@ -131,6 +131,53 @@ textarea::placeholder{color:#918b80}
   display:block;
   font:700 21px/1 Arial,Helvetica,sans-serif;
 }
+
+.attachment-queue{
+  grid-column:1/-1;
+  display:none;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:0 6px 2px;
+}
+.attachment-queue.visible{display:flex}
+.attachment-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  max-width:100%;
+  background:#f3f1ec;
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:6px 8px 6px 10px;
+  color:var(--ink);
+  font:11px/1.2 Arial,Helvetica,sans-serif;
+}
+.attachment-chip-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:210px;
+}
+.attachment-chip-remove{
+  width:22px;height:22px;
+  border:0;border-radius:50%;
+  background:#fff;color:var(--ink);
+  font:700 13px/1 Arial,Helvetica,sans-serif;
+  cursor:pointer;
+}
+.cancel-attachment{
+  display:none;
+  margin-left:8px;
+  border:0;
+  background:transparent;
+  color:var(--ink);
+  font:700 10px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.06em;
+  text-decoration:underline;
+  cursor:pointer;
+}
+.cancel-attachment.visible{display:inline-block}
+
 .mic-status{
   grid-column:1/-1;
   min-height:14px;
@@ -406,7 +453,13 @@ textarea::placeholder{color:#918b80}
       placeholder="" aria-label="Messaggio per Silver" autofocus></textarea>
 
     <button class="send" type="submit">INVIA</button>
-    <div class="mic-status" id="micStatus" aria-live="polite"></div>
+
+    <div class="attachment-queue" id="attachmentQueue" aria-live="polite"></div>
+
+    <div class="mic-status" id="micStatus" aria-live="polite">
+      <span id="micStatusText"></span>
+      <button class="cancel-attachment" id="cancelAttachmentButton" type="button">ANNULLA</button>
+    </div>
   </form>
 
   <div class="dictation-help-row" id="dictationHelpRow">
@@ -424,7 +477,7 @@ textarea::placeholder{color:#918b80}
   <input class="hidden-file" id="resumeFileInput" type="file"
     accept=".json,application/json">
 
-  <input class="hidden-file" id="attachmentFileInput" type="file"
+  <input class="hidden-file" id="attachmentFileInput" type="file" multiple
     accept=".pdf,.txt,.md,.json,.jpg,.jpeg,.png,.webp,.gif,application/pdf,text/plain,text/markdown,application/json,image/*">
 
   <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
@@ -537,6 +590,11 @@ const helpButton = document.getElementById('helpButton');
 const helpBackdrop = document.getElementById('helpBackdrop');
 const helpClose = document.getElementById('helpClose');
 const attachmentFileInput = document.getElementById('attachmentFileInput');
+const attachmentQueue = document.getElementById('attachmentQueue');
+const micStatusText = document.getElementById('micStatusText');
+const cancelAttachmentButton = document.getElementById('cancelAttachmentButton');
+let pendingAttachments = [];
+let attachmentAbortController = null;
 
 const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
@@ -897,6 +955,62 @@ resumeFileInput.addEventListener('change',async ()=>{
   }
 });
 
+function setMicStatus(text){
+  if(micStatusText){
+    micStatusText.textContent = text || '';
+  }else{
+    micStatus.textContent = text || '';
+  }
+}
+
+function renderAttachmentQueue(){
+  attachmentQueue.innerHTML='';
+
+  if(!pendingAttachments.length){
+    attachmentQueue.classList.remove('visible');
+    updateComposerState();
+    return;
+  }
+
+  attachmentQueue.classList.add('visible');
+
+  pendingAttachments.forEach((item,index)=>{
+    const chip=document.createElement('div');
+    chip.className='attachment-chip';
+
+    const name=document.createElement('span');
+    name.className='attachment-chip-name';
+    name.textContent=(item.kind === 'photo' ? '📷 ' : '📎 ') + (item.file.name || 'allegato');
+
+    const remove=document.createElement('button');
+    remove.type='button';
+    remove.className='attachment-chip-remove';
+    remove.textContent='✕';
+    remove.setAttribute('aria-label','Rimuovi allegato');
+    remove.addEventListener('click',()=>{
+      pendingAttachments.splice(index,1);
+      renderAttachmentQueue();
+    });
+
+    chip.appendChild(name);
+    chip.appendChild(remove);
+    attachmentQueue.appendChild(chip);
+  });
+
+  updateComposerState();
+}
+
+function detectAttachmentKind(file){
+  const type=String(file?.type || '').toLowerCase();
+  const name=String(file?.name || '').toLowerCase();
+
+  return (
+    type.startsWith('image/') ||
+    name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') ||
+    name.endsWith('.webp') || name.endsWith('.gif')
+  ) ? 'photo' : 'document';
+}
+
 function attachmentLabel(file, kind){
   const safeName = String(file?.name || 'allegato').trim() || 'allegato';
   if(kind === 'photo') return `📷 ${safeName}`;
@@ -904,91 +1018,125 @@ function attachmentLabel(file, kind){
   return `📎 ${safeName}`;
 }
 
-async function sendAttachment(file, kind){
-  if(!file) return;
+async function sendPendingAttachments(optionalText=''){
+  if(!pendingAttachments.length) return null;
 
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
-  if(file.size > MAX_FILE_BYTES){
-    micStatus.textContent = 'Allegato troppo grande. Limite 8 MB.';
-    setTimeout(()=>{ micStatus.textContent=''; },4200);
-    return;
+  const MAX_FILES = 4;
+
+  if(pendingAttachments.length > MAX_FILES){
+    setMicStatus(`Puoi inviare al massimo ${MAX_FILES} allegati insieme.`);
+    return null;
   }
 
-  closeSheet(toolsBackdrop);
-  showConversationMode();
+  for(const item of pendingAttachments){
+    if(item.file.size > MAX_FILE_BYTES){
+      setMicStatus(`"${item.file.name}" supera il limite di 8 MB.`);
+      return null;
+    }
+  }
 
-  const label = attachmentLabel(file, kind);
-  addMessage(label,'user');
+  const items = pendingAttachments.slice();
+  const labels = items.map(item=>attachmentLabel(item.file,item.kind));
+
+  labels.forEach(label=>addMessage(label,'user'));
 
   const contextText =
-    kind === 'scan'
-      ? `Ho acquisito una pagina: ${file.name || 'scansione'}`
-      : kind === 'photo'
-        ? `Ho allegato una foto: ${file.name || 'immagine'}`
-        : `Ho allegato un documento: ${file.name || 'documento'}`;
+    items.length === 1
+      ? `Ho allegato: ${items[0].file.name || 'allegato'}`
+      : `Ho allegato ${items.length} file: ${items.map(x=>x.file.name || 'allegato').join(', ')}`;
 
-  sessionMessages.push({role:'user', content:contextText});
-  reviewMessages.push({role:'user', content:contextText});
+  sessionMessages.push({role:'user',content:optionalText ? `${contextText}\n${optionalText}` : contextText});
+  reviewMessages.push({role:'user',content:contextText});
+
   if(reviewMessages.length > 80){
-    reviewMessages.splice(0, reviewMessages.length - 80);
+    reviewMessages.splice(0,reviewMessages.length - 80);
   }
+
   updateSessionControls();
 
-  micStatus.textContent = 'Silver sta leggendo l’allegato…';
+  const formData=new FormData();
+  items.forEach(item=>formData.append('files',item.file,item.file.name || 'allegato'));
 
-  const formData = new FormData();
-  formData.append('file', file);
   formData.append(
     'message',
-    kind === 'scan'
-      ? 'Osserva questa pagina acquisita e aiutami a comprenderla nel contesto della conversazione.'
-      : kind === 'photo'
-        ? 'Osserva questa immagine e aiutami a comprenderla nel contesto della conversazione.'
-        : 'Leggi questo documento e aiutami a comprenderlo nel contesto della conversazione.'
+    optionalText ||
+    (items.length > 1
+      ? 'Osserva insieme questi allegati e aiutami a comprenderli nel contesto della conversazione.'
+      : 'Osserva questo allegato e aiutami a comprenderlo nel contesto della conversazione.')
   );
-  formData.append('history', JSON.stringify(sessionMessages.slice(-20)));
+  formData.append('history',JSON.stringify(sessionMessages.slice(-20)));
+
+  pendingAttachments=[];
+  renderAttachmentQueue();
+
+  attachmentAbortController=new AbortController();
+  cancelAttachmentButton.classList.add('visible');
+  setMicStatus(items.length > 1
+    ? `Silver sta leggendo ${items.length} allegati…`
+    : 'Silver sta leggendo l’allegato…'
+  );
+
+  const timeoutId=setTimeout(()=>{
+    try{ attachmentAbortController?.abort(); }catch(_){}
+  },45000);
 
   try{
-    const response = await fetch(ATTACHMENT_URL,{
+    const response=await fetch(ATTACHMENT_URL,{
       method:'POST',
-      body:formData
+      body:formData,
+      signal:attachmentAbortController.signal
     });
 
-    const data = await response.json();
+    const data=await response.json();
 
     if(!response.ok || !data.ok){
       throw new Error(data.error || 'Allegato non disponibile');
     }
 
-    const reply = data.reply || 'Ho ricevuto l’allegato.';
+    const reply=data.reply || 'Ho ricevuto l’allegato.';
     addMessage(reply,'silver');
-    sessionMessages.push({role:'assistant', content:reply});
-    reviewMessages.push({role:'assistant', content:reply});
+    sessionMessages.push({role:'assistant',content:reply});
+    reviewMessages.push({role:'assistant',content:reply});
 
     if(reviewMessages.length > 80){
-      reviewMessages.splice(0, reviewMessages.length - 80);
+      reviewMessages.splice(0,reviewMessages.length - 80);
     }
     if(sessionMessages.length > 20){
-      sessionMessages.splice(0, sessionMessages.length - 20);
+      sessionMessages.splice(0,sessionMessages.length - 20);
     }
 
     updateSessionControls();
-    micStatus.textContent = '';
-    conversation.lastElementChild?.scrollIntoView({
-      behavior:'smooth',
-      block:'nearest'
-    });
+    setMicStatus('');
+    return reply;
+
   }catch(err){
     console.error('Allegato Silver:',err);
-    addMessage(
-      err?.message
-        ? `Non riesco a leggere questo allegato: ${err.message}`
-        : 'Non riesco a leggere questo allegato in questo momento.',
-      'silver'
-    );
-    micStatus.textContent = '';
+
+    if(err?.name === 'AbortError'){
+      addMessage('L’elaborazione degli allegati è stata annullata.','silver');
+    }else{
+      addMessage(
+        err?.message
+          ? `Non riesco a leggere questo allegato: ${err.message}`
+          : 'Non riesco a leggere questo allegato in questo momento.',
+        'silver'
+      );
+    }
+
+    setMicStatus('');
+    return null;
+
+  }finally{
+    clearTimeout(timeoutId);
+    cancelAttachmentButton.classList.remove('visible');
+    attachmentAbortController=null;
   }
 }
+
+cancelAttachmentButton.addEventListener('click',()=>{
+  try{ attachmentAbortController?.abort(); }catch(_){}
+});
 
 attachmentButton.addEventListener('click',()=>{
   closeSheet(toolsBackdrop);
@@ -997,19 +1145,27 @@ attachmentButton.addEventListener('click',()=>{
 });
 
 attachmentFileInput.addEventListener('change',()=>{
-  const file = attachmentFileInput.files?.[0];
-  if(!file) return;
+  const files=Array.from(attachmentFileInput.files || []);
+  if(!files.length) return;
 
-  const type = String(file.type || '').toLowerCase();
-  const name = String(file.name || '').toLowerCase();
+  const MAX_FILES=4;
+  const available=Math.max(0,MAX_FILES - pendingAttachments.length);
 
-  const kind =
-    type.startsWith('image/') ? 'photo' :
-    name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') ||
-    name.endsWith('.webp') || name.endsWith('.gif') ? 'photo' :
-    'document';
+  files.slice(0,available).forEach(file=>{
+    pendingAttachments.push({
+      file,
+      kind:detectAttachmentKind(file)
+    });
+  });
 
-  sendAttachment(file,kind);
+  if(files.length > available){
+    setMicStatus(`Puoi preparare al massimo ${MAX_FILES} allegati insieme.`);
+    setTimeout(()=>setMicStatus(''),3500);
+  }
+
+  renderAttachmentQueue();
+  showConversationMode();
+  try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
 });
 
 saveConversationButton.addEventListener('click',saveConversationToDevice);
@@ -1348,6 +1504,11 @@ function appendStreamingSilverText(state,delta){
 
 function finishStreamingSilverMessage(state){
   const finalText = state.text.trim() || 'Ti ho ricevuto.';
+
+  // Durante lo streaming il testo è già presente nell'elemento.
+  // Prima del rendering finale lo svuotiamo, altrimenti il testo
+  // verrebbe mostrato due volte.
+  state.el.textContent='';
   renderMessage(state.el,finalText,'silver');
 
   state.listen.disabled=false;
@@ -1361,7 +1522,9 @@ function finishStreamingSilverMessage(state){
 
 function updateComposerState(){
   const hasText = input.value.trim().length > 0;
+  const hasAttachments = pendingAttachments.length > 0;
   composer.classList.toggle('has-text', hasText);
+  composer.classList.toggle('has-attachments', hasAttachments);
 }
 
 clearInputButton.addEventListener('pointerdown',e=>{
@@ -1393,12 +1556,29 @@ input.addEventListener('input',()=>{
 form.addEventListener('submit', async e=>{
   e.preventDefault();
   const text=input.value.trim();
-  if(!text || send.disabled) return;
+  const hasAttachments=pendingAttachments.length > 0;
+  if((!text && !hasAttachments) || send.disabled) return;
 
   opening.style.display='none';
   conversation.style.display='flex';
   document.querySelector('.mascot').style.width='92px';
   document.querySelector('.identity').style.paddingBottom='2px';
+
+  if(hasAttachments){
+    send.disabled=true;
+    send.textContent='…';
+
+    input.value='';
+    resize();
+    updateComposerState();
+
+    await sendPendingAttachments(text);
+
+    send.disabled=false;
+    send.textContent='INVIA';
+    try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
+    return;
+  }
 
   addMessage(text,'user');
   sessionMessages.push({role:'user', content:text});
