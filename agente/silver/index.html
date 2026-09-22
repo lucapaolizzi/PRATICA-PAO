@@ -644,6 +644,95 @@ body.processing-attachments .session-row{
   }
 }
 
+
+/* === SILVER 2.0 — DUE PORTE: CHAT / PRATICA === */
+.mode-chooser{
+  width:min(620px,100%);
+  margin:22px auto 0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.mode-door{
+  border:1.5px solid var(--line);
+  border-radius:22px;
+  background:var(--paper);
+  color:var(--ink);
+  padding:18px 16px;
+  min-height:132px;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 2px 10px rgba(36,35,31,.05);
+}
+
+.mode-door strong{
+  display:block;
+  font:700 15px/1.1 Arial,Helvetica,sans-serif;
+  letter-spacing:.08em;
+  margin-bottom:9px;
+}
+
+.mode-door span{
+  display:block;
+  color:var(--muted);
+  font:13px/1.4 Arial,Helvetica,sans-serif;
+}
+
+.mode-door.practice{
+  border-color:rgba(168,131,62,.48);
+}
+
+.mode-door:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+}
+
+.mode-badge{
+  width:max-content;
+  margin:6px auto 0;
+  padding:5px 9px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--muted);
+  background:rgba(255,255,255,.7);
+  font:700 9px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.12em;
+}
+
+body:not(.mode-selected) .composer,
+body:not(.mode-selected) .dictation-help-row{
+  display:none !important;
+}
+
+body.mode-selected .mode-chooser{
+  display:none;
+}
+
+.resume-from-opening{
+  margin:12px auto 0;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  text-decoration:underline;
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.05em;
+  cursor:pointer;
+}
+
+@media(max-width:560px){
+  .mode-chooser{
+    grid-template-columns:1fr;
+    gap:9px;
+    margin-top:16px;
+  }
+
+  .mode-door{
+    min-height:96px;
+    padding:14px 14px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -657,13 +746,31 @@ body.processing-attachments .session-row{
       <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
     </div>
     <div class="silver">SILVER</div>
+    <div class="mode-badge" id="modeBadge" hidden></div>
   </header>
 
   <section class="stage">
     <div class="opening" id="opening">
       <h1 class="hello">Ciao, piacere, sono Silver.</h1>
-      <p class="question">Da dove vuoi cominciare?</p>
-      <p class="gentle">Puoi scrivermi anche solo una parola…</p>
+      <p class="question" id="openingQuestion">Come vuoi entrare?</p>
+
+      <div class="mode-chooser" id="modeChooser" aria-label="Scegli la modalità di Silver">
+        <button class="mode-door" id="chatDoor" type="button">
+          <strong>CHAT</strong>
+          <span>Domande, informazioni, problemi pratici e conversazione generale.</span>
+        </button>
+
+        <button class="mode-door practice" id="practiceDoor" type="button">
+          <strong>PRATICA</strong>
+          <span>Crescita personale P.A.O.: parti, polarità, Gestalt, metafore e presenza.</span>
+        </button>
+      </div>
+
+      <p class="gentle" id="openingGentle">Scegli la porta più adatta a ciò che vuoi portare.</p>
+
+      <button class="resume-from-opening" id="resumeOpeningButton" type="button">
+        RIPRENDI UNA SESSIONE SALVATA
+      </button>
     </div>
     <div class="conversation" id="conversation" aria-live="polite"></div>
   </section>
@@ -832,6 +939,47 @@ const deleteConversationButton = document.getElementById('deleteConversationButt
 const dictationHelpButton = document.getElementById('dictationHelpButton');
 const dictationPopover = document.getElementById('dictationPopover');
 
+const modeChooser = document.getElementById('modeChooser');
+const chatDoor = document.getElementById('chatDoor');
+const practiceDoor = document.getElementById('practiceDoor');
+const modeBadge = document.getElementById('modeBadge');
+const openingQuestion = document.getElementById('openingQuestion');
+const openingGentle = document.getElementById('openingGentle');
+const resumeOpeningButton = document.getElementById('resumeOpeningButton');
+
+let selectedMode = null;
+
+function normalizeUiMode(value){
+  return String(value || '').toLowerCase() === 'practice'
+    ? 'practice'
+    : 'chat';
+}
+
+function chooseSilverMode(mode){
+  selectedMode = normalizeUiMode(mode);
+
+  document.body.classList.add('mode-selected');
+  document.body.dataset.silverMode = selectedMode;
+
+  modeBadge.hidden = false;
+  modeBadge.textContent = selectedMode === 'practice'
+    ? 'PRATICA P.A.O.'
+    : 'CHAT';
+
+  openingQuestion.textContent = 'Da dove vuoi cominciare?';
+  openingGentle.textContent = selectedMode === 'practice'
+    ? 'Puoi portare una parte, una polarità, una sensazione, una metafora o semplicemente ciò che c’è.'
+    : 'Puoi scrivermi anche solo una parola…';
+}
+
+chatDoor.addEventListener('click',()=>chooseSilverMode('chat'));
+practiceDoor.addEventListener('click',()=>chooseSilverMode('practice'));
+
+resumeOpeningButton.addEventListener('click',()=>{
+  resumeFileInput.value='';
+  resumeFileInput.click();
+});
+
 
 dictationHelpButton.addEventListener('pointerdown',e=>{
   // Su iPhone il tap sul ? non deve togliere il focus al textarea:
@@ -955,6 +1103,15 @@ function showConversationMode(){
 function resetConversationUi(){
   document.body.classList.remove('conversation-mode');
   document.body.classList.remove('processing-attachments');
+  document.body.classList.remove('mode-selected');
+  delete document.body.dataset.silverMode;
+
+  selectedMode = null;
+  modeBadge.hidden = true;
+  modeBadge.textContent = '';
+  openingQuestion.textContent = 'Come vuoi entrare?';
+  openingGentle.textContent = 'Scegli la porta più adatta a ciò che vuoi portare.';
+
   sessionMessages = [];
   reviewMessages = [];
   conversation.innerHTML = '';
@@ -1054,7 +1211,8 @@ function saveConversationToDevice(){
 
   const payload = {
     format: 'silver-pao-conversation',
-    version: 1,
+    version: 2,
+    mode: selectedMode || 'chat',
     savedAt: new Date().toISOString(),
     messages: sessionMessages.map(m=>({
       role:m.role,
@@ -1096,7 +1254,7 @@ function normalizeSavedMessages(data){
     throw new Error('File Silver non riconosciuto');
   }
 
-  return data.messages
+  const messages = data.messages
     .filter(m =>
       m &&
       (m.role === 'user' || m.role === 'assistant') &&
@@ -1107,6 +1265,11 @@ function normalizeSavedMessages(data){
       role:m.role,
       content:m.content.trim()
     }));
+
+  return {
+    messages,
+    mode: normalizeUiMode(data.mode || 'chat')
+  };
 }
 
 function renderRestoredConversation(messages){
@@ -1172,13 +1335,14 @@ resumeFileInput.addEventListener('change',async ()=>{
   try{
     const text = await file.text();
     const data = JSON.parse(text);
-    const messages = normalizeSavedMessages(data);
+    const restored = normalizeSavedMessages(data);
 
-    if(!messages.length){
+    if(!restored.messages.length){
       throw new Error('Conversazione vuota');
     }
 
-    renderRestoredConversation(messages);
+    chooseSilverMode(restored.mode);
+    renderRestoredConversation(restored.messages);
     micStatus.textContent = 'Conversazione ripresa. Puoi continuare da qui.';
     setTimeout(()=>{ micStatus.textContent=''; },3500);
   }catch(err){
@@ -1349,6 +1513,7 @@ async function sendPendingAttachments(optionalText=''){
       ? 'Osserva insieme questi allegati e aiutami a comprenderli nel contesto della conversazione.'
       : 'Osserva questo allegato e aiutami a comprenderlo nel contesto della conversazione.')
   );
+  formData.append('mode', selectedMode || 'chat');
   formData.append('history',JSON.stringify(sessionMessages.slice(-20)));
 
   pendingAttachments=[];
@@ -1857,6 +2022,12 @@ form.addEventListener('submit', async e=>{
   e.preventDefault();
   const text=input.value.trim();
   const hasAttachments=pendingAttachments.length > 0;
+
+  if(!selectedMode){
+    openingQuestion.textContent = 'Scegli prima CHAT oppure PRATICA.';
+    return;
+  }
+
   if((!text && !hasAttachments) || send.disabled) return;
 
   opening.style.display='none';
@@ -1904,7 +2075,8 @@ form.addEventListener('submit', async e=>{
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         message:text,
-        history:sessionMessages.slice(-12)
+        history:sessionMessages.slice(-12),
+        mode:selectedMode || 'chat'
       })
     });
 
