@@ -363,7 +363,63 @@ textarea::placeholder{color:#918b80}
     justify-content:flex-start;
     padding-top:6px;
   }
-  body.keyboard-open .identity{
+  body.keyboard-open 
+/* Silver resta visibile anche durante chat e allegati */
+body.conversation-mode .identity{
+  display:flex !important;
+  position:sticky;
+  top:calc(8px + env(safe-area-inset-top));
+  z-index:35;
+  width:max-content;
+  margin:0 auto 12px;
+  padding:6px 10px 7px;
+  border:1px solid rgba(36,35,31,.12);
+  border-radius:18px;
+  background:rgba(245,240,230,.92);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  align-items:center;
+  gap:8px;
+  transform:none !important;
+}
+
+body.conversation-mode .identity img{
+  width:54px !important;
+  height:54px !important;
+  object-fit:contain;
+  margin:0 !important;
+}
+
+body.conversation-mode .identity .identity-title,
+body.conversation-mode .identity .silver-name,
+body.conversation-mode .identity h1{
+  font-size:12px !important;
+  letter-spacing:.22em !important;
+  margin:0 !important;
+  line-height:1 !important;
+}
+
+body.conversation-mode .identity .welcome,
+body.conversation-mode .identity .subtitle,
+body.conversation-mode .identity p{
+  display:none !important;
+}
+
+@media(max-width:560px){
+  body.conversation-mode .identity{
+    top:calc(4px + env(safe-area-inset-top));
+    margin-bottom:8px;
+    padding:5px 8px 6px;
+    border-radius:16px;
+  }
+
+  body.conversation-mode .identity img{
+    width:46px !important;
+    height:46px !important;
+  }
+}
+
+.identity{
     display:none;
   }
   body.keyboard-open .composer{
