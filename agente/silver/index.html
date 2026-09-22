@@ -744,6 +744,69 @@ body.mode-selected .mode-chooser{
   font:11px/1.35 Arial,Helvetica,sans-serif;
 }
 
+
+/* === SILVER 2.5 — CHIUSURA SESSIONE SEMPRE VISIBILE === */
+body.conversation-mode .shell{
+  display:flex;
+  flex-direction:column;
+}
+
+body.conversation-mode .stage{
+  order:1;
+}
+
+body.conversation-mode .session-row.visible{
+  order:2;
+  display:flex !important;
+  justify-content:center;
+  margin:8px 0 10px !important;
+  transform:none !important;
+  position:relative;
+  z-index:7;
+}
+
+body.conversation-mode .composer{
+  order:3;
+}
+
+body.conversation-mode .dictation-help-row{
+  order:4;
+}
+
+body.conversation-mode .session-end{
+  min-height:38px;
+  padding:10px 16px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(36,35,31,.06);
+}
+
+/* Con tastiera aperta non intralcia la scrittura */
+@media(max-width:760px){
+  body.keyboard-open .session-row{
+    display:none !important;
+  }
+}
+
+
+/* === SILVER 2.6 — NO SOVRAPPOSIZIONI + FOTO ROBUSTE === */
+body.conversation-mode:not(.keyboard-open) .composer{
+  position:relative !important;
+  inset:auto !important;
+  transform:none !important;
+  width:100% !important;
+  margin:8px auto 4px !important;
+}
+
+body.conversation-mode:not(.keyboard-open) .conversation{
+  overflow:visible !important;
+  padding-bottom:12px !important;
+}
+
+body.conversation-mode:not(.keyboard-open) .session-row.visible{
+  position:relative !important;
+  inset:auto !important;
+}
+
 </style>
 </head>
 <body>
@@ -818,7 +881,7 @@ body.mode-selected .mode-chooser{
   </div>
 
   <div class="session-row" id="sessionRow">
-    <button class="session-end" id="sessionEndButton" type="button">SALVA SESSIONE</button>
+    <button class="session-end" id="sessionEndButton" type="button">CHIUDI / SALVA SESSIONE</button>
   </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
@@ -874,6 +937,35 @@ body.mode-selected .mode-chooser{
     </section>
   </div>
 
+
+
+  <div class="sheet-backdrop" id="recoveryBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="recoveryTitle">Sessione Silver interrotta</h2>
+
+      <p class="sheet-note" style="font-size:13px;line-height:1.5;margin-top:4px;">
+        Ho trovato una sessione rimasta aperta su questo dispositivo.
+        Vuoi riprenderla?
+      </p>
+
+      <div class="sheet-grid" style="margin-top:12px;">
+        <button class="sheet-action primary" id="recoverSessionButton" type="button">
+          <strong>RIPRENDI SESSIONE</strong>
+          <span>Continua dal punto in cui eri rimasto.</span>
+        </button>
+
+        <button class="sheet-action danger" id="discardRecoveryButton" type="button">
+          <strong>SCARTA</strong>
+          <span>Elimina il recupero temporaneo da questo dispositivo.</span>
+        </button>
+      </div>
+
+      <p class="sheet-note">
+        Il recupero è salvato solo localmente sul dispositivo e non viene archiviato sul server.
+      </p>
+    </section>
+  </div>
 
   <div class="sheet-backdrop" id="exitBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="exitTitle">
@@ -980,6 +1072,10 @@ const sessionClose = document.getElementById('sessionClose');
 const saveConversationButton = document.getElementById('saveConversationButton');
 const deleteConversationButton = document.getElementById('deleteConversationButton');
 
+const recoveryBackdrop = document.getElementById('recoveryBackdrop');
+const recoverSessionButton = document.getElementById('recoverSessionButton');
+const discardRecoveryButton = document.getElementById('discardRecoveryButton');
+
 const exitBackdrop = document.getElementById('exitBackdrop');
 const exitContinueButton = document.getElementById('exitContinueButton');
 const exitSaveButton = document.getElementById('exitSaveButton');
@@ -1074,24 +1170,38 @@ document.addEventListener('pointerdown',e=>{
   }
 });
 
+let maxVisibleViewportHeight = window.visualViewport
+  ? window.visualViewport.height
+  : window.innerHeight;
+
 function updateKeyboardLayout(){
   const focused = document.activeElement === input;
   const vv = window.visualViewport;
+  const currentHeight = vv ? vv.height : window.innerHeight;
 
-  document.body.classList.toggle('keyboard-open', focused);
-  composer.classList.toggle('keyboard-open', focused);
+  // Memorizza la massima altezza visibile quando la tastiera non è aperta.
+  if(!focused || currentHeight > maxVisibleViewportHeight){
+    maxVisibleViewportHeight = currentHeight;
+  }
 
-  if(!focused){
+  // Su iPhone il textarea può restare "focused" anche quando la tastiera
+  // è già stata chiusa. Per questo non basta il focus: verifichiamo anche
+  // che il viewport sia realmente ridotto in modo significativo.
+  const keyboardGap = Math.max(0, maxVisibleViewportHeight - currentHeight);
+  const keyboardOpen = focused && keyboardGap > 120;
+
+  document.body.classList.toggle('keyboard-open', keyboardOpen);
+  composer.classList.toggle('keyboard-open', keyboardOpen);
+
+  if(!keyboardOpen){
     document.documentElement.style.removeProperty('--composer-top');
     document.documentElement.style.removeProperty('--help-top');
     return;
   }
 
   const viewportTop = vv ? vv.offsetTop : 0;
-  const viewportHeight = vv ? vv.height : window.innerHeight;
+  const viewportHeight = currentHeight;
 
-  // Posiziona il composer SEMPRE dentro la parte visibile dello schermo,
-  // indipendentemente da come Safari/WebView calcola l'altezza della tastiera.
   const composerHeight = Math.max(composer.offsetHeight || 0, 58);
   const helpHeight = 34;
   const gap = 8;
@@ -1119,13 +1229,12 @@ if(window.visualViewport){
 }
 
 input.addEventListener('focus',()=>{
-  // La classe viene attivata subito: non dipende più da una soglia
-  // che su alcuni iPhone/WebView può risultare zero.
-  document.body.classList.add('keyboard-open');
-  composer.classList.add('keyboard-open');
+  // Aspettiamo il resize reale del visualViewport prima di dichiarare
+  // aperta la tastiera: evita il composer fisso quando la tastiera non c'è.
   requestAnimationFrame(updateKeyboardLayout);
   setTimeout(updateKeyboardLayout,80);
   setTimeout(updateKeyboardLayout,260);
+  setTimeout(updateKeyboardLayout,420);
 });
 
 input.addEventListener('blur',()=>{
@@ -1140,6 +1249,112 @@ input.addEventListener('blur',()=>{
 
 let sessionMessages = [];
 let reviewMessages = [];
+
+const RECOVERY_KEY = 'silver-pao-local-recovery-v1';
+
+function recoveryPayload(){
+  return {
+    format:'silver-pao-local-recovery',
+    version:1,
+    savedAt:new Date().toISOString(),
+    mode:selectedMode || 'chat',
+    draft:input.value || '',
+    messages:sessionMessages.map(m=>({
+      role:m.role,
+      content:String(m.content || '')
+    }))
+  };
+}
+
+function saveRecoveryDraft(){
+  try{
+    const hasSomething =
+      sessionMessages.length > 0 ||
+      input.value.trim().length > 0;
+
+    if(!hasSomething){
+      localStorage.removeItem(RECOVERY_KEY);
+      return;
+    }
+
+    localStorage.setItem(
+      RECOVERY_KEY,
+      JSON.stringify(recoveryPayload())
+    );
+  }catch(err){
+    console.warn('Recupero locale Silver non disponibile:',err);
+  }
+}
+
+function clearRecoveryDraft(){
+  try{
+    localStorage.removeItem(RECOVERY_KEY);
+  }catch(err){
+    console.warn('Pulizia recupero Silver:',err);
+  }
+}
+
+function readRecoveryDraft(){
+  try{
+    const raw=localStorage.getItem(RECOVERY_KEY);
+    if(!raw) return null;
+
+    const data=JSON.parse(raw);
+    if(
+      !data ||
+      data.format !== 'silver-pao-local-recovery' ||
+      !Array.isArray(data.messages)
+    ){
+      clearRecoveryDraft();
+      return null;
+    }
+
+    const messages=data.messages
+      .filter(m =>
+        m &&
+        (m.role === 'user' || m.role === 'assistant') &&
+        typeof m.content === 'string' &&
+        m.content.trim()
+      )
+      .map(m=>({
+        role:m.role,
+        content:m.content.trim()
+      }));
+
+    const draft=typeof data.draft === 'string' ? data.draft : '';
+
+    if(!messages.length && !draft.trim()){
+      clearRecoveryDraft();
+      return null;
+    }
+
+    return {
+      messages,
+      draft,
+      mode:normalizeUiMode(data.mode || 'chat')
+    };
+  }catch(err){
+    console.warn('Lettura recupero Silver:',err);
+    clearRecoveryDraft();
+    return null;
+  }
+}
+
+function restoreLocalRecovery(data){
+  chooseSilverMode(data.mode);
+
+  if(data.messages.length){
+    renderRestoredConversation(data.messages);
+  }
+
+  input.value=data.draft || '';
+  resize();
+  updateComposerState();
+  updateSessionControls();
+  closeSheet(recoveryBackdrop);
+}
+
+
 
 let activeAudio = null;
 let activeAudioUrl = null;
@@ -1161,14 +1376,12 @@ function closeSheet(backdrop){
 
 function updateSessionControls(){
   sessionRow.classList.toggle('visible', sessionMessages.length > 0);
+  saveRecoveryDraft();
 }
 
 function showConversationMode(){
   document.body.classList.add('conversation-mode');
-  opening.style.display='none';
-  conversation.style.display='flex';
-  document.querySelector('.mascot').style.width='92px';
-  document.querySelector('.identity').style.paddingBottom='2px';
+  showConversationMode();
 }
 
 function resetConversationUi(){
@@ -1309,6 +1522,7 @@ function saveConversationToDevice(){
   // Review in background: non blocca l'utente.
   sendSessionReviewInBackground();
 
+  clearRecoveryDraft();
   closeSheet(sessionBackdrop);
   allowPageExit = true;
 
@@ -1388,6 +1602,27 @@ helpBackdrop.addEventListener('click',e=>{
   if(e.target === helpBackdrop) closeSheet(helpBackdrop);
 });
 
+/* Recupero locale dopo chiusura/uscita accidentale */
+recoverSessionButton.addEventListener('click',()=>{
+  const data=readRecoveryDraft();
+  if(data){
+    restoreLocalRecovery(data);
+  }else{
+    closeSheet(recoveryBackdrop);
+  }
+});
+
+discardRecoveryButton.addEventListener('click',()=>{
+  clearRecoveryDraft();
+  closeSheet(recoveryBackdrop);
+});
+
+recoveryBackdrop.addEventListener('click',e=>{
+  if(e.target === recoveryBackdrop){
+    closeSheet(recoveryBackdrop);
+  }
+});
+
 /* Protezione uscita accidentale */
 exitContinueButton.addEventListener('click',()=>{
   pendingExitAction = null;
@@ -1403,6 +1638,7 @@ exitSaveButton.addEventListener('click',()=>{
 exitWithoutSaveButton.addEventListener('click',()=>{
   const action = pendingExitAction;
   pendingExitAction = null;
+  clearRecoveryDraft();
   allowPageExit = true;
   closeSheet(exitBackdrop);
 
@@ -1441,9 +1677,19 @@ lucaButton.addEventListener('click',e=>{
   testo personalizzato.
 */
 window.addEventListener('beforeunload',e=>{
+  if(hasUnsavedSilverWork()){
+    saveRecoveryDraft();
+  }
+
   if(allowPageExit || !hasUnsavedSilverWork()) return;
   e.preventDefault();
   e.returnValue = '';
+});
+
+window.addEventListener('pagehide',()=>{
+  if(hasUnsavedSilverWork()){
+    saveRecoveryDraft();
+  }
 });
 
 
@@ -1475,11 +1721,11 @@ resumeFileInput.addEventListener('change',async ()=>{
 
     chooseSilverMode(restored.mode);
     renderRestoredConversation(restored.messages);
-    micStatus.textContent = 'Conversazione ripresa. Puoi continuare da qui.';
-    setTimeout(()=>{ micStatus.textContent=''; },3500);
+    setMicStatus('Conversazione ripresa. Puoi continuare da qui.');
+    setTimeout(()=>{ setMicStatus(''); },3500);
   }catch(err){
     console.error('Riprendi conversazione:',err);
-    micStatus.textContent = 'Questo file non è una conversazione Silver valida.';
+    setMicStatus('Questo file non è una conversazione Silver valida.');
   }
 });
 
@@ -1538,8 +1784,13 @@ async function optimizeImageForUpload(file){
     return file;
   }
 
-  // Se è già piccola, non la tocchiamo.
-  if(file.size <= 1.5 * 1024 * 1024){
+  const needsFormatConversion =
+    type.includes('heic') ||
+    type.includes('heif') ||
+    /\.(heic|heif)$/i.test(String(file?.name || ''));
+
+  // Se è già piccola e in un formato web standard, non la tocchiamo.
+  if(file.size <= 1.5 * 1024 * 1024 && !needsFormatConversion){
     return file;
   }
 
@@ -1592,6 +1843,47 @@ function attachmentLabel(file, kind){
   if(kind === 'photo') return `📷 ${safeName}`;
   if(kind === 'scan') return `📄 Pagina acquisita: ${safeName}`;
   return `📎 ${safeName}`;
+}
+
+async function fetchAttachmentWithRetry(formData, signal){
+  let lastError = null;
+
+  for(let attempt=0; attempt<2; attempt++){
+    try{
+      const response = await fetch(ATTACHMENT_URL,{
+        method:'POST',
+        body:formData,
+        signal
+      });
+
+      // Errori temporanei lato rete/servizio: un solo secondo tentativo.
+      if(response.status >= 500 && attempt === 0){
+        await new Promise(resolve=>setTimeout(resolve,700));
+        continue;
+      }
+
+      return response;
+
+    }catch(err){
+      if(signal?.aborted) throw err;
+      lastError = err;
+
+      const message = String(err?.message || '').toLowerCase();
+      const retryable =
+        err?.name === 'TypeError' ||
+        message.includes('load failed') ||
+        message.includes('failed to fetch') ||
+        message.includes('network');
+
+      if(!retryable || attempt === 1){
+        throw err;
+      }
+
+      await new Promise(resolve=>setTimeout(resolve,700));
+    }
+  }
+
+  throw lastError || new Error('Collegamento allegato non disponibile');
 }
 
 async function sendPendingAttachments(optionalText=''){
@@ -1664,13 +1956,17 @@ async function sendPendingAttachments(optionalText=''){
   },90000);
 
   try{
-    const response=await fetch(ATTACHMENT_URL,{
-      method:'POST',
-      body:formData,
-      signal:attachmentAbortController.signal
-    });
+    const response=await fetchAttachmentWithRetry(
+      formData,
+      attachmentAbortController.signal
+    );
 
-    const data=await response.json();
+    let data={};
+    try{
+      data=await response.json();
+    }catch(_){
+      data={};
+    }
 
     if(!response.ok || !data.ok){
       throw new Error(data.error || 'Allegato non disponibile');
@@ -1702,9 +1998,11 @@ async function sendPendingAttachments(optionalText=''){
       );
     }else{
       addMessage(
-        err?.message
-          ? `Non riesco a leggere questo allegato: ${err.message}`
-          : 'Non riesco a leggere questo allegato in questo momento.',
+        /load failed|failed to fetch|network/i.test(String(err?.message || ''))
+          ? 'La foto non è arrivata correttamente. Ho già riprovato automaticamente: prova a reinviarla.'
+          : (err?.message
+              ? `Non riesco a leggere questo allegato: ${err.message}`
+              : 'Non riesco a leggere questo allegato in questo momento.'),
         'silver'
       );
     }
@@ -1777,6 +2075,7 @@ deleteConversationButton.addEventListener('click',async ()=>{
 
   await sendSessionReview();
 
+  clearRecoveryDraft();
   resetConversationUi();
   allowPageExit = true;
 
@@ -2149,6 +2448,7 @@ function resize(){
 input.addEventListener('input',()=>{
   resize();
   updateComposerState();
+  saveRecoveryDraft();
 },{passive:true});
 
 form.addEventListener('submit', async e=>{
@@ -2198,7 +2498,7 @@ form.addEventListener('submit', async e=>{
 
   send.disabled=true;
   send.textContent='…';
-  micStatus.textContent='Silver sta rispondendo…';
+  setMicStatus('Silver sta rispondendo…');
 
   let streamingState=null;
 
@@ -2223,7 +2523,7 @@ form.addEventListener('submit', async e=>{
     }
 
     streamingState=startStreamingSilverMessage();
-    micStatus.textContent='';
+    setMicStatus('');
 
     const reader=response.body.getReader();
     const decoder=new TextDecoder();
@@ -2275,7 +2575,7 @@ form.addEventListener('submit', async e=>{
   }finally{
     send.disabled=false;
     send.textContent='INVIA';
-    micStatus.textContent='';
+    setMicStatus('');
     input.focus();
     conversation.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
@@ -2283,6 +2583,13 @@ form.addEventListener('submit', async e=>{
 
 updateComposerState();
 updateSessionControls();
+
+requestAnimationFrame(()=>{
+  const recovery=readRecoveryDraft();
+  if(recovery){
+    openSheet(recoveryBackdrop);
+  }
+});
 </script>
 </body>
 </html>
