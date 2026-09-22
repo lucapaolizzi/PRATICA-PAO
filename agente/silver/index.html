@@ -507,6 +507,143 @@ body.conversation-mode .conversation{
   }
 }
 
+
+/* === Conversazione pulita: nessuna sovrapposizione === */
+body.conversation-mode .identity{
+  display:block !important;
+  position:relative !important;
+  top:auto !important;
+  left:auto !important;
+  transform:none !important;
+  width:max-content;
+  margin:0 auto 8px;
+  padding:0;
+  border:0;
+  background:transparent;
+  z-index:2;
+}
+
+body.conversation-mode .identity .mascot{
+  width:64px !important;
+  margin:0 auto !important;
+}
+
+body.conversation-mode .identity .silver{
+  margin-top:3px !important;
+  font-size:10px !important;
+  letter-spacing:.20em !important;
+}
+
+body.conversation-mode .stage{
+  flex:none !important;
+  justify-content:flex-start !important;
+  transform:none !important;
+  padding:0 0 8px !important;
+}
+
+body.conversation-mode .conversation{
+  padding:6px 0 10px !important;
+}
+
+body.conversation-mode:not(.keyboard-open) .composer{
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  width:100% !important;
+  margin:8px auto 4px !important;
+  z-index:5;
+}
+
+body.conversation-mode:not(.keyboard-open) .dictation-help-row{
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  width:100% !important;
+  margin:2px auto 10px !important;
+  z-index:5;
+}
+
+/* Allegati compatti: una sola riga scorrevole */
+.attachment-queue{
+  flex-wrap:nowrap !important;
+  overflow-x:auto;
+  overflow-y:hidden;
+  gap:6px;
+  padding:1px 4px 3px;
+  scrollbar-width:none;
+}
+.attachment-queue::-webkit-scrollbar{display:none}
+
+.attachment-chip{
+  flex:0 0 auto;
+  padding:5px 6px 5px 9px;
+  gap:5px;
+  font-size:10px;
+}
+.attachment-chip-name{
+  max-width:110px !important;
+}
+.attachment-chip-remove{
+  width:20px;
+  height:20px;
+  font-size:12px;
+}
+
+/* Durante la lettura degli allegati resta solo una barra di stato pulita */
+body.processing-attachments .composer{
+  min-height:54px;
+  grid-template-columns:1fr !important;
+  padding:10px 14px !important;
+  border-radius:22px !important;
+}
+body.processing-attachments .composer-left,
+body.processing-attachments .composer textarea,
+body.processing-attachments .composer .send,
+body.processing-attachments .attachment-queue{
+  display:none !important;
+}
+body.processing-attachments .mic-status{
+  grid-column:1/-1;
+  min-height:28px;
+  margin:0 !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  text-align:center;
+  font-size:12px;
+  line-height:1.35;
+}
+body.processing-attachments .dictation-help-row{
+  display:none !important;
+}
+body.processing-attachments .session-row{
+  display:none !important;
+}
+
+/* Con tastiera aperta: composer più compatto e Silver non ruba spazio */
+@media(max-width:760px){
+  body.keyboard-open .identity{
+    display:none !important;
+  }
+
+  body.keyboard-open .composer.has-attachments{
+    max-height:168px;
+    overflow-y:auto;
+    align-content:start;
+  }
+
+  body.keyboard-open .attachment-queue{
+    grid-column:1/-1;
+    max-width:100%;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -817,6 +954,7 @@ function showConversationMode(){
 
 function resetConversationUi(){
   document.body.classList.remove('conversation-mode');
+  document.body.classList.remove('processing-attachments');
   sessionMessages = [];
   reviewMessages = [];
   conversation.innerHTML = '';
@@ -1074,7 +1212,9 @@ function renderAttachmentQueue(){
 
     const name=document.createElement('span');
     name.className='attachment-chip-name';
-    name.textContent=(item.kind === 'photo' ? '📷 ' : '📎 ') + (item.file.name || 'allegato');
+    name.textContent=item.kind === 'photo'
+      ? `📷 Foto ${index+1}`
+      : `📎 ${item.file.name || `File ${index+1}`}`;
 
     const remove=document.createElement('button');
     remove.type='button';
@@ -1177,7 +1317,11 @@ async function sendPendingAttachments(optionalText=''){
   }
 
   const items = pendingAttachments.slice();
-  const labels = items.map(item=>attachmentLabel(item.file,item.kind));
+  const labels = items.map((item,index)=>
+    item.kind === 'photo'
+      ? `📷 Foto ${index+1}`
+      : attachmentLabel(item.file,item.kind)
+  );
 
   labels.forEach(label=>addMessage(label,'user'));
 
@@ -1211,6 +1355,7 @@ async function sendPendingAttachments(optionalText=''){
   renderAttachmentQueue();
 
   attachmentAbortController=new AbortController();
+  document.body.classList.add('processing-attachments');
   cancelAttachmentButton.classList.add('visible');
   setMicStatus(items.length > 1
     ? `Silver sta leggendo ${items.length} allegati… Puoi annullare se vuoi.`
@@ -1272,6 +1417,7 @@ async function sendPendingAttachments(optionalText=''){
 
   }finally{
     clearTimeout(timeoutId);
+    document.body.classList.remove('processing-attachments');
     cancelAttachmentButton.classList.remove('visible');
     attachmentAbortController=null;
   }
