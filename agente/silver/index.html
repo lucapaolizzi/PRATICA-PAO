@@ -1,3 +1,4 @@
+<!-- SILVER 2.9 — IDENTIFICAZIONE / MOBILITÀ | frontend derivato da 2.8 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1075,7 +1076,7 @@ textarea{
       <div class="mode-chooser single-mode" id="modeChooser" aria-label="Entra nella chat di crescita personale">
         <button class="mode-door practice" id="practiceDoor" type="button">
           <strong>CHAT DI CRESCITA PERSONALE</strong>
-          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa con l’intera persona. Silver segue ciò che emerge in figura e cerca lo sfondo senza forzarlo.</small></span>
+          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa automaticamente con la volontà dell’intera persona.</small></span>
         </button>
       </div>
 
@@ -1145,7 +1146,7 @@ textarea{
 
         <a class="sheet-action" id="lucaButton" href="/agente/pao/">
           <strong>PARLA CON PAO</strong>
-          <span>Contatto umano con PAO: anche per continuare un lavoro che richiede più intensità, presenza o accompagnamento.</span>
+          <span>Contatto umano con PAO: email, video-call, incontro individuale e canali ufficiali.</span>
         </a>
 
         <button class="sheet-action" id="helpButton" type="button">
@@ -3478,7 +3479,7 @@ form.addEventListener('submit', async e=>{
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         message:text,
-        history:sessionMessages.slice(-12),
+        history:sessionMessages.slice(-20),
         mode:'practice',
         language:selectedLanguage
       })
