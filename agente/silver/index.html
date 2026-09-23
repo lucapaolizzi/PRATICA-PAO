@@ -2746,7 +2746,7 @@ async function sendPendingAttachments(optionalText=''){
   if(!pendingAttachments.length) return null;
 
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
-  const MAX_MEDIA_BYTES = 24 * 1024 * 1024;
+  const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
   const MAX_FILES = 4;
 
   if(pendingAttachments.length > MAX_FILES){
@@ -2757,7 +2757,7 @@ async function sendPendingAttachments(optionalText=''){
   for(const item of pendingAttachments){
     const isMedia = item.kind === 'audio' || item.kind === 'video';
     const maxBytes = isMedia ? MAX_MEDIA_BYTES : MAX_FILE_BYTES;
-    const maxLabel = isMedia ? '24 MB' : '8 MB';
+    const maxLabel = isMedia ? '25 MB' : '8 MB';
 
     if(item.file.size > maxBytes){
       setMicStatus(
@@ -2917,38 +2917,87 @@ attachmentFileInput.addEventListener('change',async ()=>{
   if(!files.length) return;
 
   const MAX_FILES=4;
+  const MAX_FILE_BYTES=8 * 1024 * 1024;
+  const MAX_MEDIA_BYTES=25 * 1024 * 1024;
+
   const available=Math.max(0,MAX_FILES - pendingAttachments.length);
   const selected=files.slice(0,available);
 
-  const selectedKinds = selected.map(file=>detectAttachmentKind(file));
-
-  setMicStatus(
-    selectedKinds.some(kind=>kind==='photo')
-      ? 'Preparo foto e allegati…'
-      : selectedKinds.some(kind=>kind==='audio')
-        ? 'Preparo audio e allegati…'
-        : 'Preparo gli allegati…'
-  );
+  const accepted=[];
+  const rejected=[];
 
   for(const originalFile of selected){
     const kind=detectAttachmentKind(originalFile);
-    const file=kind === 'photo'
-      ? await optimizeImageForUpload(originalFile)
-      : originalFile;
+    const isMedia = kind === 'audio' || kind === 'video';
+    const maxBytes = isMedia ? MAX_MEDIA_BYTES : MAX_FILE_BYTES;
 
-    pendingAttachments.push({file,kind});
+    if(originalFile.size > maxBytes){
+      rejected.push({
+        name:originalFile.name || 'allegato',
+        kind,
+        sizeMB:(originalFile.size / (1024 * 1024)).toFixed(1),
+        maxMB:isMedia ? 25 : 8
+      });
+      continue;
+    }
+
+    accepted.push({file:originalFile,kind});
   }
 
-  if(files.length > available){
+  if(accepted.length){
+    const acceptedKinds=accepted.map(item=>item.kind);
+
+    setMicStatus(
+      acceptedKinds.some(kind=>kind==='photo')
+        ? 'Preparo foto e allegati…'
+        : acceptedKinds.some(kind=>kind==='video')
+          ? 'Preparo il video…'
+          : acceptedKinds.some(kind=>kind==='audio')
+            ? 'Preparo l’audio…'
+            : 'Preparo gli allegati…'
+    );
+
+    for(const item of accepted){
+      const file=item.kind === 'photo'
+        ? await optimizeImageForUpload(item.file)
+        : item.file;
+
+      pendingAttachments.push({
+        file,
+        kind:item.kind
+      });
+    }
+  }
+
+  renderAttachmentQueue();
+
+  if(pendingAttachments.length){
+    showConversationMode();
+  }
+
+  if(rejected.length){
+    const item=rejected[0];
+    const typeLabel =
+      item.kind === 'video'
+        ? 'Il video'
+        : item.kind === 'audio'
+          ? 'L’audio'
+          : 'Il file';
+
+    setMicStatus(
+      `${typeLabel} "${item.name}" pesa ${item.sizeMB} MB e supera il limite di ${item.maxMB} MB. ` +
+      `Non è stato aggiunto. ${item.kind === 'video' || item.kind === 'audio'
+        ? 'Riducilo, accorcialo oppure invia una versione audio più leggera.'
+        : 'Riduci il file o dividilo in più parti.'}`
+    );
+  }else if(files.length > available){
     setMicStatus(`Puoi preparare al massimo ${MAX_FILES} allegati insieme.`);
-    setTimeout(()=>setMicStatus(''),3500);
   }else{
     setMicStatus('');
   }
 
-  renderAttachmentQueue();
-  showConversationMode();
-  try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
+  // IMPORTANTE: dopo ALLEGA non apriamo automaticamente la tastiera.
+  // L’utente può premere direttamente INVIA oppure toccare il campo testo se vuole aggiungere una nota.
 });
 
 saveConversationButton.addEventListener('click',()=>saveConversationToDevice());
@@ -3364,11 +3413,19 @@ form.addEventListener('submit', async e=>{
     resize();
     updateComposerState();
 
-    await sendPendingAttachments(text);
+    const attachmentReply = await sendPendingAttachments(text);
 
     send.disabled=false;
     send.textContent='INVIA';
-    try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
+
+    // Niente focus automatico: evita la schermata "vuota" con tastiera su iPhone.
+    // Se l’invio non parte (es. file troppo grande), il messaggio resta visibile.
+    if(attachmentReply){
+      conversation.lastElementChild?.scrollIntoView({
+        behavior:'smooth',
+        block:'nearest'
+      });
+    }
     return;
   }
 
