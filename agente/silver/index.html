@@ -1075,7 +1075,7 @@ textarea{
       <div class="mode-chooser single-mode" id="modeChooser" aria-label="Entra nella chat di crescita personale">
         <button class="mode-door practice" id="practiceDoor" type="button">
           <strong>CHAT DI CRESCITA PERSONALE</strong>
-          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa automaticamente con la volontà dell’intera persona.</small></span>
+          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa con l’intera persona. Silver segue ciò che emerge in figura e cerca lo sfondo senza forzarlo.</small></span>
         </button>
       </div>
 
@@ -1127,7 +1127,7 @@ textarea{
     accept=".json,application/json">
 
   <input class="hidden-file" id="attachmentFileInput" type="file" multiple
-    accept=".pdf,.doc,.docx,.dot,.odt,.rtf,.pages,.ppt,.pptx,.pps,.pot,.ppa,.pwz,.wiz,.key,.xls,.xlsx,.xla,.xlb,.xlc,.xlm,.xlt,.xlw,.csv,.tsv,.iif,.txt,.text,.md,.markdown,.json,.jsonl,.html,.htm,.xml,.eml,.ics,.vcf,.srt,.vtt,.log,.conf,.rst,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.sql,.c,.cc,.cpp,.cxx,.h,.hh,.java,.go,.rs,.rb,.php,.swift,.kt,.kts,.r,.lua,.pl,.asm,.s,.bat,.sh,.ksh,.ps1,.yaml,.yml,.toml,.ini,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,.ogg,.flac,image/*,application/pdf,text/plain,text/markdown,application/json,text/csv,text/tsv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg,audio/flac">
+    accept=".pdf,.doc,.docx,.dot,.odt,.rtf,.pages,.ppt,.pptx,.pps,.pot,.ppa,.pwz,.wiz,.key,.xls,.xlsx,.xla,.xlb,.xlc,.xlm,.xlt,.xlw,.csv,.tsv,.iif,.txt,.text,.md,.markdown,.json,.jsonl,.html,.htm,.xml,.eml,.ics,.vcf,.srt,.vtt,.log,.conf,.rst,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.sql,.c,.cc,.cpp,.cxx,.h,.hh,.java,.go,.rs,.rb,.php,.swift,.kt,.kts,.r,.lua,.pl,.asm,.s,.bat,.sh,.ksh,.ps1,.yaml,.yml,.toml,.ini,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp3,.mp4,.mov,.mpeg,.mpga,.m4a,.wav,.webm,.ogg,.flac,image/*,application/pdf,text/plain,text/markdown,application/json,text/csv,text/tsv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg,audio/flac,video/quicktime">
 
   <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
@@ -1145,7 +1145,7 @@ textarea{
 
         <a class="sheet-action" id="lucaButton" href="/agente/pao/">
           <strong>PARLA CON PAO</strong>
-          <span>Contatto umano con PAO: email, video-call, incontro individuale e canali ufficiali.</span>
+          <span>Contatto umano con PAO: anche per continuare un lavoro che richiede più intensità, presenza o accompagnamento.</span>
         </a>
 
         <button class="sheet-action" id="helpButton" type="button">
@@ -1162,7 +1162,7 @@ textarea{
         </button>
       </div>
       <p class="sheet-note" id="toolsNote">
-        Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
+        Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio e video compatibili da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
     </section>
@@ -2630,7 +2630,7 @@ const AUDIO_ATTACHMENT_EXTS = new Set([
 ]);
 
 const VIDEO_ATTACHMENT_EXTS = new Set([
-  'mp4','mpeg','mpg','webm'
+  'mp4','mov','mpeg','mpg','webm'
 ]);
 
 const SPREADSHEET_ATTACHMENT_EXTS = new Set([
@@ -2928,6 +2928,22 @@ attachmentFileInput.addEventListener('change',async ()=>{
 
   for(const originalFile of selected){
     const kind=detectAttachmentKind(originalFile);
+    const ext=attachmentExtension(originalFile);
+    const type=String(originalFile.type || '').toLowerCase();
+
+    const isMov =
+      ext === 'mov' ||
+      type === 'video/quicktime';
+
+    if(isMov){
+      rejected.push({
+        name:originalFile.name || 'video.mov',
+        kind:'video',
+        reason:'mov'
+      });
+      continue;
+    }
+
     const isMedia = kind === 'audio' || kind === 'video';
     const maxBytes = isMedia ? MAX_MEDIA_BYTES : MAX_FILE_BYTES;
 
@@ -2977,19 +2993,28 @@ attachmentFileInput.addEventListener('change',async ()=>{
 
   if(rejected.length){
     const item=rejected[0];
-    const typeLabel =
-      item.kind === 'video'
-        ? 'Il video'
-        : item.kind === 'audio'
-          ? 'L’audio'
-          : 'Il file';
 
-    setMicStatus(
-      `${typeLabel} "${item.name}" pesa ${item.sizeMB} MB e supera il limite di ${item.maxMB} MB. ` +
-      `Non è stato aggiunto. ${item.kind === 'video' || item.kind === 'audio'
-        ? 'Riducilo, accorcialo oppure invia una versione audio più leggera.'
-        : 'Riduci il file o dividilo in più parti.'}`
-    );
+    if(item.reason === 'mov'){
+      setMicStatus(
+        `Il video "${item.name}" è in formato MOV/QuickTime. ` +
+        `Silver riconosce il file, ma il servizio di trascrizione non accetta ufficialmente MOV. ` +
+        `Per la voce, esportalo in MP4 oppure M4A e allegalo di nuovo.`
+      );
+    }else{
+      const typeLabel =
+        item.kind === 'video'
+          ? 'Il video'
+          : item.kind === 'audio'
+            ? 'L’audio'
+            : 'Il file';
+
+      setMicStatus(
+        `${typeLabel} "${item.name}" pesa ${item.sizeMB} MB e supera il limite di ${item.maxMB} MB. ` +
+        `Non è stato aggiunto. ${item.kind === 'video' || item.kind === 'audio'
+          ? 'Riducilo, accorcialo oppure invia una versione audio più leggera.'
+          : 'Riduci il file o dividilo in più parti.'}`
+      );
+    }
   }else if(files.length > available){
     setMicStatus(`Puoi preparare al massimo ${MAX_FILES} allegati insieme.`);
   }else{
