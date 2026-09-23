@@ -1076,7 +1076,7 @@ textarea{
     accept=".json,application/json">
 
   <input class="hidden-file" id="attachmentFileInput" type="file" multiple
-    accept=".pdf,.txt,.md,.json,.jpg,.jpeg,.png,.webp,.gif,application/pdf,text/plain,text/markdown,application/json,image/*">
+    accept=".pdf,.doc,.docx,.dot,.odt,.rtf,.pages,.ppt,.pptx,.pps,.pot,.ppa,.pwz,.wiz,.key,.xls,.xlsx,.xla,.xlb,.xlc,.xlm,.xlt,.xlw,.csv,.tsv,.iif,.txt,.text,.md,.markdown,.json,.jsonl,.html,.htm,.xml,.eml,.ics,.vcf,.srt,.vtt,.log,.conf,.rst,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.sql,.c,.cc,.cpp,.cxx,.h,.hh,.java,.go,.rs,.rb,.php,.swift,.kt,.kts,.r,.lua,.pl,.asm,.s,.bat,.sh,.ksh,.ps1,.yaml,.yml,.toml,.ini,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,.ogg,.flac,image/*,application/pdf,text/plain,text/markdown,application/json,text/csv,text/tsv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg,audio/flac">
 
   <div class="sheet-backdrop" id="toolsBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
@@ -1089,7 +1089,7 @@ textarea{
         </button>
         <button class="sheet-action" id="attachmentButton" type="button">
           <strong>ALLEGA</strong>
-          <span>Foto, fotocamera, PDF o altri file.</span>
+          <span>Foto, PDF, Word, Excel, PowerPoint, testi, codice e audio.</span>
         </button>
 
         <a class="sheet-action" id="lucaButton" href="/agente/pao/">
@@ -1111,7 +1111,7 @@ textarea{
         </button>
       </div>
       <p class="sheet-note" id="toolsNote">
-        Con ALLEGA puoi scegliere una foto, scattarne una o selezionare un file. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
+        Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
     </section>
@@ -2352,9 +2352,10 @@ function renderAttachmentQueue(){
 
     const name=document.createElement('span');
     name.className='attachment-chip-name';
-    name.textContent=item.kind === 'photo'
-      ? `📷 Foto ${index+1}`
-      : `📎 ${item.file.name || `File ${index+1}`}`;
+    name.textContent=attachmentLabel(
+      item.file,
+      item.kind
+    );
 
     const remove=document.createElement('button');
     remove.type='button';
@@ -2420,27 +2421,122 @@ async function optimizeImageForUpload(file){
       {type:'image/jpeg',lastModified:Date.now()}
     );
   }catch(err){
-    console.warn('Ottimizzazione immagine non disponibile:',err);
-    return file;
+    console.warn('createImageBitmap non disponibile per questa immagine:',err);
+
+    // Fallback utile soprattutto su Safari/iPhone: prova la decodifica
+    // nativa del browser tramite <img>, quindi converte in JPEG.
+    try{
+      const objectUrl=URL.createObjectURL(file);
+      const img=new Image();
+
+      await new Promise((resolve,reject)=>{
+        img.onload=resolve;
+        img.onerror=()=>reject(new Error('Formato immagine non decodificabile'));
+        img.src=objectUrl;
+      });
+
+      const maxSide=1600;
+      const scale=Math.min(1,maxSide / Math.max(img.naturalWidth,img.naturalHeight));
+      const width=Math.max(1,Math.round(img.naturalWidth * scale));
+      const height=Math.max(1,Math.round(img.naturalHeight * scale));
+
+      const canvas=document.createElement('canvas');
+      canvas.width=width;
+      canvas.height=height;
+
+      const ctx=canvas.getContext('2d',{alpha:false});
+      ctx.drawImage(img,0,0,width,height);
+
+      URL.revokeObjectURL(objectUrl);
+
+      const blob=await new Promise(resolve=>{
+        canvas.toBlob(resolve,'image/jpeg',0.82);
+      });
+
+      if(!blob) return file;
+
+      const baseName=(file.name || 'foto').replace(/\.[^.]+$/,'');
+      return new File(
+        [blob],
+        `${baseName}.jpg`,
+        {type:'image/jpeg',lastModified:Date.now()}
+      );
+
+    }catch(fallbackErr){
+      console.warn('Conversione immagine fallback non disponibile:',fallbackErr);
+      return file;
+    }
   }
 }
+
+function attachmentExtension(file){
+  const name=String(file?.name || '').toLowerCase();
+  const m=name.match(/\.([a-z0-9]+)$/i);
+  return m ? m[1] : '';
+}
+
+const AUDIO_ATTACHMENT_EXTS = new Set([
+  'mp3','mp4','mpeg','mpga','m4a','wav','webm','ogg','flac'
+]);
+
+const SPREADSHEET_ATTACHMENT_EXTS = new Set([
+  'xls','xlsx','xla','xlb','xlc','xlm','xlt','xlw','csv','tsv','iif'
+]);
+
+const PRESENTATION_ATTACHMENT_EXTS = new Set([
+  'ppt','pptx','pps','pot','ppa','pwz','wiz','key'
+]);
+
+const CODE_ATTACHMENT_EXTS = new Set([
+  'js','mjs','ts','tsx','jsx','py','sql','c','cc','cpp','cxx','h','hh',
+  'java','go','rs','rb','php','swift','kt','kts','r','lua','pl','asm','s',
+  'bat','sh','ksh','ps1','yaml','yml','toml','ini','css','html','htm','xml'
+]);
 
 function detectAttachmentKind(file){
   const type=String(file?.type || '').toLowerCase();
   const name=String(file?.name || '').toLowerCase();
+  const ext=attachmentExtension(file);
 
-  return (
+  if(
     type.startsWith('image/') ||
-    name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') ||
-    name.endsWith('.webp') || name.endsWith('.gif')
-  ) ? 'photo' : 'document';
+    /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(name)
+  ){
+    return 'photo';
+  }
+
+  if(
+    type.startsWith('audio/') ||
+    AUDIO_ATTACHMENT_EXTS.has(ext)
+  ){
+    return 'audio';
+  }
+
+  if(SPREADSHEET_ATTACHMENT_EXTS.has(ext)){
+    return 'spreadsheet';
+  }
+
+  if(PRESENTATION_ATTACHMENT_EXTS.has(ext)){
+    return 'presentation';
+  }
+
+  if(CODE_ATTACHMENT_EXTS.has(ext)){
+    return 'code';
+  }
+
+  return 'document';
 }
 
 function attachmentLabel(file, kind){
   const safeName = String(file?.name || 'allegato').trim() || 'allegato';
+
   if(kind === 'photo') return `📷 ${safeName}`;
+  if(kind === 'audio') return `🎙️ ${safeName}`;
+  if(kind === 'spreadsheet') return `📊 ${safeName}`;
+  if(kind === 'presentation') return `📽️ ${safeName}`;
+  if(kind === 'code') return `💻 ${safeName}`;
   if(kind === 'scan') return `📄 Pagina acquisita: ${safeName}`;
-  return `📎 ${safeName}`;
+  return `📄 ${safeName}`;
 }
 
 async function fetchAttachmentWithRetry(formData, signal){
@@ -2503,10 +2599,8 @@ async function sendPendingAttachments(optionalText=''){
   }
 
   const items = pendingAttachments.slice();
-  const labels = items.map((item,index)=>
-    item.kind === 'photo'
-      ? `📷 Foto ${index+1}`
-      : attachmentLabel(item.file,item.kind)
+  const labels = items.map(item=>
+    attachmentLabel(item.file,item.kind)
   );
 
   labels.forEach(label=>addMessage(label,'user'));
@@ -2635,10 +2729,14 @@ attachmentFileInput.addEventListener('change',async ()=>{
   const available=Math.max(0,MAX_FILES - pendingAttachments.length);
   const selected=files.slice(0,available);
 
+  const selectedKinds = selected.map(file=>detectAttachmentKind(file));
+
   setMicStatus(
-    selected.some(file=>detectAttachmentKind(file)==='photo')
-      ? 'Preparo le foto…'
-      : 'Preparo gli allegati…'
+    selectedKinds.some(kind=>kind==='photo')
+      ? 'Preparo foto e allegati…'
+      : selectedKinds.some(kind=>kind==='audio')
+        ? 'Preparo audio e allegati…'
+        : 'Preparo gli allegati…'
   );
 
   for(const originalFile of selected){
