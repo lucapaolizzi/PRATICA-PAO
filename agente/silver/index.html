@@ -1034,6 +1034,23 @@ textarea{
   }
 }
 
+
+/* === SILVER 2.7.2 — PICKER FILE iPHONE SENZA TAGLIO === */
+@media(max-width:760px){
+  body.file-picker-open:not(.conversation-mode) .identity{
+    transform:none !important;
+    padding-top:8px !important;
+  }
+
+  body.file-picker-open:not(.conversation-mode) .stage{
+    transform:none !important;
+  }
+
+  body.file-picker-open:not(.conversation-mode) .composer{
+    transform:none !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1450,6 +1467,45 @@ const micStatusText = document.getElementById('micStatusText');
 const cancelAttachmentButton = document.getElementById('cancelAttachmentButton');
 let pendingAttachments = [];
 let attachmentAbortController = null;
+let nativeAttachmentPickerOpen = false;
+let nativeAttachmentPickerScrollY = 0;
+
+function prepareNativeAttachmentPicker(){
+  nativeAttachmentPickerOpen = true;
+  nativeAttachmentPickerScrollY = window.scrollY || 0;
+
+  // Il menu nativo di iPhone modifica temporaneamente il viewport.
+  // Togliamo le traslazioni verticali della schermata iniziale,
+  // così Silver non finisce dietro la barra praticapao.it.
+  document.body.classList.add('file-picker-open');
+
+  document.body.classList.remove('keyboard-open');
+  composer.classList.remove('keyboard-open');
+
+  try{ input.blur(); }catch(_){}
+
+  // Mantiene la posizione della pagina stabile prima di aprire il picker.
+  window.scrollTo({
+    top:nativeAttachmentPickerScrollY,
+    left:0,
+    behavior:'auto'
+  });
+}
+
+function finishNativeAttachmentPicker(){
+  if(!nativeAttachmentPickerOpen) return;
+
+  nativeAttachmentPickerOpen = false;
+  document.body.classList.remove('file-picker-open');
+
+  requestAnimationFrame(()=>{
+    window.scrollTo({
+      top:nativeAttachmentPickerScrollY,
+      left:0,
+      behavior:'auto'
+    });
+  });
+}
 
 const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
@@ -2376,6 +2432,13 @@ window.addEventListener('pagehide',()=>{
   }
 });
 
+window.addEventListener('focus',()=>{
+  if(nativeAttachmentPickerOpen){
+    setTimeout(finishNativeAttachmentPicker,120);
+  }
+});
+
+
 
 sessionEndButton.addEventListener('click',()=>openSheet(sessionBackdrop));
 sessionClose.addEventListener('click',()=>closeSheet(sessionBackdrop));
@@ -2803,12 +2866,22 @@ cancelAttachmentButton.addEventListener('click',()=>{
 });
 
 attachmentButton.addEventListener('click',()=>{
+  prepareNativeAttachmentPicker();
   closeSheet(toolsBackdrop);
   attachmentFileInput.value='';
-  attachmentFileInput.click();
+
+  // Un frame di respiro evita il salto grafico su Safari/iPhone
+  // prima che compaia il menu nativo Foto / Fotocamera / File.
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      attachmentFileInput.click();
+    });
+  });
 });
 
 attachmentFileInput.addEventListener('change',async ()=>{
+  finishNativeAttachmentPicker();
+
   const files=Array.from(attachmentFileInput.files || []);
   if(!files.length) return;
 
