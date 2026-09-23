@@ -287,17 +287,51 @@ textarea::placeholder{color:#918b80}
 }
 
 .sheet-backdrop{
-  position:fixed;inset:0;background:rgba(20,19,17,.28);
-  display:none;align-items:flex-end;justify-content:center;
-  z-index:100;padding:0 12px calc(10px + env(safe-area-inset-bottom));
+  position:fixed;
+  left:0;
+  right:0;
+  top:var(--silver-sheet-vv-top,0px);
+  bottom:auto;
+  height:var(--silver-sheet-vv-height,100svh);
+  background:rgba(20,19,17,.28);
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:100;
+  padding:
+    calc(10px + env(safe-area-inset-top))
+    12px
+    calc(10px + env(safe-area-inset-bottom));
 }
 .sheet-backdrop.open{display:flex}
 .sheet{
   width:min(620px,100%);
-  background:#fff;border-radius:26px;
+  max-height:calc(
+    var(--silver-sheet-vv-height,100svh)
+    - 20px
+    - env(safe-area-inset-top)
+    - env(safe-area-inset-bottom)
+  );
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  background:#fff;
+  border-radius:26px;
   padding:10px 12px 14px;
   box-shadow:0 -10px 34px rgba(20,19,17,.18);
 }
+/* === SILVER 2.7.1 — MENU STRUMENTI SEMPRE VISIBILE === */
+#toolsBackdrop .sheet{
+  scroll-padding-top:12px;
+  scroll-padding-bottom:16px;
+}
+
+@media(max-width:760px){
+  #toolsBackdrop .sheet{
+    border-radius:24px 24px 20px 20px;
+  }
+}
+
 .sheet-handle{
   width:40px;height:4px;border-radius:4px;background:#d5d2cc;
   margin:2px auto 12px;
@@ -1743,7 +1777,38 @@ let activeAudioDone = null;
 let playbackRunId = 0;
 
 
+function updateSheetViewport(){
+  const vv = window.visualViewport;
+
+  const height = Math.max(
+    320,
+    Math.round(vv ? vv.height : window.innerHeight)
+  );
+
+  const top = Math.max(
+    0,
+    Math.round(vv ? vv.offsetTop : 0)
+  );
+
+  document.documentElement.style.setProperty(
+    '--silver-sheet-vv-height',
+    `${height}px`
+  );
+
+  document.documentElement.style.setProperty(
+    '--silver-sheet-vv-top',
+    `${top}px`
+  );
+}
+
 function openSheet(backdrop){
+  updateSheetViewport();
+
+  // Ogni pannello deve aprirsi dalla sua parte iniziale,
+  // evitando che una precedente posizione di scroll nasconda ALLEGA.
+  const sheet = backdrop.querySelector('.sheet');
+  if(sheet) sheet.scrollTop = 0;
+
   backdrop.classList.add('open');
   backdrop.setAttribute('aria-hidden','false');
 }
@@ -1752,6 +1817,28 @@ function closeSheet(backdrop){
   backdrop.classList.remove('open');
   backdrop.setAttribute('aria-hidden','true');
 }
+
+updateSheetViewport();
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener(
+    'resize',
+    updateSheetViewport,
+    {passive:true}
+  );
+  window.visualViewport.addEventListener(
+    'scroll',
+    updateSheetViewport,
+    {passive:true}
+  );
+}
+
+window.addEventListener(
+  'orientationchange',
+  ()=>setTimeout(updateSheetViewport,120),
+  {passive:true}
+);
+
 
 function updateSessionControls(persistRecovery=true){
   sessionRow.classList.toggle('visible', sessionMessages.length > 0);
