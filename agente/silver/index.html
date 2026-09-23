@@ -807,6 +807,199 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   inset:auto !important;
 }
 
+
+.mode-chooser.single-mode{
+  grid-template-columns:minmax(0,1fr) !important;
+  max-width:620px;
+}
+.mode-chooser.single-mode .mode-door{
+  width:100%;
+}
+
+
+/* === SILVER MULTILINGUA / RTL === */
+.msg{
+  unicode-bidi:plaintext;
+  text-align:start;
+}
+textarea{
+  unicode-bidi:plaintext;
+  text-align:start;
+}
+.language-option[aria-pressed="true"]{
+  border-color:rgba(168,131,62,.70);
+  box-shadow:0 0 0 1px rgba(168,131,62,.20) inset;
+}
+.language-option .native{
+  font-size:14px;
+  margin-top:3px;
+}
+
+
+/* === SILVER 2.5 — TRADUTTORE === */
+.translator-sheet{
+  max-height:min(88dvh,760px);
+  overflow-y:auto;
+}
+
+.translator-lang-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);
+  gap:8px;
+  align-items:end;
+  margin:10px 0 12px;
+}
+
+.translator-field label{
+  display:block;
+  margin:0 0 5px 4px;
+  color:var(--muted);
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.translator-field select,
+.translator-style select{
+  width:100%;
+  min-height:44px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--paper);
+  color:var(--ink);
+  font:14px/1.2 Arial,Helvetica,sans-serif;
+  padding:10px 34px 10px 11px;
+}
+
+.translator-swap{
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:#fff;
+  color:var(--ink);
+  font:700 18px/1 Arial,Helvetica,sans-serif;
+  cursor:pointer;
+}
+
+.translator-style{
+  margin:0 0 12px;
+}
+
+.translator-textarea{
+  width:100%;
+  min-height:120px;
+  max-height:240px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  color:var(--ink);
+  font:16px/1.45 Arial,Helvetica,sans-serif;
+  padding:12px 13px;
+  unicode-bidi:plaintext;
+  text-align:start;
+}
+
+.translator-count{
+  min-height:16px;
+  margin:5px 4px 10px;
+  color:var(--muted);
+  font:10px/1.3 Arial,Helvetica,sans-serif;
+  text-align:right;
+}
+
+.translator-main-action{
+  width:100%;
+  min-height:46px;
+  border:0;
+  border-radius:16px;
+  background:var(--ink);
+  color:#fff;
+  font:700 12px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.08em;
+  cursor:pointer;
+}
+
+.translator-main-action[disabled]{
+  opacity:.55;
+  cursor:default;
+}
+
+.translator-result-wrap{
+  display:none;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+
+.translator-result-wrap.visible{
+  display:block;
+}
+
+.translator-result-label{
+  margin:0 0 7px 3px;
+  color:var(--muted);
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.translator-result{
+  min-height:94px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--paper);
+  color:var(--ink);
+  padding:12px 13px;
+  white-space:pre-wrap;
+  font:16px/1.5 Arial,Helvetica,sans-serif;
+  unicode-bidi:plaintext;
+  text-align:start;
+}
+
+.translator-actions{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:9px;
+}
+
+.translator-mini{
+  min-height:40px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#fff;
+  color:var(--ink);
+  font:700 10px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.05em;
+  cursor:pointer;
+}
+
+.translator-status{
+  min-height:18px;
+  margin:8px 3px 0;
+  color:var(--muted);
+  font:11px/1.35 Arial,Helvetica,sans-serif;
+}
+
+@media(max-width:520px){
+  .translator-lang-row{
+    grid-template-columns:1fr 38px 1fr;
+    gap:6px;
+  }
+  .translator-swap{
+    width:38px;
+    height:38px;
+  }
+  .translator-actions{
+    grid-template-columns:1fr 1fr;
+  }
+  .translator-actions .translator-mini:last-child{
+    grid-column:1/-1;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -826,21 +1019,16 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   <section class="stage">
     <div class="opening" id="opening">
       <h1 class="hello">Ciao, piacere, sono Silver.</h1>
-      <p class="question" id="openingQuestion">Come vuoi entrare?</p>
+      <p class="question" id="openingQuestion">Entra nella pratica.</p>
 
-      <div class="mode-chooser" id="modeChooser" aria-label="Scegli la modalità di Silver">
-        <button class="mode-door" id="chatDoor" type="button">
-          <strong>CHAT GENERICA</strong>
-          <span>Domande, informazioni, problemi pratici e conversazioni generali.</span>
-        </button>
-
+      <div class="mode-chooser single-mode" id="modeChooser" aria-label="Entra nella chat di crescita personale">
         <button class="mode-door practice" id="practiceDoor" type="button">
-          <strong>CHAT IN PRATICA</strong>
-          <span>Crescita personale P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Qui la voce di una parte non viene confusa automaticamente con la volontà dell’intera persona.</small></span>
+          <strong>CHAT DI CRESCITA PERSONALE</strong>
+          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa automaticamente con la volontà dell’intera persona.</small></span>
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Scegli la porta più adatta a ciò che vuoi portare.</p>
+      <p class="gentle" id="openingGentle">Uno spazio dedicato alla crescita personale e all’incontro delle parti.</p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -859,7 +1047,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
 
     </div>
 
-    <textarea id="input" rows="1" maxlength="3000"
+    <textarea id="input" rows="1" maxlength="3000" dir="auto"
       placeholder="" aria-label="Messaggio per Silver"></textarea>
 
     <button class="send" type="submit">INVIA</button>
@@ -913,11 +1101,149 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
           <strong>HELP / PROBLEMI</strong>
           <span>Segnala bug, problemi dell’interfaccia o difficoltà nell’uso di Silver.</span>
         </button>
+        <button class="sheet-action" id="languageButton" type="button">
+          <strong>LINGUA</strong>
+          <span id="languageCurrentLabel">Automatica · segue la lingua in cui scrivi.</span>
+        </button>
+        <button class="sheet-action" id="translatorButton" type="button">
+          <strong>TRADUTTORE</strong>
+          <span>Traduci testi in modo fedele, naturale o mantenendo il tono.</span>
+        </button>
       </div>
       <p class="sheet-note" id="toolsNote">
         Con ALLEGA puoi scegliere una foto, scattarne una o selezionare un file. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
+
+
+  <div class="sheet-backdrop" id="translatorBackdrop" aria-hidden="true">
+    <section class="sheet translator-sheet" role="dialog" aria-modal="true" aria-labelledby="translatorTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="translatorTitle">Traduttore Silver</h2>
+      <p class="sheet-note" style="font-size:13px;line-height:1.5;margin-top:4px;">
+        Incolla o scrivi un testo. Silver traduce senza aggiungerlo alla conversazione.
+      </p>
+
+      <div class="translator-lang-row">
+        <div class="translator-field">
+          <label for="translatorSource">Da</label>
+          <select id="translatorSource">
+            <option value="auto">Rileva automaticamente</option>
+            <option value="it">Italiano</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+            <option value="pt">Português</option>
+          </select>
+        </div>
+
+        <button class="translator-swap" id="translatorSwap" type="button"
+          aria-label="Scambia le lingue" title="Scambia le lingue">↕</button>
+
+        <div class="translator-field">
+          <label for="translatorTarget">A</label>
+          <select id="translatorTarget">
+            <option value="it">Italiano</option>
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="de">Deutsch</option>
+            <option value="pt">Português</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="translator-style">
+        <div class="translator-field">
+          <label for="translatorStyle">Tipo di traduzione</label>
+          <select id="translatorStyle">
+            <option value="natural">Naturale — come parlerebbe un madrelingua</option>
+            <option value="faithful">Fedele — più vicina possibile all’originale</option>
+            <option value="tone">Mantieni il tono — intenzione e registro dell’originale</option>
+          </select>
+        </div>
+      </div>
+
+      <textarea class="translator-textarea" id="translatorInput" maxlength="6000"
+        dir="auto" placeholder="Scrivi o incolla qui il testo da tradurre…"
+        aria-label="Testo da tradurre"></textarea>
+      <div class="translator-count" id="translatorCount">0 / 6000</div>
+
+      <button class="translator-main-action" id="translatorTranslate" type="button">TRADUCI</button>
+
+      <div class="translator-result-wrap" id="translatorResultWrap">
+        <div class="translator-result-label">Traduzione</div>
+        <div class="translator-result" id="translatorResult" dir="auto"></div>
+
+        <div class="translator-actions">
+          <button class="translator-mini" id="translatorCopy" type="button">COPIA</button>
+          <button class="translator-mini" id="translatorListen" type="button">🔊 ASCOLTA</button>
+          <button class="translator-mini" id="translatorClear" type="button">NUOVO TESTO</button>
+        </div>
+      </div>
+
+      <div class="translator-status" id="translatorStatus" aria-live="polite"></div>
+      <button class="sheet-close" id="translatorClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
+  <div class="sheet-backdrop" id="languageBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="languageTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="languageTitle">Lingua di Silver</h2>
+      <p class="sheet-note" style="font-size:13px;line-height:1.5;margin-top:4px;">
+        In modalità Automatica, Silver risponde nella lingua in cui ti esprimi.
+      </p>
+
+      <div class="sheet-grid" id="languageGrid" style="margin-top:12px;">
+        <button class="sheet-action language-option" type="button" data-language="auto">
+          <strong>AUTOMATICA</strong>
+          <span>Segue la lingua della persona.</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="it">
+          <strong>ITALIANO</strong>
+          <span class="native">Italiano</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="en">
+          <strong>ENGLISH</strong>
+          <span class="native">English</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="ar" dir="rtl">
+          <strong>العربية</strong>
+          <span class="native">العربية</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="fr">
+          <strong>FRANÇAIS</strong>
+          <span class="native">Français</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="es">
+          <strong>ESPAÑOL</strong>
+          <span class="native">Español</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="de">
+          <strong>DEUTSCH</strong>
+          <span class="native">Deutsch</span>
+        </button>
+
+        <button class="sheet-action language-option" type="button" data-language="pt">
+          <strong>PORTUGUÊS</strong>
+          <span class="native">Português</span>
+        </button>
+      </div>
+
+      <button class="sheet-close" id="languageClose" type="button">CHIUDI</button>
     </section>
   </div>
 
@@ -1024,6 +1350,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
+const TRANSLATE_URL = WORKER_URL + 'translate';
 
 
 const backLink = document.getElementById('backLink');
@@ -1060,6 +1387,29 @@ const resumeFileInput = document.getElementById('resumeFileInput');
 const helpButton = document.getElementById('helpButton');
 const helpBackdrop = document.getElementById('helpBackdrop');
 const helpClose = document.getElementById('helpClose');
+
+const languageButton = document.getElementById('languageButton');
+const translatorButton = document.getElementById('translatorButton');
+const translatorBackdrop = document.getElementById('translatorBackdrop');
+const translatorClose = document.getElementById('translatorClose');
+const translatorSource = document.getElementById('translatorSource');
+const translatorTarget = document.getElementById('translatorTarget');
+const translatorStyle = document.getElementById('translatorStyle');
+const translatorInput = document.getElementById('translatorInput');
+const translatorCount = document.getElementById('translatorCount');
+const translatorTranslate = document.getElementById('translatorTranslate');
+const translatorSwap = document.getElementById('translatorSwap');
+const translatorResultWrap = document.getElementById('translatorResultWrap');
+const translatorResult = document.getElementById('translatorResult');
+const translatorCopy = document.getElementById('translatorCopy');
+const translatorListen = document.getElementById('translatorListen');
+const translatorClear = document.getElementById('translatorClear');
+const translatorStatus = document.getElementById('translatorStatus');
+
+const languageBackdrop = document.getElementById('languageBackdrop');
+const languageClose = document.getElementById('languageClose');
+const languageCurrentLabel = document.getElementById('languageCurrentLabel');
+const languageOptions = Array.from(document.querySelectorAll('.language-option'));
 const attachmentFileInput = document.getElementById('attachmentFileInput');
 const attachmentQueue = document.getElementById('attachmentQueue');
 const micStatusText = document.getElementById('micStatusText');
@@ -1107,40 +1457,66 @@ const dictationHelpButton = document.getElementById('dictationHelpButton');
 const dictationPopover = document.getElementById('dictationPopover');
 
 const modeChooser = document.getElementById('modeChooser');
-const chatDoor = document.getElementById('chatDoor');
 const practiceDoor = document.getElementById('practiceDoor');
 const modeBadge = document.getElementById('modeBadge');
 const openingQuestion = document.getElementById('openingQuestion');
 const openingGentle = document.getElementById('openingGentle');
 const resumeOpeningButton = document.getElementById('resumeOpeningButton');
 
-let selectedMode = null;
+let selectedMode = 'practice';
+let selectedLanguage = 'auto';
+
+const LANGUAGE_LABELS = {
+  auto:'Automatica · segue la lingua in cui scrivi.',
+  it:'Italiano',
+  en:'English',
+  ar:'العربية',
+  fr:'Français',
+  es:'Español',
+  de:'Deutsch',
+  pt:'Português'
+};
+
+function normalizeUiLanguage(value){
+  const lang = String(value || 'auto').toLowerCase();
+  return Object.prototype.hasOwnProperty.call(LANGUAGE_LABELS, lang)
+    ? lang
+    : 'auto';
+}
+
+function setSilverLanguage(value){
+  selectedLanguage = normalizeUiLanguage(value);
+
+  languageCurrentLabel.textContent = LANGUAGE_LABELS[selectedLanguage];
+
+  languageOptions.forEach(button=>{
+    button.setAttribute(
+      'aria-pressed',
+      button.dataset.language === selectedLanguage ? 'true' : 'false'
+    );
+  });
+
+  input.dir = selectedLanguage === 'ar' ? 'rtl' : 'auto';
+}
 
 function normalizeUiMode(value){
-  return String(value || '').toLowerCase() === 'practice'
-    ? 'practice'
-    : 'chat';
+  return 'practice';
 }
 
-function chooseSilverMode(mode){
-  selectedMode = normalizeUiMode(mode);
+function chooseSilverMode(){
+  selectedMode = 'practice';
 
   document.body.classList.add('mode-selected');
-  document.body.dataset.silverMode = selectedMode;
+  document.body.dataset.silverMode = 'practice';
 
   modeBadge.hidden = false;
-  modeBadge.textContent = selectedMode === 'practice'
-    ? 'CHAT IN PRATICA'
-    : 'CHAT GENERICA';
+  modeBadge.textContent = 'CRESCITA PERSONALE';
 
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = selectedMode === 'practice'
-    ? 'Puoi portare una parte, una polarità, una sensazione, una metafora o semplicemente ciò che c’è.'
-    : 'Puoi scrivermi anche solo una parola…';
+  openingGentle.textContent = 'Puoi portare una parte, una polarità, una sensazione, una metafora o semplicemente ciò che c’è.';
 }
 
-chatDoor.addEventListener('click',()=>chooseSilverMode('chat'));
-practiceDoor.addEventListener('click',()=>chooseSilverMode('practice'));
+practiceDoor.addEventListener('click',()=>chooseSilverMode());
 
 resumeOpeningButton.addEventListener('click',()=>{
   resumeFileInput.value='';
@@ -1257,7 +1633,8 @@ function recoveryPayload(){
     format:'silver-pao-local-recovery',
     version:1,
     savedAt:new Date().toISOString(),
-    mode:selectedMode || 'chat',
+    mode:'practice',
+    language:selectedLanguage,
     draft:input.value || '',
     messages:sessionMessages.map(m=>({
       role:m.role,
@@ -1331,7 +1708,8 @@ function readRecoveryDraft(){
     return {
       messages,
       draft,
-      mode:normalizeUiMode(data.mode || 'chat')
+      mode:'practice',
+      language:normalizeUiLanguage(data.language || 'auto')
     };
   }catch(err){
     console.warn('Lettura recupero Silver:',err);
@@ -1341,7 +1719,8 @@ function readRecoveryDraft(){
 }
 
 function restoreLocalRecovery(data){
-  chooseSilverMode(data.mode);
+  setSilverLanguage(data.language || 'auto');
+  chooseSilverMode();
 
   if(data.messages.length){
     renderRestoredConversation(data.messages);
@@ -1383,7 +1762,10 @@ function updateSessionControls(persistRecovery=true){
 
 function showConversationMode(){
   document.body.classList.add('conversation-mode');
-  showConversationMode();
+  opening.style.display='none';
+  conversation.style.display='flex';
+  document.querySelector('.mascot').style.width='92px';
+  document.querySelector('.identity').style.paddingBottom='2px';
 }
 
 function resetConversationUi(){
@@ -1392,11 +1774,11 @@ function resetConversationUi(){
   document.body.classList.remove('mode-selected');
   delete document.body.dataset.silverMode;
 
-  selectedMode = null;
+  selectedMode = 'practice';
   modeBadge.hidden = true;
   modeBadge.textContent = '';
-  openingQuestion.textContent = 'Come vuoi entrare?';
-  openingGentle.textContent = 'Scegli la porta più adatta a ciò che vuoi portare.';
+  openingQuestion.textContent = 'Entra nella pratica.';
+  openingGentle.textContent = 'Uno spazio dedicato alla crescita personale e all’incontro delle parti.';
 
   sessionMessages = [];
   reviewMessages = [];
@@ -1498,7 +1880,8 @@ function saveConversationToDevice(exitAction=null){
   const payload = {
     format: 'silver-pao-conversation',
     version: 2,
-    mode: selectedMode || 'chat',
+    mode: 'practice',
+    language: selectedLanguage,
     savedAt: new Date().toISOString(),
     messages: sessionMessages.map(m=>({
       role:m.role,
@@ -1540,7 +1923,7 @@ function saveConversationToDevice(exitAction=null){
     }
 
     // Se invece l'utente sta semplicemente terminando la conversazione,
-    // resta dentro Silver e torna alle due porte iniziali.
+    // resta dentro Silver e torna all’ingresso della crescita personale.
     allowPageExit = false;
     resetConversationUi();
     window.scrollTo({top:0,behavior:'smooth'});
@@ -1570,7 +1953,8 @@ function normalizeSavedMessages(data){
 
   return {
     messages,
-    mode: normalizeUiMode(data.mode || 'chat')
+    mode:'practice',
+    language:normalizeUiLanguage(data.language || 'auto')
   };
 }
 
@@ -1617,6 +2001,202 @@ helpClose.addEventListener('click',()=>closeSheet(helpBackdrop));
 helpBackdrop.addEventListener('click',e=>{
   if(e.target === helpBackdrop) closeSheet(helpBackdrop);
 });
+
+languageButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  openSheet(languageBackdrop);
+});
+
+languageClose.addEventListener('click',()=>closeSheet(languageBackdrop));
+
+languageBackdrop.addEventListener('click',e=>{
+  if(e.target === languageBackdrop) closeSheet(languageBackdrop);
+});
+
+languageOptions.forEach(button=>{
+  button.addEventListener('click',()=>{
+    setSilverLanguage(button.dataset.language);
+    saveRecoveryDraft();
+    closeSheet(languageBackdrop);
+  });
+});
+
+
+const TRANSLATOR_LANG_NAMES = {
+  auto:'Rileva automaticamente',
+  it:'Italiano',
+  en:'English',
+  ar:'العربية',
+  fr:'Français',
+  es:'Español',
+  de:'Deutsch',
+  pt:'Português'
+};
+
+function updateTranslatorDirection(){
+  translatorInput.dir = translatorSource.value === 'ar' ? 'rtl' : 'auto';
+  translatorResult.dir = translatorTarget.value === 'ar' ? 'rtl' : 'auto';
+}
+
+function clearTranslatorResult(){
+  translatorResult.textContent='';
+  translatorResultWrap.classList.remove('visible');
+  translatorStatus.textContent='';
+  translatorListen.textContent='🔊 ASCOLTA';
+  translatorListen.disabled=false;
+}
+
+translatorButton.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+
+  // Se Silver è stata impostata manualmente in una lingua, la usiamo
+  // come destinazione iniziale del traduttore. In automatico resta Italiano.
+  if(selectedLanguage !== 'auto' && selectedLanguage !== 'ar'){
+    translatorTarget.value = selectedLanguage;
+  }else if(selectedLanguage === 'ar'){
+    translatorTarget.value = 'ar';
+  }
+
+  updateTranslatorDirection();
+  openSheet(translatorBackdrop);
+  setTimeout(()=>translatorInput.focus(),120);
+});
+
+translatorClose.addEventListener('click',()=>closeSheet(translatorBackdrop));
+
+translatorBackdrop.addEventListener('click',e=>{
+  if(e.target === translatorBackdrop) closeSheet(translatorBackdrop);
+});
+
+translatorSource.addEventListener('change',updateTranslatorDirection);
+translatorTarget.addEventListener('change',()=>{
+  updateTranslatorDirection();
+  clearTranslatorResult();
+});
+
+translatorInput.addEventListener('input',()=>{
+  translatorCount.textContent = `${translatorInput.value.length} / 6000`;
+  clearTranslatorResult();
+});
+
+translatorSwap.addEventListener('click',()=>{
+  const source = translatorSource.value;
+  const target = translatorTarget.value;
+
+  if(source === 'auto'){
+    translatorSource.value = target;
+
+    let fallback = selectedLanguage !== 'auto'
+      ? selectedLanguage
+      : 'it';
+
+    if(fallback === target){
+      fallback = target === 'it' ? 'en' : 'it';
+    }
+
+    translatorTarget.value = fallback;
+  }else{
+    translatorSource.value = target;
+    translatorTarget.value = source;
+  }
+
+  updateTranslatorDirection();
+  clearTranslatorResult();
+});
+
+translatorClear.addEventListener('click',()=>{
+  translatorInput.value='';
+  translatorCount.textContent='0 / 6000';
+  clearTranslatorResult();
+  translatorInput.focus();
+});
+
+translatorCopy.addEventListener('click',async ()=>{
+  const text = translatorResult.textContent.trim();
+  if(!text) return;
+
+  try{
+    await navigator.clipboard.writeText(text);
+    translatorStatus.textContent='Traduzione copiata.';
+  }catch(_){
+    const temp=document.createElement('textarea');
+    temp.value=text;
+    temp.style.position='fixed';
+    temp.style.opacity='0';
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    temp.remove();
+    translatorStatus.textContent='Traduzione copiata.';
+  }
+
+  setTimeout(()=>{
+    if(translatorStatus.textContent === 'Traduzione copiata.'){
+      translatorStatus.textContent='';
+    }
+  },2200);
+});
+
+translatorListen.addEventListener('click',()=>{
+  const text = translatorResult.textContent.trim();
+  if(!text) return;
+  speakSilver(text, translatorListen, translatorTarget.value);
+});
+
+translatorTranslate.addEventListener('click',async ()=>{
+  const text = translatorInput.value.trim();
+
+  if(!text){
+    translatorStatus.textContent='Scrivi o incolla prima il testo da tradurre.';
+    translatorInput.focus();
+    return;
+  }
+
+  translatorTranslate.disabled=true;
+  translatorTranslate.textContent='TRADUCO…';
+  translatorStatus.textContent='Silver sta traducendo…';
+
+  try{
+    const response = await fetch(TRANSLATE_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        text,
+        source:translatorSource.value,
+        target:translatorTarget.value,
+        style:translatorStyle.value
+      })
+    });
+
+    let data={};
+    try{ data=await response.json(); }catch(_){}
+
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || 'Traduzione non disponibile');
+    }
+
+    translatorResult.textContent = String(data.translation || '').trim();
+    translatorResultWrap.classList.add('visible');
+    translatorStatus.textContent='';
+    updateTranslatorDirection();
+
+    requestAnimationFrame(()=>{
+      translatorResultWrap.scrollIntoView({
+        behavior:'smooth',
+        block:'nearest'
+      });
+    });
+
+  }catch(err){
+    console.error('Traduttore Silver:',err);
+    translatorStatus.textContent =
+      'In questo momento non riesco a tradurre. Riprova tra poco.';
+  }finally{
+    translatorTranslate.disabled=false;
+    translatorTranslate.textContent='TRADUCI';
+  }
+});
+
 
 /* Recupero locale dopo chiusura/uscita accidentale */
 recoverSessionButton.addEventListener('click',()=>{
@@ -1736,7 +2316,8 @@ resumeFileInput.addEventListener('change',async ()=>{
       throw new Error('Conversazione vuota');
     }
 
-    chooseSilverMode(restored.mode);
+    setSilverLanguage(restored.language || 'auto');
+    chooseSilverMode();
     renderRestoredConversation(restored.messages);
     setMicStatus('Conversazione ripresa. Puoi continuare da qui.');
     setTimeout(()=>{ setMicStatus(''); },3500);
@@ -1954,7 +2535,8 @@ async function sendPendingAttachments(optionalText=''){
       ? 'Osserva insieme questi allegati e aiutami a comprenderli nel contesto della conversazione.'
       : 'Osserva questo allegato e aiutami a comprenderlo nel contesto della conversazione.')
   );
-  formData.append('mode', selectedMode || 'chat');
+  formData.append('mode', 'practice');
+  formData.append('language', selectedLanguage);
   formData.append('history',JSON.stringify(sessionMessages.slice(-20)));
 
   pendingAttachments=[];
@@ -2097,7 +2679,7 @@ deleteConversationButton.addEventListener('click',async ()=>{
   allowPageExit = false;
 
   // È terminata la conversazione, non Silver:
-  // torniamo alle due porte CHAT GENERICA / CHAT IN PRATICA.
+  // torniamo all’ingresso della CHAT DI CRESCITA PERSONALE.
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -2193,14 +2775,15 @@ function splitForSpeech(text, maxLen=260){
   return chunks.filter(Boolean);
 }
 
-async function fetchSpeechChunk(text){
+async function fetchSpeechChunk(text, languageOverride=null){
   const response = await fetch(SPEECH_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       text,
       voice:'marin',
-      style:'cedar2cplus'
+      style:'cedar2cplus',
+      language:languageOverride || selectedLanguage
     })
   });
 
@@ -2211,7 +2794,7 @@ async function fetchSpeechChunk(text){
   return await response.blob();
 }
 
-async function speakSilver(text, button){
+async function speakSilver(text, button, languageOverride=null){
   // Se stiamo già ascoltando QUESTO messaggio:
   // tocco = PAUSA / RIPRENDI dallo stesso punto.
   if(activeListenButton === button && activeAudio){
@@ -2261,7 +2844,7 @@ async function speakSilver(text, button){
     // AVVIO RAPIDO:
     // prepara solo il primo blocco, lo riproduce subito e,
     // mentre Silver parla, prepara già il blocco successivo.
-    let nextBlobPromise = fetchSpeechChunk(chunks[0]);
+    let nextBlobPromise = fetchSpeechChunk(chunks[0], languageOverride);
 
     for(let i=0;i<chunks.length;i++){
       if(myRunId !== playbackRunId) return;
@@ -2278,7 +2861,7 @@ async function speakSilver(text, button){
       // mentre quello corrente sta per essere riprodotto.
       nextBlobPromise =
         i + 1 < chunks.length
-          ? fetchSpeechChunk(chunks[i+1])
+          ? fetchSpeechChunk(chunks[i+1], languageOverride)
           : null;
 
       if(activeAudioUrl){
@@ -2353,6 +2936,7 @@ function addMessage(text, who){
   if(who !== 'silver'){
     const el=document.createElement('div');
     el.className='msg '+who;
+    el.dir = selectedLanguage === 'ar' ? 'rtl' : 'auto';
     renderMessage(el,text,who);
     conversation.appendChild(el);
     updateSessionControls();
@@ -2364,6 +2948,7 @@ function addMessage(text, who){
 
   const el=document.createElement('div');
   el.className='msg silver';
+  el.dir = selectedLanguage === 'ar' ? 'rtl' : 'auto';
   renderMessage(el,text,'silver');
 
   const listen=document.createElement('button');
@@ -2388,6 +2973,7 @@ function startStreamingSilverMessage(){
 
   const el=document.createElement('div');
   el.className='msg silver';
+  el.dir = selectedLanguage === 'ar' ? 'rtl' : 'auto';
   el.textContent='';
 
   const listen=document.createElement('button');
@@ -2474,11 +3060,6 @@ form.addEventListener('submit', async e=>{
   const text=input.value.trim();
   const hasAttachments=pendingAttachments.length > 0;
 
-  if(!selectedMode){
-    openingQuestion.textContent = 'Scegli prima CHAT GENERICA oppure CHAT IN PRATICA.';
-    return;
-  }
-
   if((!text && !hasAttachments) || send.disabled) return;
 
   opening.style.display='none';
@@ -2527,7 +3108,8 @@ form.addEventListener('submit', async e=>{
       body:JSON.stringify({
         message:text,
         history:sessionMessages.slice(-12),
-        mode:selectedMode || 'chat'
+        mode:'practice',
+        language:selectedLanguage
       })
     });
 
@@ -2599,6 +3181,7 @@ form.addEventListener('submit', async e=>{
   }
 });
 
+setSilverLanguage('auto');
 updateComposerState();
 updateSessionControls(false);
 
