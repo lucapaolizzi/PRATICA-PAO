@@ -2626,7 +2626,11 @@ function attachmentExtension(file){
 }
 
 const AUDIO_ATTACHMENT_EXTS = new Set([
-  'mp3','mp4','mpeg','mpga','m4a','wav','webm','ogg','flac'
+  'mp3','mpga','m4a','wav','ogg','flac'
+]);
+
+const VIDEO_ATTACHMENT_EXTS = new Set([
+  'mp4','mpeg','mpg','webm'
 ]);
 
 const SPREADSHEET_ATTACHMENT_EXTS = new Set([
@@ -2656,6 +2660,13 @@ function detectAttachmentKind(file){
   }
 
   if(
+    type.startsWith('video/') ||
+    VIDEO_ATTACHMENT_EXTS.has(ext)
+  ){
+    return 'video';
+  }
+
+  if(
     type.startsWith('audio/') ||
     AUDIO_ATTACHMENT_EXTS.has(ext)
   ){
@@ -2681,6 +2692,7 @@ function attachmentLabel(file, kind){
   const safeName = String(file?.name || 'allegato').trim() || 'allegato';
 
   if(kind === 'photo') return `📷 ${safeName}`;
+  if(kind === 'video') return `🎬 ${safeName}`;
   if(kind === 'audio') return `🎙️ ${safeName}`;
   if(kind === 'spreadsheet') return `📊 ${safeName}`;
   if(kind === 'presentation') return `📽️ ${safeName}`;
@@ -2734,6 +2746,7 @@ async function sendPendingAttachments(optionalText=''){
   if(!pendingAttachments.length) return null;
 
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
+  const MAX_MEDIA_BYTES = 24 * 1024 * 1024;
   const MAX_FILES = 4;
 
   if(pendingAttachments.length > MAX_FILES){
@@ -2742,8 +2755,14 @@ async function sendPendingAttachments(optionalText=''){
   }
 
   for(const item of pendingAttachments){
-    if(item.file.size > MAX_FILE_BYTES){
-      setMicStatus(`"${item.file.name}" supera il limite di 8 MB.`);
+    const isMedia = item.kind === 'audio' || item.kind === 'video';
+    const maxBytes = isMedia ? MAX_MEDIA_BYTES : MAX_FILE_BYTES;
+    const maxLabel = isMedia ? '24 MB' : '8 MB';
+
+    if(item.file.size > maxBytes){
+      setMicStatus(
+        `"${item.file.name}" supera il limite di ${maxLabel}.`
+      );
       return null;
     }
   }
@@ -2789,14 +2808,26 @@ async function sendPendingAttachments(optionalText=''){
   attachmentAbortController=new AbortController();
   document.body.classList.add('processing-attachments');
   cancelAttachmentButton.classList.add('visible');
-  setMicStatus(items.length > 1
-    ? `Silver sta leggendo ${items.length} allegati… Puoi annullare se vuoi.`
-    : 'Silver sta leggendo l’allegato… Puoi annullare se vuoi.'
+  const containsVideo = items.some(item=>item.kind === 'video');
+  const containsAudio = items.some(item=>item.kind === 'audio');
+
+  setMicStatus(
+    containsVideo
+      ? 'Silver sta caricando e trascrivendo l’audio del video… Puoi annullare se vuoi.'
+      : containsAudio
+        ? 'Silver sta caricando e trascrivendo l’audio… Puoi annullare se vuoi.'
+        : items.length > 1
+          ? `Silver sta leggendo ${items.length} allegati… Puoi annullare se vuoi.`
+          : 'Silver sta leggendo l’allegato… Puoi annullare se vuoi.'
+  );
+
+  const mediaUpload = items.some(
+    item=>item.kind === 'audio' || item.kind === 'video'
   );
 
   const timeoutId=setTimeout(()=>{
     try{ attachmentAbortController?.abort(); }catch(_){}
-  },90000);
+  }, mediaUpload ? 150000 : 90000);
 
   try{
     const response=await fetchAttachmentWithRetry(
@@ -2842,7 +2873,7 @@ async function sendPendingAttachments(optionalText=''){
     }else{
       addMessage(
         /load failed|failed to fetch|network/i.test(String(err?.message || ''))
-          ? 'La foto non è arrivata correttamente. Ho già riprovato automaticamente: prova a reinviarla.'
+          ? 'L’allegato non è arrivato correttamente. Ho già riprovato automaticamente: prova a reinviarlo.'
           : (err?.message
               ? `Non riesco a leggere questo allegato: ${err.message}`
               : 'Non riesco a leggere questo allegato in questo momento.'),
