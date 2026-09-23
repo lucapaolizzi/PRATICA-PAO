@@ -1064,7 +1064,7 @@ textarea{
       <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
     </div>
     <div class="silver">SILVER</div>
-    <div class="mode-badge" id="modeBadge" hidden></div>
+    <div class="mode-badge" id="modeBadge">CRESCITA PERSONALE</div>
   </header>
 
   <section class="stage">
@@ -1079,7 +1079,7 @@ textarea{
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Uno spazio dedicato alla crescita personale e all’incontro delle parti.</p>
+      <p class="gentle" id="openingGentle">Uno spazio dedicato all’incontro delle parti.</p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -1918,10 +1918,10 @@ function resetConversationUi(){
   delete document.body.dataset.silverMode;
 
   selectedMode = 'practice';
-  modeBadge.hidden = true;
-  modeBadge.textContent = '';
+  modeBadge.hidden = false;
+  modeBadge.textContent = 'CRESCITA PERSONALE';
   openingQuestion.textContent = 'Entra nella pratica.';
-  openingGentle.textContent = 'Uno spazio dedicato alla crescita personale e all’incontro delle parti.';
+  openingGentle.textContent = 'Uno spazio dedicato all’incontro delle parti.';
 
   sessionMessages = [];
   reviewMessages = [];
