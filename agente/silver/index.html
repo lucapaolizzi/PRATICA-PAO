@@ -1,4 +1,4 @@
-<!-- SILVER 2.9.1 — CONTESTO PRIMA DELL’ALLARME | frontend invariato da 2.9 -->
+<!-- SILVER FRONTEND 4.0 — SEDIE A/B + SILVER/C + MICROFONO + MOBILE AUDIT -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -877,6 +877,20 @@ textarea{
   overflow-y:auto;
 }
 
+/* Traduttore mobile: niente pannello tagliato/centrato quando appare la tastiera. */
+#translatorBackdrop.translator-input-focused{
+  align-items:flex-start;
+}
+#translatorBackdrop.translator-input-focused .translator-sheet{
+  max-height:calc(
+    var(--silver-sheet-vv-height,100svh)
+    - 20px
+    - env(safe-area-inset-top)
+    - env(safe-area-inset-bottom)
+  );
+  margin-top:0;
+}
+
 .translator-lang-row{
   display:grid;
   grid-template-columns:minmax(0,1fr) 42px minmax(0,1fr);
@@ -1052,35 +1066,254 @@ textarea{
   }
 }
 
+
+
+/* === SILVER FRONTEND 3.0 — MOBILE KEYBOARD SAFE AREA === */
+@media(max-width:760px){
+  body.keyboard-open{
+    scroll-padding-bottom:var(--keyboard-reserve, 150px);
+  }
+
+  body.keyboard-open .composer{
+    position:fixed !important;
+    left:50% !important;
+    right:auto !important;
+    top:var(--composer-top, auto) !important;
+    bottom:auto !important;
+    transform:translateX(-50%) !important;
+    width:min(724px,calc(100% - 16px)) !important;
+    margin:0 !important;
+    z-index:80 !important;
+  }
+
+  body.keyboard-open .dictation-help-row{
+    position:fixed !important;
+    left:50% !important;
+    right:auto !important;
+    top:var(--help-top, auto) !important;
+    bottom:auto !important;
+    transform:translateX(-50%) !important;
+    width:100% !important;
+    margin:0 !important;
+    z-index:81 !important;
+    pointer-events:none;
+  }
+
+  body.keyboard-open .dictation-help,
+  body.keyboard-open .dictation-popover{
+    pointer-events:auto;
+  }
+
+  body.keyboard-open .conversation{
+    padding-bottom:var(--keyboard-reserve, 150px) !important;
+  }
+}
+
+
+/* === SILVER FRONTEND 4.0 — DUE SEDIE + FACILITATORE C === */
+.chair-scene{
+  width:min(620px,100%);
+  margin:0 auto 2px;
+  display:grid;
+  grid-template-columns:minmax(72px,1fr) minmax(125px,235px) minmax(72px,1fr);
+  align-items:center;
+  gap:6px;
+}
+.facilitator-column{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.chair-position{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  padding:6px 2px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.chair-label{
+  min-width:30px;height:30px;
+  border:1px solid rgba(36,35,31,.22);
+  border-radius:999px;
+  background:rgba(255,255,255,.74);
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font:700 13px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.06em;
+  transition:.18s ease;
+}
+.chair-position.active .chair-label{
+  background:var(--ink);color:#fff;border-color:var(--ink);
+  box-shadow:0 4px 14px rgba(36,35,31,.14);
+}
+.chair-position.active{color:var(--ink)}
+.chair-position:focus-visible,.observer-button:focus-visible{
+  outline:2px solid var(--gold);outline-offset:3px;border-radius:14px;
+}
+.chair-drawing{
+  position:relative;
+  width:66px;height:72px;
+  display:block;
+  opacity:.78;
+  transition:.18s ease;
+}
+.chair-position.active .chair-drawing{opacity:1;transform:translateY(-1px)}
+.chair-back{
+  position:absolute;left:15px;top:5px;width:35px;height:35px;
+  border:2px solid currentColor;border-radius:9px 9px 5px 5px;
+  background:rgba(255,255,255,.18);
+}
+.chair-seat{
+  position:absolute;left:11px;top:38px;width:44px;height:9px;
+  border:2px solid currentColor;border-radius:5px;background:rgba(255,255,255,.18);
+}
+.chair-leg{position:absolute;top:47px;width:2px;height:21px;background:currentColor;border-radius:2px}
+.chair-leg.one{left:18px;transform:rotate(8deg)}
+.chair-leg.two{right:18px;transform:rotate(-8deg)}
+.chair-side{
+  position:absolute;top:31px;left:9px;width:24px;height:2px;
+  background:currentColor;transform:rotate(-36deg);transform-origin:left center;border-radius:2px;
+}
+.chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1)}
+.chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) translateY(-1px)}
+.chair-position[data-chair="B"] .chair-label{transform:none}
+.observer-button{
+  margin-top:4px;
+  border:1px solid rgba(36,35,31,.18);
+  background:rgba(255,255,255,.72);
+  color:var(--muted);
+  border-radius:999px;
+  padding:5px 9px;
+  font:700 9px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.observer-button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chair-scene-note{
+  margin:4px 0 0;
+  color:var(--muted);
+  font:10px/1.25 Arial,Helvetica,sans-serif;
+  letter-spacing:.04em;
+}
+
+/* Il vecchio selettore di modalità resta solo per compatibilità JS, non è più parte dell'ingresso. */
+.mode-chooser{display:none !important}
+
+/* Microfono Silver: stessa funzione su iPhone e Android. */
+.dictation-help.voice-mic{
+  width:38px;height:38px;
+  border-radius:50%;
+  font:400 18px/36px Arial,Helvetica,sans-serif;
+  transition:.18s ease;
+}
+.dictation-help.voice-mic.recording{
+  background:var(--ink);color:#fff;border-color:var(--ink);
+  box-shadow:0 0 0 5px rgba(36,35,31,.08);
+  animation:silverMicPulse 1.25s ease-in-out infinite;
+}
+.dictation-help.voice-mic.busy{opacity:.58;cursor:wait;animation:none}
+@keyframes silverMicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* Sheet mobile: chiusura sempre raggiungibile e contenuto realmente scrollabile. */
+.sheet{scroll-padding-bottom:76px}
+.sheet-close{
+  position:sticky;
+  bottom:0;
+  z-index:4;
+  background:rgba(251,248,241,.97);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.sheet-grid{align-items:stretch}
+.sheet-action{height:100%}
+@media(max-width:520px){
+  .sheet-backdrop{padding-left:8px;padding-right:8px}
+  .sheet{padding-left:10px;padding-right:10px;border-radius:22px}
+  .sheet-grid{gap:8px}
+  .sheet-action{padding:12px 10px}
+  .sheet-note{font-size:10.5px}
+}
+
+/* La scena resta visibile ma compatta durante la conversazione. */
+body.conversation-mode .identity{width:100% !important;}
+body.conversation-mode .chair-scene{
+  width:min(280px,78vw);
+  grid-template-columns:62px minmax(86px,1fr) 62px;
+  gap:2px;
+}
+body.conversation-mode .chair-drawing{width:42px;height:46px;transform:scale(.72)}
+body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1) scale(.72)}
+body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) scale(.72) translateY(-1px)}
+body.conversation-mode .chair-label{width:24px;height:24px;min-width:24px;font-size:10px}
+body.conversation-mode .observer-button{font-size:8px;padding:4px 7px}
+body.conversation-mode .chair-scene-note{display:none}
+
+@media(max-width:520px){
+  .chair-scene{grid-template-columns:72px minmax(118px,1fr) 72px;gap:1px}
+  .chair-drawing{width:56px;height:64px}
+  .chair-label{width:28px;height:28px;min-width:28px}
+}
+
 </style>
 </head>
-<body>
+<body class="mode-selected" data-silver-mode="practice">
 <main class="shell">
   <div class="topbar">
     <a class="back" href="/agente/patto/" id="backLink">INDIETRO</a>
   </div>
 
-  <header class="identity" aria-label="Silver, Agente P.A.O.">
-    <div class="mascot-wrap">
-      <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
+  <header class="identity" aria-label="Silver, facilitatore tra le sedie A e B">
+    <div class="chair-scene" id="chairScene" data-chair="A">
+      <button class="chair-position active" id="chairAButton" data-chair="A" type="button" aria-pressed="true" aria-label="Scrivi dalla sedia A">
+        <span class="chair-label">A</span>
+        <span class="chair-drawing" aria-hidden="true">
+          <span class="chair-back"></span><span class="chair-seat"></span>
+          <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
+        </span>
+      </button>
+
+      <div class="facilitator-column">
+        <div class="mascot-wrap">
+          <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
+        </div>
+        <div class="silver">SILVER</div>
+        <button class="observer-button" id="chairCButton" type="button" aria-pressed="false" aria-label="Osserva da C con Silver">C · OSSERVA</button>
+        <div class="mode-badge" id="modeBadge">CRESCITA PERSONALE</div>
+      </div>
+
+      <button class="chair-position" id="chairBButton" data-chair="B" type="button" aria-pressed="false" aria-label="Scrivi dalla sedia B">
+        <span class="chair-label">B</span>
+        <span class="chair-drawing" aria-hidden="true">
+          <span class="chair-back"></span><span class="chair-seat"></span>
+          <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
+        </span>
+      </button>
     </div>
-    <div class="silver">SILVER</div>
-    <div class="mode-badge" id="modeBadge">CRESCITA PERSONALE</div>
+    <p class="chair-scene-note">A ↔ B · due posizioni alla volta · Silver facilita</p>
   </header>
 
   <section class="stage">
     <div class="opening" id="opening">
       <h1 class="hello">Ciao, piacere, sono Silver.</h1>
-      <p class="question" id="openingQuestion">Entra nella pratica.</p>
+      <p class="question" id="openingQuestion">Da dove vuoi cominciare?</p>
 
       <div class="mode-chooser single-mode" id="modeChooser" aria-label="Entra nella chat di crescita personale">
         <button class="mode-door practice" id="practiceDoor" type="button">
           <strong>CHAT DI CRESCITA PERSONALE</strong>
-          <span>Pratica P.A.O.: tecnica delle parti e delle polarità, Gestalt, metafore, intensità e presenza.<br><small>Ogni parte può esprimersi senza essere confusa automaticamente con la volontà dell’intera persona.</small></span>
+          <span>Entra nella pratica.</span>
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Uno spazio dedicato all’incontro delle parti.</p>
+      <p class="gentle" id="openingGentle">Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.</p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -1100,7 +1333,7 @@ textarea{
     </div>
 
     <textarea id="input" rows="1" maxlength="3000" dir="auto"
-      placeholder="" aria-label="Messaggio per Silver"></textarea>
+      placeholder="A · Inizia a scrivere da qui…" aria-label="Messaggio per Silver"></textarea>
 
     <button class="send" type="submit">INVIA</button>
 
@@ -1113,11 +1346,8 @@ textarea{
   </form>
 
   <div class="dictation-help-row" id="dictationHelpRow">
-    <button class="dictation-help" id="dictationHelpButton" type="button"
-      aria-label="Come dettare un messaggio" title="Come dettare un messaggio">?</button>
-    <div class="dictation-popover" id="dictationPopover">
-      🎤 Per dettare, usa il microfono della tastiera del tuo dispositivo. La posizione può cambiare tra iPhone e Android.
-    </div>
+    <button class="dictation-help voice-mic" id="dictationHelpButton" type="button"
+      aria-label="Detta un messaggio a Silver" title="Detta un messaggio a Silver">🎤</button>
   </div>
 
   <div class="session-row" id="sessionRow">
@@ -1144,9 +1374,9 @@ textarea{
           <span>Foto, PDF, Word, Excel, PowerPoint, testi, codice e audio.</span>
         </button>
 
-        <a class="sheet-action" id="lucaButton" href="/agente/pao/">
+        <a class="sheet-action" id="lucaButton" href="/agente/pao/" target="_blank" rel="noopener">
           <strong>PARLA CON PAO</strong>
-          <span>Contatto umano con PAO: email, video-call, incontro individuale e canali ufficiali.</span>
+          <span>Contatto umano con PAO: si apre senza chiudere questa sessione Silver.</span>
         </a>
 
         <button class="sheet-action" id="helpButton" type="button">
@@ -1545,7 +1775,10 @@ function requestSilverExit(action){
 }
 
 const dictationHelpButton = document.getElementById('dictationHelpButton');
-const dictationPopover = document.getElementById('dictationPopover');
+const chairScene = document.getElementById('chairScene');
+const chairAButton = document.getElementById('chairAButton');
+const chairBButton = document.getElementById('chairBButton');
+const chairCButton = document.getElementById('chairCButton');
 
 const modeChooser = document.getElementById('modeChooser');
 const practiceDoor = document.getElementById('practiceDoor');
@@ -1556,6 +1789,57 @@ const resumeOpeningButton = document.getElementById('resumeOpeningButton');
 
 let selectedMode = 'practice';
 let selectedLanguage = 'auto';
+let activeChair = 'A';
+
+function normalizeChair(value){
+  const chair = String(value || 'A').toUpperCase();
+  return chair === 'B' || chair === 'C' ? chair : 'A';
+}
+
+function chairPlaceholder(chair){
+  if(chair === 'B') return 'B · Rispondi da questa parte…';
+  if(chair === 'C') return 'C · Osserva A e B…';
+  return 'A · Inizia a scrivere da qui…';
+}
+
+function setActiveChair(value,{announce=false,focus=false}={}){
+  activeChair = normalizeChair(value);
+  if(chairScene) chairScene.dataset.chair = activeChair;
+
+  const isA = activeChair === 'A';
+  const isB = activeChair === 'B';
+  const isC = activeChair === 'C';
+
+  chairAButton?.classList.toggle('active',isA);
+  chairBButton?.classList.toggle('active',isB);
+  chairCButton?.classList.toggle('active',isC);
+  chairAButton?.setAttribute('aria-pressed',String(isA));
+  chairBButton?.setAttribute('aria-pressed',String(isB));
+  chairCButton?.setAttribute('aria-pressed',String(isC));
+
+  input.placeholder = chairPlaceholder(activeChair);
+  saveRecoveryDraft();
+
+  if(announce){
+    setMicStatus(
+      isC
+        ? 'C: osserva A e B senza dover scegliere subito.'
+        : `Ora puoi scrivere dalla sedia ${activeChair}.`
+    );
+    setTimeout(()=>{
+      const t=micStatusText?.textContent || '';
+      if(t.startsWith('C:') || t.startsWith('Ora puoi scrivere dalla sedia')) setMicStatus('');
+    },2200);
+  }
+
+  if(focus){
+    try{ input.focus({preventScroll:true}); }catch(_){ input.focus(); }
+  }
+}
+
+chairAButton?.addEventListener('click',()=>setActiveChair('A',{announce:true}));
+chairBButton?.addEventListener('click',()=>setActiveChair('B',{announce:true}));
+chairCButton?.addEventListener('click',()=>setActiveChair('C',{announce:true}));
 
 const LANGUAGE_LABELS = {
   auto:'Automatica · segue la lingua in cui scrivi.',
@@ -1604,7 +1888,7 @@ function chooseSilverMode(){
   modeBadge.textContent = 'CRESCITA PERSONALE';
 
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = 'Puoi portare una parte, una polarità, una sensazione, una metafora o semplicemente ciò che c’è.';
+  openingGentle.textContent = 'Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.';
 }
 
 practiceDoor.addEventListener('click',()=>chooseSilverMode());
@@ -1615,27 +1899,162 @@ resumeOpeningButton.addEventListener('click',()=>{
 });
 
 
-dictationHelpButton.addEventListener('pointerdown',e=>{
-  // Su iPhone il tap sul ? non deve togliere il focus al textarea:
-  // così la tastiera resta aperta.
-  e.preventDefault();
-  e.stopPropagation();
+let silverMediaRecorder = null;
+let silverMicStream = null;
+let silverMicChunks = [];
+let silverMicTimer = null;
+let silverMicBusy = false;
 
-  const row = document.getElementById('dictationHelpRow');
-  row.classList.toggle('show-dictation-help');
-
-  requestAnimationFrame(()=>{
-    try{ input.focus({preventScroll:true}); }
-    catch(err){ input.focus(); }
-  });
-});
-
-document.addEventListener('pointerdown',e=>{
-  const row = document.getElementById('dictationHelpRow');
-  if(!row.contains(e.target)){
-    row.classList.remove('show-dictation-help');
+function stopMicTracks(){
+  if(silverMicStream){
+    silverMicStream.getTracks().forEach(track=>{
+      try{ track.stop(); }catch(_){}
+    });
   }
-});
+  silverMicStream = null;
+}
+
+function supportedMicMime(){
+  if(typeof MediaRecorder === 'undefined') return '';
+  const candidates=[
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/ogg;codecs=opus'
+  ];
+  return candidates.find(type=>{
+    try{ return MediaRecorder.isTypeSupported(type); }catch(_){ return false; }
+  }) || '';
+}
+
+function micFileExtension(type){
+  const t=String(type || '').toLowerCase();
+  if(t.includes('mp4')) return 'm4a';
+  if(t.includes('ogg')) return 'ogg';
+  return 'webm';
+}
+
+function resetMicButton(){
+  silverMicBusy=false;
+  dictationHelpButton.classList.remove('recording','busy');
+  dictationHelpButton.textContent='🎤';
+  dictationHelpButton.disabled=false;
+  dictationHelpButton.setAttribute('aria-label','Detta un messaggio a Silver');
+  dictationHelpButton.title='Detta un messaggio a Silver';
+}
+
+async function transcribeSilverRecording(blob){
+  if(!blob || blob.size < 300){
+    setMicStatus('Non ho ricevuto abbastanza audio. Riprova.');
+    resetMicButton();
+    return;
+  }
+
+  silverMicBusy=true;
+  dictationHelpButton.classList.remove('recording');
+  dictationHelpButton.classList.add('busy');
+  dictationHelpButton.textContent='…';
+  dictationHelpButton.disabled=true;
+  setMicStatus('Trascrivo la tua voce…');
+
+  const formData=new FormData();
+  const ext=micFileExtension(blob.type);
+  formData.append('audio',blob,`dettatura-silver.${ext}`);
+
+  try{
+    const response=await fetch(TRANSCRIBE_URL,{method:'POST',body:formData});
+    let data={};
+    try{ data=await response.json(); }catch(_){}
+    if(!response.ok || !data.ok){
+      throw new Error(data.error || 'Trascrizione non disponibile');
+    }
+
+    const spoken=String(data.text || '').trim();
+    if(!spoken) throw new Error('Non ho riconosciuto parole');
+
+    const before=input.value.trim();
+    input.value = before ? `${before} ${spoken}` : spoken;
+    resize();
+    updateComposerState();
+    saveRecoveryDraft();
+    setMicStatus('Voce trascritta. Puoi correggere il testo prima di inviarlo.');
+    setTimeout(()=>{
+      if(micStatusText?.textContent === 'Voce trascritta. Puoi correggere il testo prima di inviarlo.') setMicStatus('');
+    },3500);
+  }catch(err){
+    console.error('Microfono Silver:',err);
+    setMicStatus(err?.message || 'Non riesco a trascrivere la voce in questo momento.');
+  }finally{
+    resetMicButton();
+  }
+}
+
+async function startSilverMic(){
+  if(silverMicBusy) return;
+
+  if(silverMediaRecorder && silverMediaRecorder.state === 'recording'){
+    try{ silverMediaRecorder.stop(); }catch(_){}
+    return;
+  }
+
+  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
+    setMicStatus('Il browser non consente la registrazione vocale. Puoi comunque scrivere normalmente.');
+    return;
+  }
+
+  try{
+    // Evita che la tastiera rubi spazio mentre si detta.
+    try{ input.blur(); }catch(_){}
+
+    silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    silverMicChunks=[];
+    const mime=supportedMicMime();
+    silverMediaRecorder = mime
+      ? new MediaRecorder(silverMicStream,{mimeType:mime})
+      : new MediaRecorder(silverMicStream);
+
+    silverMediaRecorder.addEventListener('dataavailable',event=>{
+      if(event.data && event.data.size>0) silverMicChunks.push(event.data);
+    });
+
+    silverMediaRecorder.addEventListener('stop',()=>{
+      if(silverMicTimer){ clearTimeout(silverMicTimer); silverMicTimer=null; }
+      const type=silverMediaRecorder?.mimeType || silverMicChunks[0]?.type || 'audio/webm';
+      const blob=new Blob(silverMicChunks,{type});
+      silverMicChunks=[];
+      stopMicTracks();
+      silverMediaRecorder=null;
+      transcribeSilverRecording(blob);
+    },{once:true});
+
+    silverMediaRecorder.start(250);
+    dictationHelpButton.classList.add('recording');
+    dictationHelpButton.textContent='■';
+    dictationHelpButton.setAttribute('aria-label','Ferma la dettatura');
+    dictationHelpButton.title='Ferma la dettatura';
+    setMicStatus('Sto ascoltando… Tocca ■ per fermare.');
+
+    // Limite di sicurezza/UX per una dettatura singola.
+    silverMicTimer=setTimeout(()=>{
+      if(silverMediaRecorder?.state === 'recording'){
+        try{ silverMediaRecorder.stop(); }catch(_){}
+      }
+    },90000);
+
+  }catch(err){
+    stopMicTracks();
+    silverMediaRecorder=null;
+    resetMicButton();
+    const denied = err?.name === 'NotAllowedError' || err?.name === 'SecurityError';
+    setMicStatus(
+      denied
+        ? 'Per usare il microfono, autorizzalo nelle impostazioni del browser per praticapao.it.'
+        : 'Non riesco ad aprire il microfono in questo momento.'
+    );
+  }
+}
+
+dictationHelpButton.addEventListener('click',startSilverMic);
 
 let maxVisibleViewportHeight = window.visualViewport
   ? window.visualViewport.height
@@ -1663,6 +2082,7 @@ function updateKeyboardLayout(){
   if(!keyboardOpen){
     document.documentElement.style.removeProperty('--composer-top');
     document.documentElement.style.removeProperty('--help-top');
+    document.documentElement.style.removeProperty('--keyboard-reserve');
     return;
   }
 
@@ -1670,7 +2090,7 @@ function updateKeyboardLayout(){
   const viewportHeight = currentHeight;
 
   const composerHeight = Math.max(composer.offsetHeight || 0, 58);
-  const helpHeight = 34;
+  const helpHeight = 44;
   const gap = 8;
   const bottomSafe = 12;
 
@@ -1688,6 +2108,34 @@ function updateKeyboardLayout(){
     '--help-top',
     `${Math.round(composerTop + composerHeight + gap)}px`
   );
+
+  document.documentElement.style.setProperty(
+    '--keyboard-reserve',
+    `${Math.round(composerHeight + helpHeight + gap + bottomSafe + 18)}px`
+  );
+
+  requestAnimationFrame(keepLastMessageAboveComposer);
+}
+
+function keepLastMessageAboveComposer(){
+  if(!document.body.classList.contains('keyboard-open')) return;
+
+  const last = conversation.lastElementChild;
+  if(!last) return;
+
+  requestAnimationFrame(()=>{
+    const lastRect = last.getBoundingClientRect();
+    const composerRect = composer.getBoundingClientRect();
+    const safeBottom = composerRect.top - 14;
+
+    if(lastRect.bottom > safeBottom){
+      window.scrollBy({
+        top:Math.ceil(lastRect.bottom - safeBottom + 14),
+        left:0,
+        behavior:'auto'
+      });
+    }
+  });
 }
 
 if(window.visualViewport){
@@ -1710,6 +2158,7 @@ input.addEventListener('blur',()=>{
     composer.classList.remove('keyboard-open');
     document.documentElement.style.removeProperty('--composer-top');
     document.documentElement.style.removeProperty('--help-top');
+    document.documentElement.style.removeProperty('--keyboard-reserve');
   },120);
 });
 
@@ -1726,6 +2175,7 @@ function recoveryPayload(){
     savedAt:new Date().toISOString(),
     mode:'practice',
     language:selectedLanguage,
+    chair:activeChair,
     draft:input.value || '',
     messages:sessionMessages.map(m=>({
       role:m.role,
@@ -1800,7 +2250,8 @@ function readRecoveryDraft(){
       messages,
       draft,
       mode:'practice',
-      language:normalizeUiLanguage(data.language || 'auto')
+      language:normalizeUiLanguage(data.language || 'auto'),
+      chair:normalizeChair(data.chair || 'A')
     };
   }catch(err){
     console.warn('Lettura recupero Silver:',err);
@@ -1812,6 +2263,7 @@ function readRecoveryDraft(){
 function restoreLocalRecovery(data){
   setSilverLanguage(data.language || 'auto');
   chooseSilverMode();
+  setActiveChair(data.chair || 'A');
 
   if(data.messages.length){
     renderRestoredConversation(data.messages);
@@ -1915,14 +2367,15 @@ function showConversationMode(){
 function resetConversationUi(){
   document.body.classList.remove('conversation-mode');
   document.body.classList.remove('processing-attachments');
-  document.body.classList.remove('mode-selected');
-  delete document.body.dataset.silverMode;
+  document.body.classList.add('mode-selected');
+  document.body.dataset.silverMode = 'practice';
 
   selectedMode = 'practice';
   modeBadge.hidden = false;
   modeBadge.textContent = 'CRESCITA PERSONALE';
-  openingQuestion.textContent = 'Entra nella pratica.';
-  openingGentle.textContent = 'Uno spazio dedicato all’incontro delle parti.';
+  openingQuestion.textContent = 'Da dove vuoi cominciare?';
+  openingGentle.textContent = 'Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.';
+  setActiveChair('A');
 
   sessionMessages = [];
   reviewMessages = [];
@@ -1935,6 +2388,10 @@ function resetConversationUi(){
   resize();
   updateComposerState();
   updateSessionControls();
+
+  if(silverMediaRecorder?.state === 'recording'){ try{ silverMediaRecorder.stop(); }catch(_){} }
+  stopMicTracks();
+  resetMicButton();
 
   if(activeAudio){
     try{ activeAudio.pause(); }catch(e){}
@@ -2014,18 +2471,25 @@ function sendSessionReviewInBackground(){
   }
 }
 
-function saveConversationToDevice(exitAction=null){
+async function saveConversationToDevice(exitAction=null, triggerButton=saveConversationButton){
   if(!sessionMessages.length) return;
 
-  saveConversationButton.disabled = true;
-  const strong = saveConversationButton.querySelector('strong');
-  if(strong) strong.textContent = 'SALVATAGGIO…';
+  const button = triggerButton || saveConversationButton;
+  const strong = button.querySelector('strong');
+  const detail = button.querySelector('span');
+  const originalStrong = strong ? strong.textContent : '';
+  const originalDetail = detail ? detail.textContent : '';
+
+  button.disabled = true;
+  if(strong) strong.textContent = 'PREPARO IL FILE…';
+  if(detail) detail.textContent = 'La sessione resta qui finché il salvataggio non è confermato.';
 
   const payload = {
     format: 'silver-pao-conversation',
-    version: 2,
+    version: 3,
     mode: 'practice',
     language: selectedLanguage,
+    chair: activeChair,
     savedAt: new Date().toISOString(),
     messages: sessionMessages.map(m=>({
       role:m.role,
@@ -2033,45 +2497,78 @@ function saveConversationToDevice(exitAction=null){
     }))
   };
 
-  const blob = new Blob(
-    [JSON.stringify(payload,null,2)],
-    {type:'application/json;charset=utf-8'}
-  );
+  const json=JSON.stringify(payload,null,2);
+  const fileName=`Silver_conversazione_${safeFileDate()}.json`;
+  const file=new File([json],fileName,{type:'application/json;charset=utf-8'});
+  let exported=false;
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Silver_conversazione_${safeFileDate()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  try{
+    // Su iPhone/Android il foglio di condivisione è più affidabile del download
+    // per salvare un file locale. Se disponibile lo usiamo come prima scelta.
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      if(strong) strong.textContent='SALVA / CONDIVIDI…';
+      if(detail) detail.textContent='Scegli dove conservare il file della sessione.';
+      await navigator.share({files:[file],title:'Sessione Silver'});
+      exported=true;
+    }else{
+      const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=fileName;
+      a.rel='noopener';
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
 
-  setTimeout(()=>URL.revokeObjectURL(url),1500);
+      await new Promise(resolve=>setTimeout(resolve,900));
+      try{ a.remove(); }catch(_){}
+      setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(_){} },10000);
 
-  // Review in background: non blocca l'utente.
+      // Il browser non espone un evento affidabile di "download completato".
+      // Chiediamo conferma prima di cancellare/chiudere la sessione.
+      exported = window.confirm(
+        'Il download della sessione è stato avviato.\n\nHai visto il file salvato o il download partire?\n\nOK = termina la sessione\nAnnulla = resta qui senza perdere nulla.'
+      );
+    }
+  }catch(err){
+    if(err?.name === 'AbortError'){
+      // L'utente ha chiuso il foglio Condividi: nessuna perdita di dati.
+      exported=false;
+    }else{
+      console.error('Salvataggio Silver:',err);
+      setMicStatus('Non sono riuscito a esportare la sessione. Non ho cancellato nulla.');
+      exported=false;
+    }
+  }
+
+  button.disabled=false;
+  if(strong) strong.textContent=originalStrong || 'SALVA E TERMINA';
+  if(detail) detail.textContent=originalDetail;
+
+  if(!exported){
+    // La sessione e il recupero locale restano intatti.
+    return;
+  }
+
   sendSessionReviewInBackground();
-
   clearRecoveryDraft();
   closeSheet(sessionBackdrop);
+  closeSheet(exitBackdrop);
 
+  if(typeof exitAction === 'function'){
+    allowPageExit=true;
+    exitAction();
+    return;
+  }
+
+  allowPageExit=false;
+  resetConversationUi();
+  setMicStatus('Sessione esportata correttamente.');
   setTimeout(()=>{
-    saveConversationButton.disabled = false;
-    if(strong) strong.textContent = 'SALVA E TERMINA';
-
-    // Se il salvataggio nasce dal popup "Vuoi uscire da Silver?",
-    // dopo aver salvato esegue davvero l'uscita richiesta.
-    if(typeof exitAction === 'function'){
-      allowPageExit = true;
-      exitAction();
-      return;
-    }
-
-    // Se invece l'utente sta semplicemente terminando la conversazione,
-    // resta dentro Silver e torna all’ingresso della crescita personale.
-    allowPageExit = false;
-    resetConversationUi();
-    window.scrollTo({top:0,behavior:'smooth'});
-  },180);
+    if(micStatusText?.textContent === 'Sessione esportata correttamente.') setMicStatus('');
+  },3500);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function normalizeSavedMessages(data){
@@ -2098,7 +2595,8 @@ function normalizeSavedMessages(data){
   return {
     messages,
     mode:'practice',
-    language:normalizeUiLanguage(data.language || 'auto')
+    language:normalizeUiLanguage(data.language || 'auto'),
+    chair:normalizeChair(data.chair || 'A')
   };
 }
 
@@ -2203,13 +2701,33 @@ translatorButton.addEventListener('click',()=>{
 
   updateTranslatorDirection();
   openSheet(translatorBackdrop);
-  setTimeout(()=>translatorInput.focus(),120);
+  // Non aprire automaticamente la tastiera: il traduttore deve mostrarsi intero.
+  // La tastiera comparirà solo quando la persona tocca il campo di testo.
 });
 
-translatorClose.addEventListener('click',()=>closeSheet(translatorBackdrop));
+translatorInput.addEventListener('focus',()=>{
+  translatorBackdrop.classList.add('translator-input-focused');
+  updateSheetViewport();
+  setTimeout(()=>{
+    try{ translatorInput.scrollIntoView({behavior:'smooth',block:'center'}); }catch(_){}
+  },120);
+});
+
+translatorInput.addEventListener('blur',()=>{
+  setTimeout(()=>translatorBackdrop.classList.remove('translator-input-focused'),120);
+});
+
+translatorClose.addEventListener('click',()=>{
+  translatorBackdrop.classList.remove('translator-input-focused');
+  closeSheet(translatorBackdrop);
+});
 
 translatorBackdrop.addEventListener('click',e=>{
-  if(e.target === translatorBackdrop) closeSheet(translatorBackdrop);
+  if(e.target === translatorBackdrop){
+    try{ translatorInput.blur(); }catch(_){}
+    translatorBackdrop.classList.remove('translator-input-focused');
+    closeSheet(translatorBackdrop);
+  }
 });
 
 translatorSource.addEventListener('change',updateTranslatorDirection);
@@ -2373,7 +2891,7 @@ exitSaveButton.addEventListener('click',()=>{
   const action = pendingExitAction;
   pendingExitAction = null;
   closeSheet(exitBackdrop);
-  saveConversationToDevice(action);
+  saveConversationToDevice(action, exitSaveButton);
 });
 
 exitWithoutSaveButton.addEventListener('click',()=>{
@@ -2397,18 +2915,13 @@ exitBackdrop.addEventListener('click',e=>{
   }
 });
 
-/* Anche "PARLA CON PAO" esce da Silver: proteggiamo la sessione. */
+/* PARLA CON PAO non chiude Silver: apre una nuova scheda e conserva il recupero locale. */
 const lucaButton = document.getElementById('lucaButton');
-lucaButton.addEventListener('click',e=>{
-  if(!hasUnsavedSilverWork()) return;
-
-  e.preventDefault();
-  const href = lucaButton.getAttribute('href') || '/agente/pao/';
+lucaButton.addEventListener('click',()=>{
+  if(hasUnsavedSilverWork()){
+    saveRecoveryDraft();
+  }
   closeSheet(toolsBackdrop);
-
-  requestSilverExit(()=>{
-    window.location.href = href;
-  });
 });
 
 /*
@@ -2469,6 +2982,7 @@ resumeFileInput.addEventListener('change',async ()=>{
 
     setSilverLanguage(restored.language || 'auto');
     chooseSilverMode();
+    setActiveChair(restored.chair || 'A');
     renderRestoredConversation(restored.messages);
     setMicStatus('Conversazione ripresa. Puoi continuare da qui.');
     setTimeout(()=>{ setMicStatus(''); },3500);
@@ -3026,7 +3540,7 @@ attachmentFileInput.addEventListener('change',async ()=>{
   // L’utente può premere direttamente INVIA oppure toccare il campo testo se vuole aggiungere una nota.
 });
 
-saveConversationButton.addEventListener('click',()=>saveConversationToDevice());
+saveConversationButton.addEventListener('click',()=>saveConversationToDevice(null, saveConversationButton));
 
 deleteConversationButton.addEventListener('click',async ()=>{
   const ok = window.confirm(
@@ -3361,10 +3875,14 @@ function appendStreamingSilverText(state,delta){
   state.el.textContent = state.text;
 
   // Mantieni visibile la parte che sta arrivando senza animazioni pesanti.
-  conversation.lastElementChild?.scrollIntoView({
-    behavior:'auto',
-    block:'nearest'
-  });
+  if(document.body.classList.contains('keyboard-open')){
+    keepLastMessageAboveComposer();
+  }else{
+    conversation.lastElementChild?.scrollIntoView({
+      behavior:'auto',
+      block:'nearest'
+    });
+  }
 }
 
 function finishStreamingSilverMessage(state){
@@ -3554,6 +4072,8 @@ form.addEventListener('submit', async e=>{
 });
 
 setSilverLanguage('auto');
+chooseSilverMode();
+setActiveChair('A');
 updateComposerState();
 updateSessionControls(false);
 
