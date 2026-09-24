@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.6 — INFO PRATICA COMPATTA + TESTO PARTI + FIX CONVERSAZIONE -->
+<!-- SILVER FRONTEND 5.7 — INFO PRATICA COMPATTA + TESTO PARTI + FIX CONVERSAZIONE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2635,6 +2635,7 @@ let silverMicStream = null;
 let silverMicChunks = [];
 let silverMicTimer = null;
 let silverMicBusy = false;
+let silverMicCancelled = false;
 
 function stopMicTracks(){
   if(silverMicStream){
@@ -2755,9 +2756,18 @@ async function startSilverMic(){
       silverMicChunks=[];
       stopMicTracks();
       silverMediaRecorder=null;
+
+      if(silverMicCancelled){
+        silverMicCancelled=false;
+        resetMicButton();
+        setMicStatus('');
+        return;
+      }
+
       transcribeSilverRecording(blob);
     },{once:true});
 
+    silverMicCancelled=false;
     silverMediaRecorder.start(250);
     dictationHelpButton.classList.add('recording');
     dictationHelpButton.textContent='■';
@@ -4654,12 +4664,36 @@ clearInputButton.addEventListener('pointerdown',e=>{
   e.preventDefault();
   e.stopPropagation();
 
+  const keyboardWasOpen =
+    document.activeElement === input ||
+    document.body.classList.contains('keyboard-open');
+
+  // Se la X viene premuta durante una dettatura, annulla davvero la registrazione:
+  // scarta l'audio e non avvia la trascrizione.
+  if(silverMediaRecorder?.state === 'recording'){
+    silverMicCancelled=true;
+    try{ silverMediaRecorder.stop(); }catch(_){}
+  }
+
   input.value = '';
   input.style.height = '42px';
   composer.classList.remove('has-text');
+  updateComposerState();
+  saveRecoveryDraft();
 
-  try{ input.focus({preventScroll:true}); }
-  catch(err){ input.focus(); }
+  // Non aprire la tastiera se era chiusa (caso tipico dopo la dettatura).
+  if(keyboardWasOpen){
+    try{ input.focus({preventScroll:true}); }
+    catch(err){ input.focus(); }
+  }else{
+    try{ input.blur(); }catch(_){}
+    document.body.classList.remove('keyboard-open');
+    composer.classList.remove('keyboard-open');
+    document.documentElement.style.removeProperty('--composer-top');
+    document.documentElement.style.removeProperty('--help-top');
+    document.documentElement.style.removeProperty('--keyboard-content-pad');
+    requestAnimationFrame(()=>window.scrollTo({top:window.scrollY,left:0,behavior:'auto'}));
+  }
 });
 
 let resizeFrame = 0;
