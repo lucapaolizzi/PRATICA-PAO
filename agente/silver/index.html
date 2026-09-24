@@ -1112,12 +1112,12 @@ textarea{
 
 /* === SILVER FRONTEND 4.0 — DUE SEDIE + FACILITATORE C === */
 .chair-scene{
-  width:min(620px,100%);
-  margin:0 auto 2px;
+  width:min(700px,100%);
+  margin:0 auto 10px;
   display:grid;
-  grid-template-columns:minmax(72px,1fr) minmax(125px,235px) minmax(72px,1fr);
+  grid-template-columns:minmax(120px,1fr) minmax(155px,230px) minmax(120px,1fr);
   align-items:center;
-  gap:6px;
+  gap:14px;
 }
 .facilitator-column{
   min-width:0;
@@ -1135,7 +1135,7 @@ textarea{
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:5px;
+  gap:7px;
   cursor:pointer;
   touch-action:manipulation;
 }
@@ -1160,50 +1160,84 @@ textarea{
 }
 .chair-drawing{
   position:relative;
-  width:66px;height:72px;
+  width:100px;height:112px;
   display:block;
   opacity:.78;
   transition:.18s ease;
 }
 .chair-position.active .chair-drawing{opacity:1;transform:translateY(-1px)}
 .chair-back{
-  position:absolute;left:15px;top:5px;width:35px;height:35px;
-  border:2px solid currentColor;border-radius:9px 9px 5px 5px;
-  background:rgba(255,255,255,.18);
+  position:absolute;left:22px;top:7px;width:54px;height:55px;
+  border:2px solid currentColor;border-radius:13px 13px 8px 8px;
+  background:rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+}
+.chair-role{
+  display:block;
+  font:700 9px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;
+  color:currentColor;
 }
 .chair-seat{
-  position:absolute;left:11px;top:38px;width:44px;height:9px;
-  border:2px solid currentColor;border-radius:5px;background:rgba(255,255,255,.18);
+  position:absolute;left:16px;top:62px;width:67px;height:13px;
+  border:2px solid currentColor;border-radius:7px;background:rgba(255,255,255,.18);
 }
-.chair-leg{position:absolute;top:47px;width:2px;height:21px;background:currentColor;border-radius:2px}
-.chair-leg.one{left:18px;transform:rotate(8deg)}
-.chair-leg.two{right:18px;transform:rotate(-8deg)}
+.chair-leg{position:absolute;top:76px;width:2px;height:31px;background:currentColor;border-radius:2px}
+.chair-leg.one{left:27px;transform:rotate(8deg)}
+.chair-leg.two{right:27px;transform:rotate(-8deg)}
 .chair-side{
-  position:absolute;top:31px;left:9px;width:24px;height:2px;
+  position:absolute;top:51px;left:14px;width:36px;height:2px;
   background:currentColor;transform:rotate(-36deg);transform-origin:left center;border-radius:2px;
 }
 .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1)}
 .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) translateY(-1px)}
 .chair-position[data-chair="B"] .chair-label{transform:none}
+.chair-position[data-chair="B"] .chair-role{transform:scaleX(-1)}
+.observer-row{
+  margin-top:5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+}
 .observer-button{
-  margin-top:4px;
-  border:1px solid rgba(36,35,31,.18);
-  background:rgba(255,255,255,.72);
-  color:var(--muted);
-  border-radius:999px;
-  padding:5px 9px;
-  font:700 9px/1 Arial,Helvetica,sans-serif;
-  letter-spacing:.10em;
+  width:30px;height:30px;min-width:30px;
+  border:1px solid rgba(36,35,31,.22);
+  background:rgba(255,255,255,.74);
+  color:var(--ink);
+  border-radius:50%;
+  padding:0;
+  display:flex;align-items:center;justify-content:center;
+  font:700 13px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.06em;
   cursor:pointer;
   touch-action:manipulation;
 }
-.observer-button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-.chair-scene-note{
-  margin:4px 0 0;
+.observer-button.active{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 4px 14px rgba(36,35,31,.14)}
+.observer-text{
   color:var(--muted);
-  font:10px/1.25 Arial,Helvetica,sans-serif;
-  letter-spacing:.04em;
+  font:700 9px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.12em;
 }
+.chair-scene-note{display:none !important}
+
+.practice-legend{
+  margin:8px auto 0;
+  color:var(--muted);
+  font:600 9px/1.35 Arial,Helvetica,sans-serif;
+  letter-spacing:.045em;
+  text-align:center;
+  max-width:620px;
+  padding:0 10px;
+}
+.practice-legend strong{color:var(--ink);font-weight:700}
+body.conversation-mode .practice-legend{display:none}
+@media(max-width:520px){
+  .practice-legend{font-size:8px;line-height:1.4;max-width:94vw;margin-top:6px}
+}
+
+.mode-badge{display:none !important}
+
 
 /* Il vecchio selettore di modalità resta solo per compatibilità JS, non è più parte dell'ingresso. */
 .mode-chooser{display:none !important}
@@ -1246,22 +1280,30 @@ textarea{
 /* La scena resta visibile ma compatta durante la conversazione. */
 body.conversation-mode .identity{width:100% !important;}
 body.conversation-mode .chair-scene{
-  width:min(280px,78vw);
-  grid-template-columns:62px minmax(86px,1fr) 62px;
-  gap:2px;
+  width:min(360px,90vw);
+  grid-template-columns:92px minmax(104px,1fr) 92px;
+  gap:4px;
 }
-body.conversation-mode .chair-drawing{width:42px;height:46px;transform:scale(.72)}
-body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1) scale(.72)}
-body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) scale(.72) translateY(-1px)}
+body.conversation-mode .chair-drawing{transform:scale(.68);transform-origin:top center;margin-bottom:-30px}
+body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1) scale(.68)}
+body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) scale(.68) translateY(-1px)}
 body.conversation-mode .chair-label{width:24px;height:24px;min-width:24px;font-size:10px}
-body.conversation-mode .observer-button{font-size:8px;padding:4px 7px}
+body.conversation-mode .chair-role{font-size:7px}
+body.conversation-mode .observer-button{width:24px;height:24px;min-width:24px;font-size:10px}
+body.conversation-mode .observer-text{font-size:7px}
 body.conversation-mode .chair-scene-note{display:none}
 
 @media(max-width:520px){
-  .chair-scene{grid-template-columns:72px minmax(118px,1fr) 72px;gap:1px}
-  .chair-drawing{width:56px;height:64px}
+  .chair-scene{grid-template-columns:90px minmax(118px,1fr) 90px;gap:2px}
+  .chair-drawing{transform:scale(.78);transform-origin:top center;margin-bottom:-22px}
+  .chair-position.active .chair-drawing{transform:scale(.78) translateY(-1px)}
+  .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1) scale(.78)}
+  .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) scale(.78) translateY(-1px)}
   .chair-label{width:28px;height:28px;min-width:28px}
+  .chair-role{font-size:7px}
+  .observer-text{font-size:8px}
 }
+
 
 </style>
 </head>
@@ -1276,7 +1318,7 @@ body.conversation-mode .chair-scene-note{display:none}
       <button class="chair-position active" id="chairAButton" data-chair="A" type="button" aria-pressed="true" aria-label="Scrivi dalla sedia A">
         <span class="chair-label">A</span>
         <span class="chair-drawing" aria-hidden="true">
-          <span class="chair-back"></span><span class="chair-seat"></span>
+          <span class="chair-back"><span class="chair-role">FIGURA</span></span><span class="chair-seat"></span>
           <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
         </span>
       </button>
@@ -1286,19 +1328,23 @@ body.conversation-mode .chair-scene-note{display:none}
           <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
         </div>
         <div class="silver">SILVER</div>
-        <button class="observer-button" id="chairCButton" type="button" aria-pressed="false" aria-label="Osserva da C con Silver">C · OSSERVA</button>
-        <div class="mode-badge" id="modeBadge">CRESCITA PERSONALE</div>
+        <div class="observer-row">
+          <button class="observer-button" id="chairCButton" type="button" aria-pressed="false" aria-label="Osserva da C con Silver">C</button>
+          <span class="observer-text">OSSERVATORE</span>
+        </div>
+        <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: Silver facilita</p>
+        <div class="mode-badge" id="modeBadge" hidden></div>
       </div>
 
       <button class="chair-position" id="chairBButton" data-chair="B" type="button" aria-pressed="false" aria-label="Scrivi dalla sedia B">
         <span class="chair-label">B</span>
         <span class="chair-drawing" aria-hidden="true">
-          <span class="chair-back"></span><span class="chair-seat"></span>
+          <span class="chair-back"><span class="chair-role">SFONDO</span></span><span class="chair-seat"></span>
           <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
         </span>
       </button>
     </div>
-    <p class="chair-scene-note">A ↔ B · due posizioni alla volta · Silver facilita</p>
+    <p class="chair-scene-note" aria-hidden="true"></p>
   </header>
 
   <section class="stage">
@@ -1313,7 +1359,7 @@ body.conversation-mode .chair-scene-note{display:none}
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.</p>
+      <p class="gentle" id="openingGentle">Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.</p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -1888,7 +1934,7 @@ function chooseSilverMode(){
   modeBadge.textContent = 'CRESCITA PERSONALE';
 
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = 'Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.';
+  openingGentle.textContent = 'Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.';
 }
 
 practiceDoor.addEventListener('click',()=>chooseSilverMode());
@@ -2374,7 +2420,7 @@ function resetConversationUi(){
   modeBadge.hidden = false;
   modeBadge.textContent = 'CRESCITA PERSONALE';
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = 'Puoi esprimere una parte di te, una sensazione, una metafora o semplicemente ciò che c’è.';
+  openingGentle.textContent = 'Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.';
   setActiveChair('A');
 
   sessionMessages = [];
