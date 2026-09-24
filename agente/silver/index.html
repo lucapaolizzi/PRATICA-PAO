@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.4 — INFO SOTTO C + LAYOUT FINALE RESPONSIVE -->
+<!-- SILVER FRONTEND 5.6 — INFO PRATICA COMPATTA + TESTO PARTI + FIX CONVERSAZIONE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1918,6 +1918,47 @@ body.conversation-mode .silver-inside{
   .resume-from-opening.mobile-resume{margin:2px auto 5px !important;}
 }
 
+
+
+/* === SILVER FRONTEND 5.5 — INFO PRATICA CENTRATA E INTERAMENTE LEGGIBILE SU MOBILE === */
+#practiceInfoBackdrop{
+  align-items:center;
+}
+#practiceInfoBackdrop .practice-info-sheet{
+  width:min(620px,100%);
+}
+#practiceInfoBackdrop .practice-info-sheet .sheet-close{
+  position:relative;
+  bottom:auto;
+}
+@media(max-width:520px){
+  #practiceInfoBackdrop{
+    padding-top:calc(8px + env(safe-area-inset-top));
+    padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  }
+  #practiceInfoBackdrop .practice-info-sheet{
+    max-height:calc(var(--silver-sheet-vv-height,100svh) - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    padding:8px 10px 10px;
+    border-radius:22px;
+    overflow-y:auto;
+  }
+  #practiceInfoBackdrop .sheet-handle{margin:1px auto 8px;}
+  #practiceInfoBackdrop .sheet-title{
+    font-size:19px;
+    margin:0 6px 10px;
+  }
+  #practiceInfoBackdrop .practice-info-sheet p{
+    font-size:13px;
+    line-height:1.42;
+    margin:0 6px 9px;
+  }
+  #practiceInfoBackdrop .practice-info-sheet p:last-of-type{margin-bottom:8px;}
+  #practiceInfoBackdrop .practice-info-sheet .sheet-close{
+    margin-top:6px;
+    padding:11px 10px;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2068,8 +2109,8 @@ body.conversation-mode .silver-inside{
       <div class="sheet-handle"></div>
       <h2 class="sheet-title" id="practiceInfoTitle">Info pratica</h2>
       <p><strong>Pratica di crescita personale: A ↔ B · due posizioni alla volta · C: spazio di osservazione.</strong></p>
-      <p><strong>A e B</strong> sono due posizioni della persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
-      <p>Da A o B una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
+      <p><strong>A e B</strong> sono due parti della stessa persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
+      <p>Da A o B, una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
       <p><strong>C</strong> è uno spazio di osservazione da cui puoi guardare ciò che accade tra A e B senza dover scegliere subito. <strong>Silver facilita</strong> il passaggio e l’esplorazione, ma non decide al posto tuo dove devi stare.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
@@ -3048,10 +3089,13 @@ function updateSessionControls(persistRecovery=true){
 
 function showConversationMode(){
   document.body.classList.add('conversation-mode');
-  // Entra davvero in modalità conversazione: questo attiva anche
-  // le regole UI che nascondono RIPRENDI e separano correttamente
-  // CHIUDI / SALVA SESSIONE dal resto dei controlli.
-  showConversationMode();
+  opening.style.display='none';
+  conversation.style.display='flex';
+
+  const mascotEl = document.querySelector('.mascot');
+  const identityEl = document.querySelector('.identity');
+  if(mascotEl) mascotEl.style.width='92px';
+  if(identityEl) identityEl.style.paddingBottom='2px';
 }
 
 function resetConversationUi(){
@@ -4640,10 +4684,7 @@ form.addEventListener('submit', async e=>{
 
   if((!text && !hasAttachments) || send.disabled) return;
 
-  opening.style.display='none';
-  conversation.style.display='flex';
-  document.querySelector('.mascot').style.width='92px';
-  document.querySelector('.identity').style.paddingBottom='2px';
+  showConversationMode();
 
   if(hasAttachments){
     send.disabled=true;
