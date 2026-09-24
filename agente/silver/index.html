@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.13 — CENTRATURA SHEET + BOLLE USER + MIC VISIBILE + AUTO-FOLLOW CALMO -->
+<!-- SILVER FRONTEND 5.14 — CENTRATURA SHEET + BOLLE USER + MIC VISIBILE + AUTO-FOLLOW CALMO -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2136,6 +2136,28 @@ body.conversation-mode .session-end{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.14 — FOLLOW SEMPLICE + MIC ROBUSTO === */
+/* Il microfono resta visivamente legato al composer in chat. */
+body.conversation-mode:not(.keyboard-open) .dictation-help-row{
+  margin:3px auto 5px !important;
+  min-height:42px !important;
+}
+body.conversation-mode:not(.keyboard-open) .session-row.visible{
+  margin:3px 0 10px !important;
+}
+
+/* Su mobile, composer e microfono devono avere un piccolo cuscinetto prima della toolbar browser. */
+@media(max-width:760px){
+  body.conversation-mode:not(.keyboard-open) .dictation-help-row{
+    padding-bottom:2px !important;
+  }
+  body.conversation-mode .conversation{
+    padding-bottom:6px !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2866,20 +2888,53 @@ async function transcribeSilverRecording(blob){
   dictationHelpButton.disabled=true;
   setMicStatus('Trascrivo la tua voce…');
 
-  const formData=new FormData();
   const ext=micFileExtension(blob.type);
-  formData.append('audio',blob,`dettatura-silver.${ext}`);
+
+  async function transcribeAttempt(attempt){
+    const formData=new FormData();
+    formData.append('audio',blob,`dettatura-silver.${ext}`);
+
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),22000);
+    try{
+      const response=await fetch(TRANSCRIBE_URL,{
+        method:'POST',
+        body:formData,
+        signal:controller.signal,
+        cache:'no-store'
+      });
+      let data={};
+      try{ data=await response.json(); }catch(_){ }
+      if(!response.ok || !data.ok){
+        const err=new Error(data.error || `Trascrizione non disponibile (${response.status})`);
+        err.httpStatus=response.status;
+        throw err;
+      }
+      const spoken=String(data.text || '').trim();
+      if(!spoken) throw new Error('Non ho riconosciuto parole');
+      return spoken;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
 
   try{
-    const response=await fetch(TRANSCRIBE_URL,{method:'POST',body:formData});
-    let data={};
-    try{ data=await response.json(); }catch(_){}
-    if(!response.ok || !data.ok){
-      throw new Error(data.error || 'Trascrizione non disponibile');
+    let spoken='';
+    let lastError=null;
+    for(let attempt=1; attempt<=2; attempt++){
+      try{
+        if(attempt===2) setMicStatus('La rete è lenta: riprovo la trascrizione…');
+        spoken=await transcribeAttempt(attempt);
+        break;
+      }catch(err){
+        lastError=err;
+        const status=Number(err?.httpStatus || 0);
+        const retryable = err?.name==='AbortError' || !status || status>=500 || /load failed|failed to fetch|network|timeout/i.test(String(err?.message||''));
+        if(attempt===2 || !retryable) throw err;
+        await new Promise(resolve=>setTimeout(resolve,450));
+      }
     }
-
-    const spoken=String(data.text || '').trim();
-    if(!spoken) throw new Error('Non ho riconosciuto parole');
+    if(!spoken) throw lastError || new Error('Trascrizione non disponibile');
 
     const before=input.value.trim();
     input.value = before ? `${before} ${spoken}` : spoken;
@@ -2892,7 +2947,13 @@ async function transcribeSilverRecording(blob){
     },3500);
   }catch(err){
     console.error('Microfono Silver:',err);
-    setMicStatus(err?.message || 'Non riesco a trascrivere la voce in questo momento.');
+    const timedOut = err?.name==='AbortError';
+    const networkish = /load failed|failed to fetch|network|timeout/i.test(String(err?.message||''));
+    setMicStatus(
+      timedOut || networkish
+        ? 'La trascrizione non è arrivata. Tocca il microfono e riprova.'
+        : (err?.message || 'Non riesco a trascrivere la voce in questo momento.')
+    );
   }finally{
     resetMicButton();
   }
@@ -3351,20 +3412,36 @@ function followConversation({behavior='auto',force=false}={}){
   cancelAnimationFrame(silverFollowFrame);
   silverFollowFrame = requestAnimationFrame(()=>{
     const vv = window.visualViewport;
+    const viewportTop = vv ? vv.offsetTop : 0;
     const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-    const rect = composer.getBoundingClientRect();
-    const safeBottom = viewportBottom - 14;
-    const overflow = rect.bottom - safeBottom;
+    const safeTop = viewportTop + 10;
+    const safeBottom = viewportBottom - 16;
 
-    // Se il composer è già interamente visibile non toccare lo scroll.
-    if(overflow <= 4) return;
+    const composerRect = composer.getBoundingClientRect();
+    let targetBottom = composerRect.bottom;
 
-    markProgrammaticScroll(behavior === 'smooth' ? 700 : 320);
-    window.scrollBy({
-      top:Math.ceil(overflow),
-      left:0,
-      behavior
-    });
+    // 5.14: quando la tastiera è chiusa, composer + microfono sono un unico blocco UX.
+    // L'auto-follow deve lasciare visibili entrambi, non solo il campo di scrittura.
+    if(dictationHelpRow){
+      const micStyle = getComputedStyle(dictationHelpRow);
+      if(micStyle.display !== 'none' && micStyle.visibility !== 'hidden'){
+        const micRect = dictationHelpRow.getBoundingClientRect();
+        targetBottom = Math.max(targetBottom,micRect.bottom);
+      }
+    }
+
+    const overflow = targetBottom - safeBottom;
+    if(overflow > 4){
+      markProgrammaticScroll(behavior === 'smooth' ? 650 : 260);
+      window.scrollBy({top:Math.ceil(overflow),left:0,behavior});
+      return;
+    }
+
+    // Se per qualche ragione il composer è finito sopra il visual viewport, riportalo dentro.
+    if(composerRect.top < safeTop){
+      markProgrammaticScroll(behavior === 'smooth' ? 650 : 260);
+      window.scrollBy({top:Math.floor(composerRect.top-safeTop),left:0,behavior});
+    }
   });
 }
 
@@ -4936,8 +5013,8 @@ function appendStreamingSilverText(state,delta){
   // a ogni singolo delta. Il Markdown viene renderizzato una sola volta alla fine.
   state.el.textContent = state.text;
 
-  // Segui lo streaming con frequenza limitata: evita il saltellamento su Safari.
-  scheduleStreamFollow();
+  // 5.14: durante lo streaming non rincorriamo il testo.
+  // Un solo riallineamento avviene alla fine della risposta.
 }
 
 function finishStreamingSilverMessage(state){
@@ -5150,7 +5227,11 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
     // Non riaprire automaticamente la tastiera dopo la risposta di Silver.
     // Porta invece in vista l'ultima risposta e il composer.
-    followConversation({behavior:'auto'});
+    // 5.14: un solo riallineamento dopo che layout e controlli sono tornati stabili.
+    requestAnimationFrame(()=>setTimeout(()=>{
+      silverAutoFollow=true;
+      followConversation({behavior:'auto',force:true});
+    },90));
   }
 });
 
