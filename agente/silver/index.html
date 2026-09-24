@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.19.1 — STRESS FIX · LIVE VOICE CONTINUA · CAMBIO SEDIA NON NEGATO · WORKER 6.2.1 -->
+<!-- SILVER FRONTEND 5.19.3 — STRESS FIX · LIVE VOICE CONTINUA · CAMBIO SEDIA NON NEGATO · WORKER 6.2.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2710,6 +2710,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
+const SILVER_FRONTEND_VERSION = '5.19.3';
+const SILVER_EXPECTED_WORKER_VERSION = '6.4.1';
 
 
 const backLink = document.getElementById('backLink');
@@ -2907,17 +2909,27 @@ function chairPlaceholder(chair){
 function explicitChairRequestFromText(value){
   const t=String(value || '').trim().toLowerCase();
   if(!t) return '';
+  if(/^[abc][.!]?$/i.test(t)) return t.charAt(0).toUpperCase();
 
-  const directMove=/(?:pass(?:iamo|o|are)|andiamo|vado|torno|spost(?:iamoci|o|armi)|entriamo|entro|mett(?:iamoci|o)|vai)\s+(?:ora\s+)?(?:alla|alla\s+sedia|nella|nella\s+sedia|sulla|sulla\s+sedia|in|a)?\s*(?:parte\s+|sedia\s+|posizione\s+)?([abc])\b/i;
-  const m=t.match(directMove);
-  if(m){
-    // 5.19.1: una frase negativa non deve cambiare sedia contro la volontà della persona.
-    const before=t.slice(0,m.index || 0);
-    if(/\bnon(?:\s+(?:voglio|vorrei|posso|possiamo|devo|dobbiamo))?\s*$/i.test(before)) return '';
-    return m[1].toUpperCase();
+  // Negazioni, ipotesi e passaggi differiti non cambiano la sedia.
+  if(/\bnon\s+(?:voglio|vorrei|posso|possiamo|intendo|intendiamo|devo|dobbiamo)?\s*(?:passare|andare|spostarmi|spostarci|entrare|tornare|passiamo|andiamo).{0,30}\b[abc]\b/i.test(t)) return '';
+  if(/\bnon\s+(?:passiamo|andiamo|entriamo|torniamo).{0,30}\b[abc]\b/i.test(t)) return '';
+  if(/\b(?:se|quando|prima di|dopo|poi|pi[uù] tardi|in seguito)\b.{0,45}(?:pass|and|spost|entr|torn).{0,35}\b[abc]\b/i.test(t)) return '';
+  if(/\brest(?:o|iamo)\s+(?:in|su|nella|sulla)?\s*(?:sedia|parte|posizione)?\s*[abc]\b.{0,50}\bnon\s+(?:pass|and|spost|entr)/i.test(t)) return '';
+
+  const patterns=[
+    /\bpass(?:iamo|o)\s+(?:ora\s+)?(?:alla|nella|sulla|in|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\bandiamo\s+(?:ora\s+)?(?:alla|nella|sulla|in|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\bvado\s+(?:ora\s+)?(?:alla|nella|sulla|in|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\btorniamo\s+(?:ora\s+)?(?:alla|nella|sulla|in|ad|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\btorno\s+(?:ora\s+)?(?:alla|nella|sulla|in|ad|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\b(?:spostiamoci|mi sposto|spostarmi|entriamo|entro|mettiamoci|mi metto)\s+(?:ora\s+)?(?:alla|nella|sulla|in|ad|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i,
+    /\b(?:voglio|vorrei|possiamo)\s+passare\s+(?:ora\s+)?(?:alla|nella|sulla|in|ad|a)?\s*(?:sedia|parte|posizione)?\s*([abc])\b/i
+  ];
+  for(const rx of patterns){
+    const m=t.match(rx);
+    if(m) return m[1].toUpperCase();
   }
-
-  if(/^(?:a|b|c)\s*[.!]?$/i.test(t)) return t.charAt(0).toUpperCase();
   return '';
 }
 
@@ -3035,6 +3047,7 @@ let silverMicChunks = [];
 let silverMicTimer = null;
 let silverMicBusy = false;
 let silverMicCancelled = false;
+let silverMicOperationPromise = Promise.resolve();
 
 // 5.19 — dettatura live: dove il browser espone SpeechRecognition,
 // il testo compare nel composer mentre la persona parla.
@@ -3184,6 +3197,61 @@ function startSilverLiveDictation(){
     console.warn('SpeechRecognition Silver non disponibile:',err);
     return false;
   }
+}
+
+async function finalizeSilverDictationBeforeAction(){
+  // 5.19.3 — se l'utente preme INVIA/ASCOLTA mentre il microfono è ancora attivo,
+  // chiudi prima il riconoscimento. Nessuna risposta di Silver deve rientrare nel composer.
+  clearTimeout(silverLiveRestartTimer);
+  silverLiveRestartTimer=0;
+
+  if(silverLiveMicActive && silverSpeechRecognition){
+    const recognition=silverSpeechRecognition;
+    silverLiveMicActive=false;
+    silverLiveMicStopping=true;
+
+    await new Promise(resolve=>{
+      let settled=false;
+      const finish=()=>{
+        if(settled) return;
+        settled=true;
+        try{ renderLiveDictation(); }catch(_){}
+        silverSpeechRecognition=null;
+        silverLiveFinalText='';
+        silverLiveInterimText='';
+        silverLiveMicStopping=false;
+        resetMicButton();
+        resolve();
+      };
+
+      const previousEnd=recognition.onend;
+      recognition.onend=event=>{
+        try{ if(typeof previousEnd==='function') previousEnd.call(recognition,event); }catch(_){}
+        finish();
+      };
+
+      try{ recognition.stop(); }catch(_){ finish(); }
+      setTimeout(finish,700);
+    });
+  }
+
+  if(silverMediaRecorder && silverMediaRecorder.state==='recording'){
+    const recorder=silverMediaRecorder;
+    try{ recorder.requestData?.(); }catch(_){}
+    try{ recorder.stop(); }catch(_){}
+  }
+
+  // Se la modalità fallback sta ancora trascrivendo l'audio, aspetta il testo prima di inviare.
+  try{ await silverMicOperationPromise; }catch(_){}
+  while(silverMicBusy){
+    await new Promise(resolve=>setTimeout(resolve,40));
+  }
+
+  stopMicTracks();
+  resetMicButton();
+  resize();
+  updateComposerState();
+  saveRecoveryDraft();
 }
 
 function stopMicTracks(){
@@ -3357,7 +3425,7 @@ async function startSilverMic(){
       if(event.data && event.data.size>0) silverMicChunks.push(event.data);
     });
 
-    silverMediaRecorder.addEventListener('stop',()=>{
+    silverMediaRecorder.addEventListener('stop',async ()=>{
       if(silverMicTimer){ clearTimeout(silverMicTimer); silverMicTimer=null; }
       const type=silverMediaRecorder?.mimeType || silverMicChunks[0]?.type || 'audio/webm';
       const blob=new Blob(silverMicChunks,{type});
@@ -3372,7 +3440,8 @@ async function startSilverMic(){
         return;
       }
 
-      transcribeSilverRecording(blob);
+      silverMicOperationPromise = transcribeSilverRecording(blob);
+      try{ await silverMicOperationPromise; }finally{ silverMicOperationPromise=Promise.resolve(); }
     },{once:true});
 
     silverMicCancelled=false;
@@ -5361,6 +5430,11 @@ async function fetchSpeechChunk(text, languageOverride=null){
 }
 
 async function speakSilver(text, button, languageOverride=null){
+  // 5.19.3 — TTS e riconoscimento non devono restare aperti insieme.
+  // Chiudi/trascrivi prima il microfono per impedire che Silver trascriva la propria voce.
+  if(silverLiveMicActive || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
+    await finalizeSilverDictationBeforeAction();
+  }
   // Se stiamo già ascoltando QUESTO messaggio:
   // tocco = PAUSA / RIPRENDI dallo stesso punto.
   if(activeListenButton === button && activeAudio){
@@ -5654,10 +5728,21 @@ input.addEventListener('input',()=>{
 
 form.addEventListener('submit', async e=>{
   e.preventDefault();
-  const text=input.value.trim();
-  const hasAttachments=pendingAttachments.length > 0;
 
   if(send.disabled) return;
+
+  if(silverLiveMicActive || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
+    send.disabled=true;
+    send.textContent='…';
+    setMicStatus('Chiudo il microfono prima di inviare…');
+    await finalizeSilverDictationBeforeAction();
+    send.disabled=false;
+    send.textContent='INVIA';
+    setMicStatus('');
+  }
+
+  const text=input.value.trim();
+  const hasAttachments=pendingAttachments.length > 0;
   if(!text && !hasAttachments){
     if(lastRejectedAttachment){
       showRejectedAttachmentNotice(lastRejectedAttachment);
@@ -5730,7 +5815,13 @@ form.addEventListener('submit', async e=>{
         history:sessionMessages.slice(-20),
         mode:'practice',
         language:selectedLanguage,
-        chair:activeChair
+        chair:activeChair,
+        client_meta:{
+          frontendVersion:SILVER_FRONTEND_VERSION,
+          expectedWorkerVersion:SILVER_EXPECTED_WORKER_VERSION,
+          mode:'practice',
+          chair:activeChair
+        }
       })
     });
 
