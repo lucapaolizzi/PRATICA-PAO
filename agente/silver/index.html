@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.14 — CENTRATURA SHEET + BOLLE USER + MIC VISIBILE + AUTO-FOLLOW CALMO -->
+<!-- SILVER FRONTEND 5.15 — DEEP TESTED · MIC INLINE · FOLLOW STABILE · VOICE RETRY -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2158,6 +2158,120 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.15 — MIC INLINE / DEEP REGRESSION === */
+/* Il microfono è parte del composer: resta raggiungibile in ogni stato. */
+.composer{
+  grid-template-columns:48px minmax(0,1fr) 42px 48px !important;
+  column-gap:6px !important;
+}
+.composer-left{grid-column:1 !important;}
+.composer textarea{grid-column:2 !important;}
+.composer-mic-inline{
+  grid-column:3 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:38px;
+  min-height:42px;
+  position:relative;
+  z-index:5;
+}
+.composer-mic-inline .voice-mic{
+  display:flex !important;
+  visibility:visible !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  line-height:36px !important;
+  margin:0 !important;
+  pointer-events:auto !important;
+}
+.composer .send{grid-column:4 !important;}
+.composer .attachment-queue,
+.composer .mic-status{grid-column:1/-1 !important;}
+
+/* Registrazione stabile: niente scale/trasformazioni sul bottone durante il tap. */
+.composer-mic-inline .voice-mic.recording{
+  animation:silverMicPulseStable 1.25s ease-in-out infinite !important;
+}
+@keyframes silverMicPulseStable{
+  0%,100%{box-shadow:0 0 0 4px rgba(36,35,31,.07);opacity:1}
+  50%{box-shadow:0 0 0 7px rgba(36,35,31,.11);opacity:.88}
+}
+
+/* Il vecchio contenitore esterno resta solo come ancora DOM per compatibilità. */
+.dictation-help-row{
+  display:none !important;
+  visibility:hidden !important;
+  min-height:0 !important;
+  height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  pointer-events:none !important;
+}
+
+/* La chat non deve perdere il composer dietro le barre del browser mobile. */
+@media(max-width:760px){
+  .composer{
+    grid-template-columns:46px minmax(0,1fr) 40px 46px !important;
+    gap:5px !important;
+  }
+  .composer-mic-inline{min-width:36px !important;}
+  .composer-mic-inline .voice-mic{
+    width:36px !important;
+    height:36px !important;
+    min-width:36px !important;
+    min-height:36px !important;
+    font-size:16px !important;
+    line-height:34px !important;
+  }
+  body.keyboard-open .composer-mic-inline{
+    display:flex !important;
+    visibility:visible !important;
+  }
+  body.keyboard-open .session-row.visible{
+    display:none !important;
+    visibility:hidden !important;
+  }
+}
+
+/* X: area distinta dal testo, senza sovrapposizione. */
+@media(max-width:520px){
+  .clear-input{
+    left:43px !important;
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    min-height:28px !important;
+  }
+  .composer.has-text textarea{
+    padding-left:78px !important;
+  }
+}
+
+/* Fogli centrati sul visual viewport reale. */
+.sheet-backdrop{
+  justify-content:center !important;
+}
+.sheet{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* Bolla utente: margine sicuro su telefoni stretti. */
+@media(max-width:520px){
+  .msg.user{
+    max-width:82% !important;
+    margin-right:16px !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2694,6 +2808,18 @@ function requestSilverExit(action){
 }
 
 const dictationHelpButton = document.getElementById('dictationHelpButton');
+const dictationHelpRow = document.getElementById('dictationHelpRow');
+
+/* 5.15 — Il microfono vive dentro il composer: non può più sparire durante scroll/tastiera. */
+const composerMicInline = document.createElement('div');
+composerMicInline.className = 'composer-mic-inline';
+composerMicInline.id = 'composerMicInline';
+send.before(composerMicInline);
+composerMicInline.appendChild(dictationHelpButton);
+if(dictationHelpRow){
+  dictationHelpRow.setAttribute('aria-hidden','true');
+  dictationHelpRow.hidden = true;
+}
 const chairScene = document.getElementById('chairScene');
 const chairAButton = document.getElementById('chairAButton');
 const chairBButton = document.getElementById('chairBButton');
@@ -2895,7 +3021,8 @@ async function transcribeSilverRecording(blob){
     formData.append('audio',blob,`dettatura-silver.${ext}`);
 
     const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),22000);
+    const timeoutMs = attempt === 1 ? 12000 : 18000;
+    const timer=setTimeout(()=>controller.abort(),timeoutMs);
     try{
       const response=await fetch(TRANSCRIBE_URL,{
         method:'POST',
@@ -2963,7 +3090,17 @@ async function startSilverMic(){
   if(silverMicBusy) return;
 
   if(silverMediaRecorder && silverMediaRecorder.state === 'recording'){
-    try{ silverMediaRecorder.stop(); }catch(_){}
+    const recorder = silverMediaRecorder;
+    try{ recorder.requestData?.(); }catch(_){}
+    dictationHelpButton.disabled = true;
+    setMicStatus('Chiudo la registrazione…');
+    setTimeout(()=>{
+      try{
+        if(recorder.state === 'recording') recorder.stop();
+      }catch(_){
+        resetMicButton();
+      }
+    },60);
     return;
   }
 
@@ -3084,8 +3221,8 @@ function updateKeyboardLayout(){
   const composerHeight = Math.max(composer.offsetHeight || 0, 58);
   // Con la tastiera aperta manteniamo anche il microfono visibile sotto il composer.
   // La chiusura sessione resta nascosta per non affollare il visual viewport.
-  const helpHeight = 42;
-  const gap = 4;
+  const helpHeight = 0;
+  const gap = 0;
   const bottomSafe = 8;
 
   const composerTop = Math.max(
@@ -3415,7 +3552,7 @@ function followConversation({behavior='auto',force=false}={}){
     const viewportTop = vv ? vv.offsetTop : 0;
     const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
     const safeTop = viewportTop + 10;
-    const safeBottom = viewportBottom - 16;
+    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 92 : 16);
 
     const composerRect = composer.getBoundingClientRect();
     let targetBottom = composerRect.bottom;
@@ -5148,7 +5285,8 @@ form.addEventListener('submit', async e=>{
   send.textContent='…';
   setMicStatus('Silver sta rispondendo…');
 
-  let streamingState=null;
+  let streamingState=startStreamingSilverMessage();
+  streamingState.el.textContent='…';
 
   try{
     const response = await fetch(STREAM_URL,{
@@ -5171,7 +5309,7 @@ form.addEventListener('submit', async e=>{
       throw new Error(errorMessage);
     }
 
-    streamingState=startStreamingSilverMessage();
+    streamingState.el.textContent='';
     setMicStatus('');
 
     const reader=response.body.getReader();
@@ -5229,9 +5367,13 @@ form.addEventListener('submit', async e=>{
     // Porta invece in vista l'ultima risposta e il composer.
     // 5.14: un solo riallineamento dopo che layout e controlli sono tornati stabili.
     requestAnimationFrame(()=>setTimeout(()=>{
-      silverAutoFollow=true;
-      followConversation({behavior:'auto',force:true});
-    },90));
+      // Se la persona ha scelto di risalire la conversazione durante la risposta,
+      // non la riportiamo forzatamente in fondo. Se invece è rimasta sul fondo,
+      // un solo riallineamento mostra il composer (con microfono integrato).
+      if(silverAutoFollow){
+        followConversation({behavior:'auto'});
+      }
+    },110));
   }
 });
 
