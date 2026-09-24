@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.18 — SEDIE A/B/C SINCRONIZZATE · SAVE PC ROBUSTO · WORKER 6.1 -->
+<!-- SILVER FRONTEND 5.19 — TRASCRIZIONE LIVE · FOLLOW CONTROLLI · TXT REALE · WORKER 6.2 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2467,6 +2467,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <p><strong>A e B</strong> sono due parti della stessa persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
       <p>Da A o B, una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
       <p><strong>C</strong> è uno spazio di osservazione da cui puoi guardare ciò che accade tra A e B senza dover scegliere subito. <strong>Silver facilita</strong> il passaggio e l’esplorazione, ma non decide al posto tuo dove devi stare.</p>
+      <p>A e B possono esprimersi anche con <strong>forte intensità</strong>: Silver distingue la voce della posizione dalla persona intera e non anticipa la risposta dell’altra sedia. La pratica sostiene libertà e mobilità, non la perdita di controllo.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
   </div>
@@ -2684,6 +2685,10 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
           <strong>SALVA E TERMINA</strong>
           <span>Scarica la conversazione sul dispositivo e torna all’ingresso di Silver.</span>
         </button>
+        <button class="sheet-action" id="exportTxtButton" type="button">
+          <strong>ESPORTA TXT</strong>
+          <span>Crea un testo leggibile dalla cronologia reale e continua la sessione.</span>
+        </button>
         <button class="sheet-action danger" id="deleteConversationButton" type="button">
           <strong>ELIMINA E TERMINA</strong>
           <span>Elimina la conversazione corrente senza salvarla e torna all’ingresso di Silver.</span>
@@ -2823,6 +2828,7 @@ function finishNativeAttachmentPicker(){
 const sessionBackdrop = document.getElementById('sessionBackdrop');
 const sessionClose = document.getElementById('sessionClose');
 const saveConversationButton = document.getElementById('saveConversationButton');
+const exportTxtButton = document.getElementById('exportTxtButton');
 const deleteConversationButton = document.getElementById('deleteConversationButton');
 
 const recoveryBackdrop = document.getElementById('recoveryBackdrop');
@@ -2896,7 +2902,7 @@ function chairPlaceholder(chair){
   return 'A · Inizia a scrivere da qui…';
 }
 
-/* 5.18 — Solo richieste esplicite cambiano sedia anche se scritte nel messaggio.
+/* 5.19 — Solo richieste esplicite cambiano sedia anche se scritte nel messaggio.
    Evita di interpretare frasi ambigue come cambi di posizione. */
 function explicitChairRequestFromText(value){
   const t=String(value || '').trim().toLowerCase();
@@ -3025,6 +3031,147 @@ let silverMicTimer = null;
 let silverMicBusy = false;
 let silverMicCancelled = false;
 
+// 5.19 — dettatura live: dove il browser espone SpeechRecognition,
+// il testo compare nel composer mentre la persona parla.
+// Se non è disponibile, resta il percorso robusto MediaRecorder → /transcribe.
+let silverSpeechRecognition = null;
+let silverLiveMicActive = false;
+let silverLiveMicStopping = false;
+let silverLiveMicDisabledForSession = false;
+let silverLiveBaseText = '';
+let silverLiveFinalText = '';
+let silverLiveInterimText = '';
+let silverLiveRestartTimer = 0;
+
+
+function speechRecognitionConstructor(){
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function preferredSpeechLanguage(){
+  const map={it:'it-IT',en:'en-US',ar:'ar-SA',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-PT'};
+  return map[selectedLanguage] || navigator.language || document.documentElement.lang || 'it-IT';
+}
+
+function joinDictationText(...parts){
+  return parts.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+}
+
+function renderLiveDictation(){
+  input.value = joinDictationText(silverLiveBaseText,silverLiveFinalText,silverLiveInterimText);
+  resize();
+  updateComposerState();
+  saveRecoveryDraft();
+}
+
+function stopSilverLiveDictation({cancel=false}={}){
+  clearTimeout(silverLiveRestartTimer);
+  silverLiveRestartTimer=0;
+  silverLiveMicActive=false;
+  silverLiveMicStopping=true;
+
+  if(silverSpeechRecognition){
+    try{ cancel ? silverSpeechRecognition.abort() : silverSpeechRecognition.stop(); }catch(_){}
+  }
+
+  if(cancel){
+    input.value=silverLiveBaseText;
+    resize();
+    updateComposerState();
+    saveRecoveryDraft();
+    setMicStatus('');
+  }else{
+    // L'eventuale testo interim già visibile resta nel composer: la persona può correggerlo.
+    renderLiveDictation();
+    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
+  }
+
+  silverSpeechRecognition=null;
+  silverLiveInterimText='';
+  silverLiveMicStopping=false;
+  resetMicButton();
+}
+
+function startSilverLiveDictation(){
+  const Ctor=speechRecognitionConstructor();
+  if(!Ctor || silverLiveMicDisabledForSession) return false;
+
+  try{
+    const recognition=new Ctor();
+    recognition.continuous=true;
+    recognition.interimResults=true;
+    recognition.maxAlternatives=1;
+    recognition.lang=preferredSpeechLanguage();
+
+    silverLiveBaseText=input.value.trim();
+    silverLiveFinalText='';
+    silverLiveInterimText='';
+    silverLiveMicStopping=false;
+    silverLiveMicActive=true;
+    silverSpeechRecognition=recognition;
+
+    recognition.onresult=event=>{
+      let finalText='';
+      let interimText='';
+      for(let i=0;i<event.results.length;i++){
+        const item=event.results[i];
+        const text=String(item?.[0]?.transcript || '').trim();
+        if(!text) continue;
+        if(item.isFinal) finalText += (finalText ? ' ' : '') + text;
+        else interimText += (interimText ? ' ' : '') + text;
+      }
+      silverLiveFinalText=finalText.trim();
+      silverLiveInterimText=interimText.trim();
+      renderLiveDictation();
+    };
+
+    recognition.onerror=event=>{
+      const code=String(event?.error || '');
+      if(code==='aborted' && silverLiveMicStopping) return;
+      if(code==='not-allowed' || code==='service-not-allowed'){
+        silverLiveMicDisabledForSession=true;
+        silverLiveMicActive=false;
+        silverSpeechRecognition=null;
+        resetMicButton();
+        setMicStatus('Microfono non autorizzato. Puoi abilitarlo per praticapao.it nelle impostazioni del browser.');
+        return;
+      }
+      if(code==='network' || code==='audio-capture' || code==='no-speech'){
+        silverLiveMicDisabledForSession=true;
+        silverLiveMicActive=false;
+        silverSpeechRecognition=null;
+        resetMicButton();
+        setMicStatus('Trascrizione live non disponibile su questo browser. Tocca di nuovo il microfono: userò la trascrizione dopo lo stop.');
+      }
+    };
+
+    recognition.onend=()=>{
+      if(silverLiveMicActive && !silverLiveMicStopping){
+        // Alcuni browser chiudono automaticamente sessioni lunghe: prova una sola ripartenza morbida.
+        clearTimeout(silverLiveRestartTimer);
+        silverLiveRestartTimer=setTimeout(()=>{
+          if(!silverLiveMicActive || !silverSpeechRecognition) return;
+          try{ silverSpeechRecognition.start(); }catch(_){}
+        },160);
+      }
+    };
+
+    recognition.start();
+    dictationHelpButton.classList.add('recording');
+    dictationHelpButton.textContent='■';
+    dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
+    dictationHelpButton.title='Ferma la dettatura e rileggi';
+    setMicStatus('Sto ascoltando… il testo compare mentre parli. Tocca ■ per fermare e rileggere.');
+    return true;
+  }catch(err){
+    silverLiveMicActive=false;
+    silverSpeechRecognition=null;
+    silverLiveMicDisabledForSession=true;
+    console.warn('SpeechRecognition Silver non disponibile:',err);
+    return false;
+  }
+}
+
 function stopMicTracks(){
   if(silverMicStream){
     silverMicStream.getTracks().forEach(track=>{
@@ -3152,6 +3299,11 @@ async function transcribeSilverRecording(blob){
 async function startSilverMic(){
   if(silverMicBusy) return;
 
+  if(silverLiveMicActive){
+    stopSilverLiveDictation({cancel:false});
+    return;
+  }
+
   if(silverMediaRecorder && silverMediaRecorder.state === 'recording'){
     const recorder = silverMediaRecorder;
     try{ recorder.requestData?.(); }catch(_){}
@@ -3167,8 +3319,12 @@ async function startSilverMic(){
     return;
   }
 
+  // Prima scelta 5.19: trascrizione progressiva direttamente nel composer.
+  // L'invio resta SEMPRE manuale.
+  if(startSilverLiveDictation()) return;
+
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
-    setMicStatus('Il browser non consente la registrazione vocale. Puoi comunque scrivere normalmente.');
+    setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
     return;
   }
 
@@ -3211,7 +3367,7 @@ async function startSilverMic(){
     dictationHelpButton.textContent='■';
     dictationHelpButton.setAttribute('aria-label','Ferma la dettatura');
     dictationHelpButton.title='Ferma la dettatura';
-    setMicStatus('Sto ascoltando… Tocca ■ per fermare.');
+    setMicStatus('Sto registrando… Tocca ■ per fermare; poi trascrivo nel composer senza inviare.');
 
     // Limite di sicurezza/UX per una dettatura singola.
     silverMicTimer=setTimeout(()=>{
@@ -3615,12 +3771,19 @@ function followConversation({behavior='auto',force=false}={}){
     const viewportTop = vv ? vv.offsetTop : 0;
     const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
     const safeTop = viewportTop + 10;
-    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 92 : 16);
+    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 18 : 16);
 
     const composerRect = composer.getBoundingClientRect();
     let targetBottom = composerRect.bottom;
 
-    // 5.14: quando la tastiera è chiusa, composer + microfono sono un unico blocco UX.
+    // 5.19: il riallineamento finale considera anche CHIUDI / SALVA SESSIONE.
+    // Un solo scroll porta in vista l'intero blocco di lavoro, senza rincorrere lo streaming.
+    if(sessionRow?.classList.contains('visible')){
+      const sessionRect=sessionRow.getBoundingClientRect();
+      targetBottom=Math.max(targetBottom,sessionRect.bottom);
+    }
+
+    // Compatibilità con vecchio contenitore microfono (ora il mic è inline).
     // L'auto-follow deve lasciare visibili entrambi, non solo il campo di scrittura.
     if(dictationHelpRow){
       const micStyle = getComputedStyle(dictationHelpRow);
@@ -3722,6 +3885,7 @@ function resetConversationUi(){
   updateComposerState();
   updateSessionControls();
 
+  if(silverLiveMicActive){ stopSilverLiveDictation({cancel:true}); }
   if(silverMediaRecorder?.state === 'recording'){ try{ silverMediaRecorder.stop(); }catch(_){} }
   stopMicTracks();
   resetMicButton();
@@ -3866,6 +4030,84 @@ async function saveSilverFileOnDesktop(json,fileName){
   }
 }
 
+
+function buildSilverPlainTranscript(){
+  const lines=[
+    'CONVERSAZIONE SILVER',
+    `Salvata: ${new Date().toLocaleString()}`,
+    `Sedia/spazio attivo: ${activeChair}`,
+    ''
+  ];
+  for(const message of sessionMessages){
+    const label=message.role==='assistant' ? 'Silver' : 'Utente';
+    lines.push(`${label}:`);
+    lines.push(String(message.content || ''));
+    lines.push('');
+  }
+  return lines.join('\n').trim() + '\n';
+}
+
+async function savePlainTextOnDesktop(text,fileName){
+  if(typeof window.showSaveFilePicker === 'function' && window.isSecureContext){
+    try{
+      const handle=await window.showSaveFilePicker({
+        suggestedName:fileName,
+        types:[{description:'Conversazione Silver TXT',accept:{'text/plain':['.txt']}}]
+      });
+      const writable=await handle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      return {ok:true,method:'picker'};
+    }catch(err){
+      if(err?.name==='AbortError') return {ok:false,cancelled:true,method:'picker'};
+    }
+  }
+  try{
+    const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=fileName;
+    a.rel='noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ try{a.remove();}catch(_){} try{URL.revokeObjectURL(url);}catch(_){} },15000);
+    return {ok:true,method:'download'};
+  }catch(err){
+    return {ok:false,error:err,method:'download'};
+  }
+}
+
+async function exportConversationTxt(){
+  if(!sessionMessages.length){
+    setMicStatus('Non c’è ancora una conversazione da esportare.');
+    return;
+  }
+  const text=buildSilverPlainTranscript();
+  const fileName=`Silver_conversazione_${safeFileDate()}.txt`;
+  const file=new File([text],fileName,{type:'text/plain;charset=utf-8'});
+  exportTxtButton.disabled=true;
+  try{
+    if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Conversazione Silver'});
+    }else{
+      const result=await savePlainTextOnDesktop(text,fileName);
+      if(!result.ok){
+        if(result.cancelled) setMicStatus('Esportazione TXT annullata.');
+        else setMicStatus('Non sono riuscito a esportare il TXT. La sessione resta qui.');
+        return;
+      }
+    }
+    closeSheet(sessionBackdrop);
+    setMicStatus('TXT esportato dalla cronologia reale. La sessione continua.');
+  }catch(err){
+    if(err?.name!=='AbortError') console.error('Export TXT Silver:',err);
+    setMicStatus(err?.name==='AbortError' ? 'Esportazione TXT annullata.' : 'Non sono riuscito a esportare il TXT.');
+  }finally{
+    exportTxtButton.disabled=false;
+  }
+}
+
 async function saveConversationToDevice(exitAction=null, triggerButton=saveConversationButton){
   if(!sessionMessages.length){
     setMicStatus('Non c’è ancora una conversazione da salvare.');
@@ -3884,7 +4126,7 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
 
   const payload = {
     format: 'silver-pao-conversation',
-    version: 3,
+    version: 4,
     mode: 'practice',
     language: selectedLanguage,
     chair: activeChair,
@@ -4764,10 +5006,8 @@ async function sendPendingAttachments(optionalText=''){
     if(reviewMessages.length > 80){
       reviewMessages.splice(0,reviewMessages.length - 80);
     }
-    if(sessionMessages.length > 20){
-      sessionMessages.splice(0,sessionMessages.length - 20);
-    }
-
+    // 5.19: conserva l'intera sessione per salvataggio/esportazione.
+    // Al Worker continuiamo a inviare solo la finestra recente con slice(-20).
     updateSessionControls();
     setMicStatus('');
     return reply;
@@ -4972,6 +5212,7 @@ attachmentFileInput.addEventListener('change',async ()=>{
   // L’utente può premere direttamente INVIA oppure toccare il campo testo se vuole aggiungere una nota.
 });
 
+exportTxtButton.addEventListener('click',exportConversationTxt);
 saveConversationButton.addEventListener('click',()=>saveConversationToDevice(null, saveConversationButton));
 
 deleteConversationButton.addEventListener('click',async ()=>{
@@ -5343,8 +5584,12 @@ clearInputButton.addEventListener('pointerdown',e=>{
     document.activeElement === input ||
     document.body.classList.contains('keyboard-open');
 
-  // Se la X viene premuta durante una dettatura, annulla davvero la registrazione:
-  // scarta l'audio e non avvia la trascrizione.
+  // Se la X viene premuta durante una dettatura, annulla davvero la registrazione/live preview.
+  if(silverLiveMicActive){
+    stopSilverLiveDictation({cancel:true});
+  }
+
+  // Nel fallback registrato scarta l'audio e non avvia la trascrizione.
   if(silverMediaRecorder?.state === 'recording'){
     silverMicCancelled=true;
     try{ silverMediaRecorder.stop(); }catch(_){}
@@ -5519,10 +5764,8 @@ form.addEventListener('submit', async e=>{
       reviewMessages.splice(0,reviewMessages.length - 80);
     }
 
-    if(sessionMessages.length > 20){
-      sessionMessages.splice(0,sessionMessages.length - 20);
-    }
-
+    // 5.19: conserva l'intera sessione per salvataggio/esportazione.
+    // Al Worker continua ad arrivare soltanto la finestra recente con slice(-20).
     updateSessionControls();
 
   }catch(err){
