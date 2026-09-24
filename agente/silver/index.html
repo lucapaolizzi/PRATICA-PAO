@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.0 — RESPONSIVE COMPACT: MOBILE PIÙ RAPIDO + MICROFONO VICINO AL COMPOSER -->
+<!-- SILVER FRONTEND 5.2 — INFO SOTTO C + LAYOUT FINALE RESPONSIVE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1845,6 +1845,79 @@ body.conversation-mode .silver-inside{
   .practice-legend{font-size:9px !important}
 }
 
+
+/* === SILVER FRONTEND 5.2 — INFO SOTTO C + SPAZIO RECUPERATO === */
+/* La spiegazione del metodo vive in Info pratica: niente legenda duplicata nella pagina. */
+.practice-legend{display:none !important;}
+
+/* Info pratica appartiene visivamente a C. */
+.practice-info-under-c{
+  margin:7px auto 0 !important;
+  width:100%;
+  display:flex;
+  justify-content:center;
+}
+.practice-info-under-c .practice-info-button{
+  padding:6px 10px 6px 7px;
+  font-size:9px;
+}
+.practice-info-under-c .practice-info-q{
+  width:20px;height:20px;min-width:20px;font-size:11px;
+}
+
+/* Un poco più di respiro al gruppo A—Silver—B senza aumentare l'altezza totale. */
+.chair-scene{margin-bottom:4px;}
+.observer-row{margin-top:4px;}
+
+/* Ordine coerente: scrittura, microfono, riprendi. */
+.resume-from-opening.mobile-resume{
+  width:min(360px,92vw);
+  margin:4px auto 4px !important;
+  padding:8px 13px !important;
+}
+
+/* Desktop: composer e microfono devono restare nello stesso viewport. */
+@media(min-width:761px){
+  .practice-info-under-c{margin-top:5px !important;}
+  .opening .gentle{margin-top:6px !important;}
+  body:not(.conversation-mode) .composer{margin-top:7px !important;}
+  body:not(.conversation-mode) .dictation-help-row{
+    min-height:38px !important;
+    margin-top:-38px !important;
+    margin-bottom:0 !important;
+  }
+  body:not(.conversation-mode) .dictation-help.voice-mic{
+    width:38px !important;height:38px !important;line-height:36px !important;
+  }
+}
+
+@media(max-width:520px){
+  /* Recuperato spazio: Silver e le sedie possono respirare leggermente di più. */
+  .chair-scene{
+    grid-template-columns:82px minmax(118px,1fr) 82px !important;
+    column-gap:3px !important;
+    margin-bottom:3px !important;
+  }
+  .mascot{width:min(178px,46vw) !important;}
+  .chair-drawing{
+    transform:scale(.71) !important;
+    margin-bottom:-31px !important;
+  }
+  .chair-position.active .chair-drawing{transform:scale(.71) translateY(-1px) !important;}
+  .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1) scale(.71) !important;}
+  .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) scale(.71) translateY(-1px) !important;}
+  .observer-row{height:30px !important;margin-top:3px !important;}
+  .practice-info-under-c{margin-top:5px !important;}
+  .practice-info-under-c .practice-info-button{padding:6px 10px 6px 7px !important;}
+
+  body:not(.conversation-mode) .composer{margin-top:5px !important;}
+  body:not(.conversation-mode) .dictation-help-row{
+    margin-top:-46px !important;
+    margin-bottom:0 !important;
+  }
+  .resume-from-opening.mobile-resume{margin:2px auto 5px !important;}
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -1870,6 +1943,12 @@ body.conversation-mode .silver-inside{
         <div class="observer-row">
           <button class="observer-button observer-eye" id="chairCButton" type="button" aria-pressed="false" aria-label="Vai nello spazio C di osservazione">C</button>
         </div>
+        <div class="practice-info-row practice-info-under-c">
+          <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri informazioni sulla pratica P.A.O.">
+            <span class="practice-info-q" aria-hidden="true">?</span>
+            <span>INFO PRATICA</span>
+          </button>
+        </div>
         <div class="mode-badge" id="modeBadge" hidden></div>
       </div>
 
@@ -1881,7 +1960,6 @@ body.conversation-mode .silver-inside{
         </span>
       </button>
 
-      <p class="practice-legend"><span class="legend-desktop"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: spazio di osservazione</span><span class="legend-mobile"><strong>Pratica:</strong> A ↔ B · C: spazio di osservazione</span></p>
     </div>
     <p class="chair-scene-note" aria-hidden="true"></p>
   </header>
@@ -1899,13 +1977,6 @@ body.conversation-mode .silver-inside{
       </div>
 
       <p class="gentle" id="openingGentle">Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
-
-      <div class="practice-info-row">
-        <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri informazioni sulla pratica P.A.O.">
-          <span class="practice-info-q" aria-hidden="true">?</span>
-          <span>INFO PRATICA</span>
-        </button>
-      </div>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -1996,10 +2067,10 @@ body.conversation-mode .silver-inside{
     <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
       <div class="sheet-handle"></div>
       <h2 class="sheet-title" id="practiceInfoTitle">Info pratica</h2>
+      <p><strong>Pratica di crescita personale: A ↔ B · due posizioni alla volta · C: spazio di osservazione.</strong></p>
       <p><strong>A e B</strong> sono due posizioni della persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
       <p>Da A o B una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
-      <p><strong>Silver facilita</strong> il passaggio tra le posizioni, ma non decide al posto tuo dove devi stare. Anche C può essere occupata da te quando vuoi osservare ciò che accade tra le parti.</p>
-      <div class="practice-info-rule">A ↔ B · due posizioni alla volta · C · spazio di osservazione · Silver facilita</div>
+      <p><strong>C</strong> è uno spazio di osservazione da cui puoi guardare ciò che accade tra A e B senza dover scegliere subito. <strong>Silver facilita</strong> il passaggio e l’esplorazione, ma non decide al posto tuo dove devi stare.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
   </div>
@@ -2506,24 +2577,16 @@ resumeOpeningButton.addEventListener('click',()=>{
   resumeFileInput.click();
 });
 
-/* Su iPhone/telefoni la scrittura viene prima di "Riprendi".
-   Su desktop il pulsante torna nella posizione originale. */
+/* La pratica viene prima: composer → microfono → riprendi sessione, su ogni schermo. */
 const resumeOpeningHome = document.createComment('resume-opening-home');
 resumeOpeningButton.parentNode.insertBefore(resumeOpeningHome,resumeOpeningButton);
 
 function placeResumeOpeningButton(){
-  const mobile = window.matchMedia('(max-width:520px)').matches;
-  if(mobile){
-    dictationHelpRow.after(resumeOpeningButton);
-    resumeOpeningButton.classList.add('mobile-resume');
-  }else{
-    resumeOpeningHome.parentNode.insertBefore(resumeOpeningButton,resumeOpeningHome.nextSibling);
-    resumeOpeningButton.classList.remove('mobile-resume');
-  }
+  dictationHelpRow.after(resumeOpeningButton);
+  resumeOpeningButton.classList.add('mobile-resume');
 }
 
 placeResumeOpeningButton();
-window.addEventListener('resize',placeResumeOpeningButton,{passive:true});
 
 
 let silverMediaRecorder = null;
