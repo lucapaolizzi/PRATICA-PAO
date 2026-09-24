@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.9 — MICROFONO SEMPRE VISIBILE IN CHAT + X DISTANZIATA -->
+<!-- SILVER FRONTEND 5.11 — REGRESSION TESTED: KEYBOARD + MIC + CHAT CONTROLS -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2052,6 +2052,30 @@ body.conversation-mode .session-end{
   }
 }
 
+
+/* === SILVER FRONTEND 5.10 — STATO TASTIERA TESTATO === */
+/* Durante la scrittura la priorità è solo il composer: niente controlli sovrapposti. */
+@media(max-width:760px){
+  body.keyboard-open .dictation-help-row{
+    display:none !important;
+    visibility:hidden !important;
+  }
+  body.keyboard-open .session-row.visible{
+    display:none !important;
+    visibility:hidden !important;
+  }
+}
+
+/* X più separata dal testo su telefoni stretti. */
+@media(max-width:520px){
+  .clear-input{
+    left:44px !important;
+  }
+  .composer.has-text textarea{
+    padding-left:76px !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2924,9 +2948,11 @@ function updateKeyboardLayout(){
   const viewportHeight = currentHeight;
 
   const composerHeight = Math.max(composer.offsetHeight || 0, 58);
-  const helpHeight = 44;
-  const gap = 8;
-  const bottomSafe = 12;
+  // Con la tastiera aperta mostriamo solo il composer: microfono e chiusura
+  // tornano quando la tastiera si chiude. Non riservare spazio per il microfono.
+  const helpHeight = 0;
+  const gap = 0;
+  const bottomSafe = 10;
 
   const composerTop = Math.max(
     viewportTop + 8,
@@ -4795,6 +4821,12 @@ function resize(){
   resizeFrame = requestAnimationFrame(()=>{
     input.style.height='auto';
     input.style.height=Math.min(input.scrollHeight,150)+'px';
+
+    // Se il testo passa su più righe mentre la tastiera è aperta,
+    // ricalcola subito la posizione del composer nel visual viewport.
+    if(document.body.classList.contains('keyboard-open')){
+      requestAnimationFrame(updateKeyboardLayout);
+    }
   });
 }
 
