@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.15 — DEEP TESTED · MIC INLINE · FOLLOW STABILE · VOICE RETRY -->
+<!-- SILVER FRONTEND 5.16 — DEEP TESTED · MIC INLINE · FOLLOW STABILE · VOICE RETRY -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -359,6 +359,28 @@ textarea::placeholder{color:#918b80}
 .sheet-action.primary{background:var(--ink);color:#fff}
 .sheet-action.primary span{color:rgba(255,255,255,.72)}
 .sheet-action.danger{border-color:rgba(145,48,42,.25)}
+.attachment-reject-summary{
+  margin:4px 6px 12px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--paper);
+  color:var(--ink);
+  font:600 13px/1.45 Arial,Helvetica,sans-serif;
+}
+.attachment-reject-help{
+  margin:0 6px 12px;
+  color:var(--muted);
+  font:12px/1.5 Arial,Helvetica,sans-serif;
+}
+.attachment-reject-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+.attachment-reject-actions .sheet-action{
+  min-height:58px;
+}
 .sheet-note{
   color:var(--muted);font-size:11px;line-height:1.35;
   margin:12px 6px 2px;
@@ -2417,6 +2439,26 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   </div>
 
 
+  <div class="sheet-backdrop" id="attachmentRejectBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="attachmentRejectTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="attachmentRejectTitle">File non allegato</h2>
+      <p class="attachment-reject-summary" id="attachmentRejectSummary"></p>
+      <p class="attachment-reject-help" id="attachmentRejectHelp"></p>
+      <div class="attachment-reject-actions">
+        <button class="sheet-action primary" id="attachmentRejectChoose" type="button">
+          <strong>SCEGLI UN ALTRO FILE</strong>
+          <span>Apri di nuovo Foto / File e seleziona una versione compatibile.</span>
+        </button>
+        <button class="sheet-action" id="attachmentRejectContinue" type="button">
+          <strong>CONTINUA SENZA FILE</strong>
+          <span>Puoi proseguire subito scrivendo o usando il microfono.</span>
+        </button>
+      </div>
+      <button class="sheet-close" id="attachmentRejectClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
   <div class="sheet-backdrop" id="practiceInfoBackdrop" aria-hidden="true">
     <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
       <div class="sheet-handle"></div>
@@ -2729,7 +2771,14 @@ const attachmentFileInput = document.getElementById('attachmentFileInput');
 const attachmentQueue = document.getElementById('attachmentQueue');
 const micStatusText = document.getElementById('micStatusText');
 const cancelAttachmentButton = document.getElementById('cancelAttachmentButton');
+const attachmentRejectBackdrop = document.getElementById('attachmentRejectBackdrop');
+const attachmentRejectSummary = document.getElementById('attachmentRejectSummary');
+const attachmentRejectHelp = document.getElementById('attachmentRejectHelp');
+const attachmentRejectChoose = document.getElementById('attachmentRejectChoose');
+const attachmentRejectContinue = document.getElementById('attachmentRejectContinue');
+const attachmentRejectClose = document.getElementById('attachmentRejectClose');
 let pendingAttachments = [];
+let lastRejectedAttachment = null;
 let attachmentAbortController = null;
 let nativeAttachmentPickerOpen = false;
 let nativeAttachmentPickerScrollY = 0;
@@ -4687,6 +4736,57 @@ cancelAttachmentButton.addEventListener('click',()=>{
   try{ attachmentAbortController?.abort(); }catch(_){}
 });
 
+function clearRejectedAttachmentNotice(){
+  lastRejectedAttachment = null;
+}
+
+function showRejectedAttachmentNotice(item){
+  if(!item) return;
+  lastRejectedAttachment = item;
+
+  let summary='Il file selezionato non è stato allegato.';
+  let help='Puoi sceglierne un altro oppure continuare subito con testo o voce.';
+
+  if(item.reason === 'mov') {
+    summary=`Il video “${item.name}” è in formato MOV/QuickTime e non può essere trascritto in modo affidabile.`;
+    help='Per lavorarci con Silver, esportalo in MP4 oppure invia soltanto l’audio in M4A/MP3. Se ti interessa solo un momento preciso, puoi anche inviare un estratto più breve.';
+  } else if(item.kind === 'video' || item.kind === 'audio') {
+    summary=`${item.kind === 'video' ? 'Il video' : 'L’audio'} “${item.name}” pesa ${item.sizeMB} MB. Il limite è ${item.maxMB} MB, quindi non è stato allegato.`;
+    help='Per il lavoro con Silver è spesso sufficiente un estratto più breve oppure la sola traccia audio. In alternativa puoi descrivere nel messaggio il passaggio che vuoi esplorare.';
+  } else {
+    summary=`Il file “${item.name}” pesa ${item.sizeMB} MB. Il limite è ${item.maxMB} MB, quindi non è stato allegato.`;
+    help='Riduci il file, dividilo in più parti oppure continua descrivendo nel messaggio ciò che vuoi osservare insieme a Silver.';
+  }
+
+  attachmentRejectSummary.textContent=summary;
+  attachmentRejectHelp.textContent=help;
+  openSheet(attachmentRejectBackdrop);
+}
+
+attachmentRejectChoose.addEventListener('click',()=>{
+  closeSheet(attachmentRejectBackdrop);
+  clearRejectedAttachmentNotice();
+  prepareNativeAttachmentPicker();
+  attachmentFileInput.value='';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>attachmentFileInput.click()));
+});
+
+attachmentRejectContinue.addEventListener('click',()=>{
+  closeSheet(attachmentRejectBackdrop);
+  clearRejectedAttachmentNotice();
+  setMicStatus('');
+  requestAnimationFrame(()=>{
+    try{ input.focus({preventScroll:true}); }catch(_){ try{ input.focus(); }catch(__){} }
+  });
+});
+
+attachmentRejectClose.addEventListener('click',()=>{
+  closeSheet(attachmentRejectBackdrop);
+});
+attachmentRejectBackdrop.addEventListener('click',e=>{
+  if(e.target === attachmentRejectBackdrop) closeSheet(attachmentRejectBackdrop);
+});
+
 attachmentButton.addEventListener('click',()=>{
   prepareNativeAttachmentPicker();
   closeSheet(toolsBackdrop);
@@ -4752,6 +4852,7 @@ attachmentFileInput.addEventListener('change',async ()=>{
   }
 
   if(accepted.length){
+    clearRejectedAttachmentNotice();
     const acceptedKinds=accepted.map(item=>item.kind);
 
     setMicStatus(
@@ -4784,27 +4885,12 @@ attachmentFileInput.addEventListener('change',async ()=>{
 
   if(rejected.length){
     const item=rejected[0];
+    showRejectedAttachmentNotice(item);
 
     if(item.reason === 'mov'){
-      setMicStatus(
-        `Il video "${item.name}" è in formato MOV/QuickTime. ` +
-        `Silver riconosce il file, ma il servizio di trascrizione non accetta ufficialmente MOV. ` +
-        `Per la voce, esportalo in MP4 oppure M4A e allegalo di nuovo.`
-      );
+      setMicStatus(`⚠️ “${item.name}” non è stato allegato: formato MOV non supportato per la trascrizione.`);
     }else{
-      const typeLabel =
-        item.kind === 'video'
-          ? 'Il video'
-          : item.kind === 'audio'
-            ? 'L’audio'
-            : 'Il file';
-
-      setMicStatus(
-        `${typeLabel} "${item.name}" pesa ${item.sizeMB} MB e supera il limite di ${item.maxMB} MB. ` +
-        `Non è stato aggiunto. ${item.kind === 'video' || item.kind === 'audio'
-          ? 'Riducilo, accorcialo oppure invia una versione audio più leggera.'
-          : 'Riduci il file o dividilo in più parti.'}`
-      );
+      setMicStatus(`⚠️ “${item.name}” non è stato allegato: ${item.sizeMB} MB, limite ${item.maxMB} MB.`);
     }
   }else if(files.length > available){
     setMicStatus(`Puoi preparare al massimo ${MAX_FILES} allegati insieme.`);
@@ -5241,11 +5327,18 @@ form.addEventListener('submit', async e=>{
   const text=input.value.trim();
   const hasAttachments=pendingAttachments.length > 0;
 
-  if((!text && !hasAttachments) || send.disabled) return;
+  if(send.disabled) return;
+  if(!text && !hasAttachments){
+    if(lastRejectedAttachment){
+      showRejectedAttachmentNotice(lastRejectedAttachment);
+    }
+    return;
+  }
 
   showConversationMode();
 
   if(hasAttachments){
+    clearRejectedAttachmentNotice();
     send.disabled=true;
     send.textContent='…';
 
@@ -5265,6 +5358,11 @@ form.addEventListener('submit', async e=>{
       followConversation({behavior:'auto',force:true});
     }
     return;
+  }
+
+  if(lastRejectedAttachment){
+    clearRejectedAttachmentNotice();
+    setMicStatus('');
   }
 
   addMessage(text,'user');
