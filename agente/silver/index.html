@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.19 — TRASCRIZIONE LIVE · FOLLOW CONTROLLI · TXT REALE · WORKER 6.2 -->
+<!-- SILVER FRONTEND 5.19.1 — STRESS FIX · LIVE VOICE CONTINUA · CAMBIO SEDIA NON NEGATO · WORKER 6.2.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2910,7 +2910,12 @@ function explicitChairRequestFromText(value){
 
   const directMove=/(?:pass(?:iamo|o|are)|andiamo|vado|torno|spost(?:iamoci|o|armi)|entriamo|entro|mett(?:iamoci|o)|vai)\s+(?:ora\s+)?(?:alla|alla\s+sedia|nella|nella\s+sedia|sulla|sulla\s+sedia|in|a)?\s*(?:parte\s+|sedia\s+|posizione\s+)?([abc])\b/i;
   const m=t.match(directMove);
-  if(m) return m[1].toUpperCase();
+  if(m){
+    // 5.19.1: una frase negativa non deve cambiare sedia contro la volontà della persona.
+    const before=t.slice(0,m.index || 0);
+    if(/\bnon(?:\s+(?:voglio|vorrei|posso|possiamo|devo|dobbiamo))?\s*$/i.test(before)) return '';
+    return m[1].toUpperCase();
+  }
 
   if(/^(?:a|b|c)\s*[.!]?$/i.test(t)) return t.charAt(0).toUpperCase();
   return '';
@@ -3147,7 +3152,16 @@ function startSilverLiveDictation(){
 
     recognition.onend=()=>{
       if(silverLiveMicActive && !silverLiveMicStopping){
-        // Alcuni browser chiudono automaticamente sessioni lunghe: prova una sola ripartenza morbida.
+        // 5.19.1: se il browser chiude una sessione lunga, conserva il segmento già
+        // trascritto PRIMA di riavviare SpeechRecognition. Così il nuovo segmento
+        // non può sovrascrivere le parole precedenti.
+        const completedSegment=joinDictationText(silverLiveFinalText,silverLiveInterimText);
+        if(completedSegment){
+          silverLiveBaseText=joinDictationText(silverLiveBaseText,completedSegment);
+          silverLiveFinalText='';
+          silverLiveInterimText='';
+          renderLiveDictation();
+        }
         clearTimeout(silverLiveRestartTimer);
         silverLiveRestartTimer=setTimeout(()=>{
           if(!silverLiveMicActive || !silverSpeechRecognition) return;
@@ -4238,8 +4252,9 @@ function renderRestoredConversation(messages){
     addMessage(m.content, m.role === 'assistant' ? 'silver' : 'user');
   }
 
-  // Il dialogo operativo usa gli ultimi 20 messaggi come contesto.
-  sessionMessages = messages.slice(-20);
+  // Conserva l'intera conversazione ripristinata per salvataggio/esportazione.
+  // Solo quando chiamiamo il Worker inviamo la finestra recente con slice(-20).
+  sessionMessages = messages.slice();
 
   // Silver Review conserva solo in memoria, per la sessione corrente,
   // una copia più ampia del dialogo da verificare alla chiusura.
