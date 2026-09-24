@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 4.9 — PULIZIA FINALE: SILVER SENZA ETICHETTA + INFO PRATICA SENZA RIPETIZIONI -->
+<!-- SILVER FRONTEND 5.0 — RESPONSIVE COMPACT: MOBILE PIÙ RAPIDO + MICROFONO VICINO AL COMPOSER -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1688,6 +1688,163 @@ body.conversation-mode .silver-inside{
   letter-spacing:.08em !important;
 }
 
+
+
+/* === SILVER FRONTEND 5.0 — RESPONSIVE COMPACT === */
+.legend-mobile{display:none}
+
+/* Desktop: il microfono resta legato visivamente al composer. */
+@media(min-width:761px){
+  body:not(.conversation-mode) .dictation-help-row{
+    margin-top:-22px !important;
+    margin-bottom:4px !important;
+  }
+  body:not(.conversation-mode) .resume-from-opening{
+    margin-bottom:8px;
+  }
+}
+
+/* Telefoni: la pratica deve iniziare prima, senza sacrificare la leggibilità. */
+@media(max-width:520px){
+  .legend-desktop{display:none}
+  .legend-mobile{display:inline}
+
+  /* Gruppo A — Silver — B più compatto verticalmente. */
+  .identity{
+    padding-bottom:0 !important;
+  }
+  .chair-scene{
+    grid-template-columns:78px minmax(112px,1fr) 78px !important;
+    column-gap:2px !important;
+    row-gap:0 !important;
+    margin-bottom:0 !important;
+  }
+  .mascot{
+    width:min(170px,44vw) !important;
+  }
+  .chair-position{
+    gap:3px !important;
+    padding-top:2px !important;
+    padding-bottom:0 !important;
+  }
+  .chair-drawing{
+    transform:scale(.68) !important;
+    transform-origin:top center !important;
+    margin-bottom:-34px !important;
+  }
+  .chair-position.active .chair-drawing{
+    transform:scale(.68) translateY(-1px) !important;
+  }
+  .chair-position[data-chair="B"] .chair-drawing{
+    transform:scaleX(-1) scale(.68) !important;
+  }
+  .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scaleX(-1) scale(.68) translateY(-1px) !important;
+  }
+  .chair-label{
+    width:26px !important;
+    height:26px !important;
+    min-width:26px !important;
+    font-size:11px !important;
+  }
+  .observer-row{
+    height:29px !important;
+    margin-top:0 !important;
+  }
+  .observer-button.observer-eye{
+    width:43px !important;
+    min-width:43px !important;
+    height:26px !important;
+    font-size:11px !important;
+  }
+  .observer-text{
+    left:calc(50% + 33px) !important;
+    font-size:8px !important;
+    letter-spacing:.09em !important;
+  }
+  .practice-legend{
+    max-width:330px !important;
+    margin:1px auto 0 !important;
+    padding:0 3px !important;
+    font-size:9.5px !important;
+    line-height:1.25 !important;
+  }
+
+  /* Testo iniziale compatto: il composer sale nel primo viewport. */
+  .opening{
+    margin-top:0 !important;
+  }
+  .hello{
+    font-size:25px !important;
+    line-height:1.04 !important;
+    margin:4px 0 6px !important;
+  }
+  .question{
+    font-size:19px !important;
+    line-height:1.14 !important;
+  }
+  .gentle{
+    max-width:360px;
+    margin:5px auto 0 !important;
+    font-size:14px !important;
+    line-height:1.23 !important;
+  }
+  .practice-info-row{
+    margin:6px auto 0 !important;
+  }
+  .practice-info-button{
+    padding:6px 10px 6px 7px !important;
+    font-size:9px !important;
+  }
+  .practice-info-button .practice-info-q{
+    width:20px !important;
+    height:20px !important;
+    min-width:20px !important;
+    font-size:11px !important;
+  }
+
+  /* Il composer resta ampio, ma non genera un vuoto artificiale sotto di sé. */
+  body:not(.conversation-mode) .composer{
+    min-height:72px !important;
+    margin-top:5px !important;
+    padding-top:5px !important;
+    padding-bottom:5px !important;
+  }
+  body:not(.conversation-mode) .composer textarea{
+    min-height:52px !important;
+    font-size:14.5px !important;
+  }
+
+  /* Correzione principale: il microfono segue immediatamente il composer. */
+  body:not(.conversation-mode) .dictation-help-row{
+    min-height:40px !important;
+    margin-top:-48px !important;
+    margin-bottom:2px !important;
+  }
+  body:not(.conversation-mode) .dictation-help.voice-mic{
+    width:40px !important;
+    height:40px !important;
+    font-size:18px !important;
+    line-height:38px !important;
+  }
+
+  .resume-from-opening.mobile-resume{
+    width:min(330px,92vw) !important;
+    margin:3px auto 6px !important;
+    padding:8px 12px !important;
+  }
+}
+
+/* Telefoni molto bassi: ulteriore compressione senza nascondere funzioni. */
+@media(max-width:520px) and (max-height:760px){
+  .mascot{width:min(154px,40vw) !important}
+  .chair-scene{grid-template-columns:72px minmax(104px,1fr) 72px !important}
+  .hello{font-size:23px !important}
+  .question{font-size:18px !important}
+  .gentle{font-size:13.5px !important}
+  .practice-legend{font-size:9px !important}
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -1725,7 +1882,7 @@ body.conversation-mode .silver-inside{
         </span>
       </button>
 
-      <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: spazio di osservazione</p>
+      <p class="practice-legend"><span class="legend-desktop"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: spazio di osservazione</span><span class="legend-mobile"><strong>Pratica:</strong> A ↔ B · C: spazio di osservazione</span></p>
     </div>
     <p class="chair-scene-note" aria-hidden="true"></p>
   </header>
