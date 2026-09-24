@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.16 — DEEP TESTED · MIC INLINE · FOLLOW STABILE · VOICE RETRY -->
+<!-- SILVER FRONTEND 5.18 — SEDIE A/B/C SINCRONIZZATE · SAVE PC ROBUSTO · WORKER 6.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2896,6 +2896,20 @@ function chairPlaceholder(chair){
   return 'A · Inizia a scrivere da qui…';
 }
 
+/* 5.18 — Solo richieste esplicite cambiano sedia anche se scritte nel messaggio.
+   Evita di interpretare frasi ambigue come cambi di posizione. */
+function explicitChairRequestFromText(value){
+  const t=String(value || '').trim().toLowerCase();
+  if(!t) return '';
+
+  const directMove=/(?:pass(?:iamo|o|are)|andiamo|vado|torno|spost(?:iamoci|o|armi)|entriamo|entro|mett(?:iamoci|o)|vai)\s+(?:ora\s+)?(?:alla|alla\s+sedia|nella|nella\s+sedia|sulla|sulla\s+sedia|in|a)?\s*(?:parte\s+|sedia\s+|posizione\s+)?([abc])\b/i;
+  const m=t.match(directMove);
+  if(m) return m[1].toUpperCase();
+
+  if(/^(?:a|b|c)\s*[.!]?$/i.test(t)) return t.charAt(0).toUpperCase();
+  return '';
+}
+
 function setActiveChair(value,{announce=false,focus=false}={}){
   activeChair = normalizeChair(value);
   if(chairScene) chairScene.dataset.chair = activeChair;
@@ -3790,8 +3804,73 @@ function sendSessionReviewInBackground(){
   }
 }
 
+function isSilverMobileDevice(){
+  const ua = navigator.userAgent || '';
+  const mobileUa = /Android|iPhone|iPad|iPod/i.test(ua);
+  const touchOnly = window.matchMedia?.('(pointer: coarse)')?.matches && (navigator.maxTouchPoints || 0) > 0;
+  return mobileUa || touchOnly;
+}
+
+async function saveSilverFileOnDesktop(json,fileName){
+  // Chrome/Edge desktop: usa il selettore nativo "Salva con nome".
+  // È molto più affidabile del download sintetico con <a>.click().
+  if(typeof window.showSaveFilePicker === 'function' && window.isSecureContext){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName:fileName,
+        types:[{
+          description:'Sessione Silver',
+          accept:{'application/json':['.json']}
+        }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      return {ok:true,method:'picker'};
+    }catch(err){
+      if(err?.name === 'AbortError') return {ok:false,cancelled:true,method:'picker'};
+      console.warn('File picker Silver non disponibile:',err);
+      // Se il picker fallisce per un motivo tecnico, passiamo al download classico.
+    }
+  }
+
+  try{
+    const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=fileName;
+    a.rel='noopener';
+    a.style.position='fixed';
+    a.style.left='-9999px';
+    a.style.top='0';
+    document.body.appendChild(a);
+    a.click();
+
+    // Lasciamo il blob vivo abbastanza a lungo perché Chrome completi l'avvio del download.
+    setTimeout(()=>{
+      try{ a.remove(); }catch(_){}
+      try{ URL.revokeObjectURL(url); }catch(_){}
+    },15000);
+
+    // Non esiste un evento browser affidabile per sapere se il download è stato salvato.
+    // Chiediamo conferma PRIMA di cancellare/reset della sessione.
+    await new Promise(resolve=>setTimeout(resolve,350));
+    const confirmed = window.confirm(
+      'Ho avviato il salvataggio della sessione.\n\nHai visto partire il download o comparire il file?\n\nOK = termina la sessione\nAnnulla = resta qui senza perdere nulla.'
+    );
+    return {ok:confirmed,method:'download'};
+  }catch(err){
+    console.error('Download Silver:',err);
+    return {ok:false,error:err,method:'download'};
+  }
+}
+
 async function saveConversationToDevice(exitAction=null, triggerButton=saveConversationButton){
-  if(!sessionMessages.length) return;
+  if(!sessionMessages.length){
+    setMicStatus('Non c’è ancora una conversazione da salvare.');
+    return;
+  }
 
   const button = triggerButton || saveConversationButton;
   const strong = button.querySelector('strong');
@@ -3801,7 +3880,7 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
 
   button.disabled = true;
   if(strong) strong.textContent = 'PREPARO IL FILE…';
-  if(detail) detail.textContent = 'La sessione resta qui finché il salvataggio non è confermato.';
+  if(detail) detail.textContent = 'La sessione resta qui finché il salvataggio non è riuscito.';
 
   const payload = {
     format: 'silver-pao-conversation',
@@ -3822,38 +3901,27 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
   let exported=false;
 
   try{
-    // Su iPhone/Android il foglio di condivisione è più affidabile del download
-    // per salvare un file locale. Se disponibile lo usiamo come prima scelta.
-    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       if(strong) strong.textContent='SALVA / CONDIVIDI…';
       if(detail) detail.textContent='Scegli dove conservare il file della sessione.';
       await navigator.share({files:[file],title:'Sessione Silver'});
       exported=true;
     }else{
-      const blob=new Blob([json],{type:'application/json;charset=utf-8'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;
-      a.download=fileName;
-      a.rel='noopener';
-      a.style.display='none';
-      document.body.appendChild(a);
-      a.click();
+      if(strong) strong.textContent='SALVA CON NOME…';
+      if(detail) detail.textContent='Scegli dove conservare la sessione sul computer.';
+      const result = await saveSilverFileOnDesktop(json,fileName);
+      exported=!!result.ok;
 
-      await new Promise(resolve=>setTimeout(resolve,900));
-      try{ a.remove(); }catch(_){}
-      setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(_){} },10000);
-
-      // Il browser non espone un evento affidabile di "download completato".
-      // Chiediamo conferma prima di cancellare/chiudere la sessione.
-      exported = window.confirm(
-        'Il download della sessione è stato avviato.\n\nHai visto il file salvato o il download partire?\n\nOK = termina la sessione\nAnnulla = resta qui senza perdere nulla.'
-      );
+      if(result.cancelled){
+        setMicStatus('Salvataggio annullato. La sessione è ancora qui.');
+      }else if(!result.ok && result.error){
+        setMicStatus('Non sono riuscito a salvare il file. La sessione non è stata cancellata.');
+      }
     }
   }catch(err){
     if(err?.name === 'AbortError'){
-      // L'utente ha chiuso il foglio Condividi: nessuna perdita di dati.
       exported=false;
+      setMicStatus('Salvataggio annullato. La sessione è ancora qui.');
     }else{
       console.error('Salvataggio Silver:',err);
       setMicStatus('Non sono riuscito a esportare la sessione. Non ho cancellato nulla.');
@@ -3870,6 +3938,7 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
     return;
   }
 
+  // Solo DOPO un salvataggio riuscito terminiamo la sessione.
   sendSessionReviewInBackground();
   clearRecoveryDraft();
   closeSheet(sessionBackdrop);
@@ -3883,9 +3952,9 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
 
   allowPageExit=false;
   resetConversationUi();
-  setMicStatus('Sessione esportata correttamente.');
+  setMicStatus('Sessione salvata correttamente.');
   setTimeout(()=>{
-    if(micStatusText?.textContent === 'Sessione esportata correttamente.') setMicStatus('');
+    if(micStatusText?.textContent === 'Sessione salvata correttamente.') setMicStatus('');
   },3500);
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -4640,6 +4709,7 @@ async function sendPendingAttachments(optionalText=''){
   );
   formData.append('mode', 'practice');
   formData.append('language', selectedLanguage);
+  formData.append('chair', activeChair);
   formData.append('history',JSON.stringify(sessionMessages.slice(-20)));
 
   pendingAttachments=[];
@@ -5365,6 +5435,11 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
   }
 
+  const requestedChair = explicitChairRequestFromText(text);
+  if(requestedChair && requestedChair !== activeChair){
+    setActiveChair(requestedChair,{announce:false,focus:false});
+  }
+
   addMessage(text,'user');
   sessionMessages.push({role:'user', content:text});
   reviewMessages.push({role:'user', content:text});
@@ -5394,7 +5469,8 @@ form.addEventListener('submit', async e=>{
         message:text,
         history:sessionMessages.slice(-20),
         mode:'practice',
-        language:selectedLanguage
+        language:selectedLanguage,
+        chair:activeChair
       })
     });
 
