@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.11 — REGRESSION TESTED: KEYBOARD + MIC + CHAT CONTROLS -->
+<!-- SILVER FRONTEND 5.13 — CENTRATURA SHEET + BOLLE USER + MIC VISIBILE + AUTO-FOLLOW CALMO -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2076,6 +2076,66 @@ body.conversation-mode .session-end{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.13 — MOBILE STABILITY / CENTERING === */
+/* Tutti i pannelli seguono anche la larghezza/offset del visual viewport iOS. */
+.sheet-backdrop{
+  left:var(--silver-sheet-vv-left,0px) !important;
+  right:auto !important;
+  width:var(--silver-sheet-vv-width,100vw) !important;
+  box-sizing:border-box !important;
+}
+#practiceInfoBackdrop .practice-info-sheet{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.practice-info-under-c{
+  justify-self:center !important;
+  align-self:center !important;
+}
+
+/* Le bolle della persona mantengono un margine reale dal bordo destro. */
+@media(max-width:520px){
+  .msg.user{
+    max-width:84% !important;
+    margin-right:12px !important;
+    border-bottom-right-radius:10px !important;
+  }
+}
+
+/* Con tastiera aperta il microfono resta disponibile sotto il composer. */
+@media(max-width:760px){
+  body.keyboard-open .dictation-help-row{
+    display:flex !important;
+    visibility:visible !important;
+    position:fixed !important;
+    left:50% !important;
+    right:auto !important;
+    top:var(--help-top,auto) !important;
+    bottom:auto !important;
+    transform:translateX(-50%) !important;
+    width:100% !important;
+    min-height:40px !important;
+    margin:0 !important;
+    z-index:122 !important;
+    pointer-events:none !important;
+    justify-content:center !important;
+    align-items:center !important;
+  }
+  body.keyboard-open .dictation-help.voice-mic{
+    display:flex !important;
+    visibility:visible !important;
+    pointer-events:auto !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+  body.keyboard-open .session-row.visible{
+    display:none !important;
+    visibility:hidden !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2918,6 +2978,19 @@ let maxVisibleViewportHeight = window.visualViewport
   ? window.visualViewport.height
   : window.innerHeight;
 
+let silverKeyboardRevealTimer = 0;
+function scheduleKeyboardReveal(delay=170){
+  clearTimeout(silverKeyboardRevealTimer);
+  silverKeyboardRevealTimer = setTimeout(()=>{
+    if(
+      document.body.classList.contains('keyboard-open') &&
+      silverAutoFollow
+    ){
+      keepLastMessageAboveComposer();
+    }
+  },delay);
+}
+
 function updateKeyboardLayout(){
   const focused = document.activeElement === input;
   const vv = window.visualViewport;
@@ -2948,11 +3021,11 @@ function updateKeyboardLayout(){
   const viewportHeight = currentHeight;
 
   const composerHeight = Math.max(composer.offsetHeight || 0, 58);
-  // Con la tastiera aperta mostriamo solo il composer: microfono e chiusura
-  // tornano quando la tastiera si chiude. Non riservare spazio per il microfono.
-  const helpHeight = 0;
-  const gap = 0;
-  const bottomSafe = 10;
+  // Con la tastiera aperta manteniamo anche il microfono visibile sotto il composer.
+  // La chiusura sessione resta nascosta per non affollare il visual viewport.
+  const helpHeight = 42;
+  const gap = 4;
+  const bottomSafe = 8;
 
   const composerTop = Math.max(
     viewportTop + 8,
@@ -2974,7 +3047,7 @@ function updateKeyboardLayout(){
     `${Math.round(composerHeight + helpHeight + gap + bottomSafe + 18)}px`
   );
 
-  requestAnimationFrame(keepLastMessageAboveComposer);
+  scheduleKeyboardReveal(170);
 }
 
 function keepLastMessageAboveComposer(){
@@ -3021,7 +3094,7 @@ input.addEventListener('blur',()=>{
     document.documentElement.style.removeProperty('--help-top');
     document.documentElement.style.removeProperty('--keyboard-reserve');
     if(silverAutoFollow){
-      setTimeout(()=>followConversation({behavior:'smooth'}),40);
+      setTimeout(()=>followConversation({behavior:'auto'}),180);
     }
   },120);
 });
@@ -3158,19 +3231,36 @@ function updateSheetViewport(){
     Math.round(vv ? vv.height : window.innerHeight)
   );
 
+  const width = Math.max(
+    280,
+    Math.round(vv ? vv.width : window.innerWidth)
+  );
+
   const top = Math.max(
     0,
     Math.round(vv ? vv.offsetTop : 0)
+  );
+
+  const left = Math.max(
+    0,
+    Math.round(vv ? vv.offsetLeft : 0)
   );
 
   document.documentElement.style.setProperty(
     '--silver-sheet-vv-height',
     `${height}px`
   );
-
+  document.documentElement.style.setProperty(
+    '--silver-sheet-vv-width',
+    `${width}px`
+  );
   document.documentElement.style.setProperty(
     '--silver-sheet-vv-top',
     `${top}px`
+  );
+  document.documentElement.style.setProperty(
+    '--silver-sheet-vv-left',
+    `${left}px`
   );
 }
 
@@ -3221,12 +3311,13 @@ function updateSessionControls(persistRecovery=true){
 }
 
 
-/* === SILVER FRONTEND 5.12 — AUTO-FOLLOW INTELLIGENTE ===
-   Mantiene in vista l'ultima risposta + composer finché la persona resta
-   vicino al fondo. Se scorre indietro per rileggere, non la riporta giù. */
+/* === SILVER FRONTEND 5.13 — AUTO-FOLLOW CALMO ===
+   Sposta la pagina solo quando il composer esce davvero dal viewport.
+   Gli aggiornamenti durante lo streaming sono limitati, così Safari non “saltella”. */
 let silverAutoFollow = true;
 let silverProgrammaticScrollUntil = 0;
 let silverFollowFrame = 0;
+let silverStreamFollowTimer = 0;
 
 function visibleViewportBottom(){
   const vv = window.visualViewport;
@@ -3245,37 +3336,53 @@ function documentBottomDistance(){
   return Math.max(0, docHeight - visibleViewportBottom());
 }
 
-function markProgrammaticScroll(ms=500){
+function markProgrammaticScroll(ms=360){
   silverProgrammaticScrollUntil = Date.now() + ms;
 }
 
-function followConversation({behavior='smooth',force=false}={}){
+function followConversation({behavior='auto',force=false}={}){
   if(!document.body.classList.contains('conversation-mode')) return;
   if(document.body.classList.contains('keyboard-open')){
-    keepLastMessageAboveComposer();
+    scheduleKeyboardReveal(150);
     return;
   }
   if(!force && !silverAutoFollow) return;
 
   cancelAnimationFrame(silverFollowFrame);
   silverFollowFrame = requestAnimationFrame(()=>{
-    markProgrammaticScroll(behavior === 'smooth' ? 850 : 300);
-    try{
-      composer.scrollIntoView({behavior,block:'end',inline:'nearest'});
-    }catch(_){
-      const rect = composer.getBoundingClientRect();
-      const target = window.scrollY + rect.bottom - window.innerHeight + 18;
-      window.scrollTo({top:Math.max(0,target),left:0,behavior});
-    }
+    const vv = window.visualViewport;
+    const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+    const rect = composer.getBoundingClientRect();
+    const safeBottom = viewportBottom - 14;
+    const overflow = rect.bottom - safeBottom;
+
+    // Se il composer è già interamente visibile non toccare lo scroll.
+    if(overflow <= 4) return;
+
+    markProgrammaticScroll(behavior === 'smooth' ? 700 : 320);
+    window.scrollBy({
+      top:Math.ceil(overflow),
+      left:0,
+      behavior
+    });
   });
 }
 
+function scheduleStreamFollow(){
+  if(silverStreamFollowTimer || !silverAutoFollow) return;
+  silverStreamFollowTimer = setTimeout(()=>{
+    silverStreamFollowTimer = 0;
+    if(document.body.classList.contains('keyboard-open')){
+      scheduleKeyboardReveal(120);
+    }else if(silverAutoFollow){
+      followConversation({behavior:'auto'});
+    }
+  },220);
+}
 
-// Un gesto manuale deve poter interrompere l'auto-follow anche durante lo streaming.
-// Gli scroll generati da JavaScript non producono wheel/touchmove, quindi non vengono confusi.
 window.addEventListener('wheel',e=>{
   if(!document.body.classList.contains('conversation-mode')) return;
-  if(Math.abs(e.deltaY) > 2) silverAutoFollow = false;
+  if(Math.abs(e.deltaY) > 3) silverAutoFollow = false;
 },{passive:true});
 
 let silverTouchStartY = null;
@@ -3287,16 +3394,18 @@ window.addEventListener('touchmove',e=>{
   if(!document.body.classList.contains('conversation-mode')) return;
   if(silverTouchStartY == null || !e.touches || !e.touches.length) return;
   const dy = e.touches[0].clientY - silverTouchStartY;
-  if(Math.abs(dy) > 8) silverAutoFollow = false;
+  if(Math.abs(dy) > 12) silverAutoFollow = false;
 },{passive:true});
 window.addEventListener('touchend',()=>{ silverTouchStartY = null; },{passive:true});
 
+let silverScrollStateTimer = 0;
 window.addEventListener('scroll',()=>{
   if(!document.body.classList.contains('conversation-mode')) return;
   if(Date.now() < silverProgrammaticScrollUntil) return;
-  // Entro ~180 px dal fondo continuiamo a seguire la chat; se la persona
-  // risale oltre questa soglia, presumiamo che stia rileggendo.
-  silverAutoFollow = documentBottomDistance() <= 180;
+  clearTimeout(silverScrollStateTimer);
+  silverScrollStateTimer = setTimeout(()=>{
+    silverAutoFollow = documentBottomDistance() <= 150;
+  },90);
 },{passive:true});
 
 function showConversationMode(){
@@ -4827,12 +4936,8 @@ function appendStreamingSilverText(state,delta){
   // a ogni singolo delta. Il Markdown viene renderizzato una sola volta alla fine.
   state.el.textContent = state.text;
 
-  // Segui lo streaming solo se la persona è rimasta vicino al fondo.
-  if(document.body.classList.contains('keyboard-open')){
-    keepLastMessageAboveComposer();
-  }else if(silverAutoFollow){
-    followConversation({behavior:'auto'});
-  }
+  // Segui lo streaming con frequenza limitata: evita il saltellamento su Safari.
+  scheduleStreamFollow();
 }
 
 function finishStreamingSilverMessage(state){
@@ -4943,7 +5048,7 @@ form.addEventListener('submit', async e=>{
     // Se l’invio non parte (es. file troppo grande), il messaggio resta visibile.
     if(attachmentReply){
       silverAutoFollow = true;
-      followConversation({behavior:'smooth',force:true});
+      followConversation({behavior:'auto',force:true});
     }
     return;
   }
@@ -4956,7 +5061,7 @@ form.addEventListener('submit', async e=>{
   }
   updateSessionControls();
   silverAutoFollow = true;
-  followConversation({behavior:'smooth',force:true});
+  followConversation({behavior:'auto',force:true});
 
   input.value='';
   resize();
@@ -5045,7 +5150,7 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
     // Non riaprire automaticamente la tastiera dopo la risposta di Silver.
     // Porta invece in vista l'ultima risposta e il composer.
-    followConversation({behavior:'smooth'});
+    followConversation({behavior:'auto'});
   }
 });
 
