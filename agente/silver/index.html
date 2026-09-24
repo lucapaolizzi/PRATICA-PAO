@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.7 — INFO PRATICA COMPATTA + TESTO PARTI + FIX CONVERSAZIONE -->
+<!-- SILVER FRONTEND 5.8 — MICROFONO SEMPRE VISIBILE IN CHAT + X DISTANZIATA -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1956,6 +1956,54 @@ body.conversation-mode .silver-inside{
   #practiceInfoBackdrop .practice-info-sheet .sheet-close{
     margin-top:6px;
     padding:11px 10px;
+  }
+}
+
+
+
+/* === SILVER FRONTEND 5.8 — MICROFONO IN CHAT + X SENZA SOVRAPPOSIZIONE === */
+/* In conversazione la priorità è: scrittura -> voce -> chiusura sessione. */
+body.conversation-mode .composer{
+  order:2 !important;
+}
+body.conversation-mode .dictation-help-row{
+  order:3 !important;
+  display:flex !important;
+  visibility:visible !important;
+  margin:2px auto 6px !important;
+  min-height:40px;
+}
+body.conversation-mode .session-row.visible{
+  order:4 !important;
+  margin:4px 0 10px !important;
+}
+body.conversation-mode .dictation-help.voice-mic{
+  width:38px;
+  height:38px;
+  line-height:36px;
+}
+
+/* Su iPhone/Android la X non deve toccare il testo trascritto. */
+@media(max-width:520px){
+  .clear-input{
+    left:54px !important;
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+    min-height:30px !important;
+  }
+  .composer.has-text textarea{
+    padding-left:48px !important;
+  }
+  body.conversation-mode .dictation-help-row{
+    margin:1px auto 5px !important;
+    min-height:38px !important;
+  }
+  body.conversation-mode .dictation-help.voice-mic{
+    width:38px !important;
+    height:38px !important;
+    line-height:36px !important;
+    font-size:17px !important;
   }
 }
 
