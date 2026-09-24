@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 4.6 — SILVER NEL PERSONAGGIO + C OCCHIO / SPAZIO DI OSSERVAZIONE -->
+<!-- SILVER FRONTEND 4.7 — CENTRATURA SILVER/C + COMPOSER INGRESSO AMPIO -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1499,6 +1499,104 @@ body.conversation-mode .observer-button.observer-eye::before{
   height:16px;
 }
 
+
+
+/* === SILVER FRONTEND 4.7 — CENTRATURA VISIVA + C AUTONOMA + SCRITTURA AMPIA === */
+/* La colonna centrale è il vero asse geometrico tra A e B. */
+.facilitator-column{
+  justify-self:center;
+  width:100%;
+  min-width:0;
+}
+.mascot-wrap.mascot-identified{
+  align-self:center;
+}
+
+/* SILVER resta legato al personaggio, ma non viene più sacrificato sul bordo inferiore. */
+.silver-inside{
+  top:73%;
+  bottom:auto;
+  font-size:8.5px;
+  letter-spacing:.17em;
+  padding:2px 5px 2px 6px;
+  border-radius:999px;
+  background:rgba(245,240,230,.82);
+  text-shadow:none;
+  box-shadow:0 1px 4px rgba(36,35,31,.06);
+}
+
+/* C è il centro dello spazio di osservazione. La parola OSSERVATORE non ne sposta l'asse. */
+.observer-row{
+  position:relative;
+  width:100%;
+  height:34px;
+  margin-top:5px;
+  display:block;
+}
+.observer-button.observer-eye{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
+.observer-text{
+  position:absolute;
+  left:calc(50% + 38px);
+  top:50%;
+  transform:translateY(-50%);
+  white-space:nowrap;
+}
+
+/* All'ingresso la scrittura ha più respiro; in conversazione torna compatta. */
+body:not(.conversation-mode) .composer{
+  min-height:72px;
+  align-items:center;
+}
+body:not(.conversation-mode) .composer textarea{
+  min-height:56px;
+  max-height:150px;
+}
+
+@media(max-width:520px){
+  /* Compensazione ottica: il braccio alzato sposta il baricentro dell'immagine verso destra. */
+  .mascot-wrap.mascot-identified{
+    transform:translateX(-7px);
+  }
+  .silver-inside{
+    top:73%;
+    bottom:auto;
+    font-size:8px;
+    letter-spacing:.15em;
+    padding:2px 5px;
+  }
+  .observer-row{
+    height:32px;
+    margin-top:3px;
+  }
+  .observer-text{
+    left:calc(50% + 35px);
+    font-size:9px;
+  }
+  body:not(.conversation-mode) .composer{
+    min-height:82px;
+    padding-top:7px;
+    padding-bottom:7px;
+  }
+  body:not(.conversation-mode) .composer textarea{
+    min-height:62px;
+    font-size:15px;
+    line-height:1.25;
+  }
+}
+
+body.conversation-mode .silver-inside{
+  top:72%;
+  bottom:auto;
+  font-size:6.5px;
+  padding:1px 4px;
+}
+body.conversation-mode .observer-row{height:28px;margin-top:2px;}
+body.conversation-mode .observer-text{left:calc(50% + 31px);}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
