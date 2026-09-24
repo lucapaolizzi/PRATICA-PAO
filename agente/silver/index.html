@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.2 — INFO SOTTO C + LAYOUT FINALE RESPONSIVE -->
+<!-- SILVER FRONTEND 5.4 — INFO SOTTO C + LAYOUT FINALE RESPONSIVE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3048,10 +3048,10 @@ function updateSessionControls(persistRecovery=true){
 
 function showConversationMode(){
   document.body.classList.add('conversation-mode');
-  opening.style.display='none';
-  conversation.style.display='flex';
-  document.querySelector('.mascot').style.width='92px';
-  document.querySelector('.identity').style.paddingBottom='2px';
+  // Entra davvero in modalità conversazione: questo attiva anche
+  // le regole UI che nascondono RIPRENDI e separano correttamente
+  // CHIUDI / SALVA SESSIONE dal resto dei controlli.
+  showConversationMode();
 }
 
 function resetConversationUi(){
