@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 4.0 — SEDIE A/B + SILVER/C + MICROFONO + MOBILE AUDIT -->
+<!-- SILVER FRONTEND 4.4 — SEDIE PULITE + FIGURA/SFONDO + LEGENDA LEGGIBILE + MOBILE COMPOSER VISIBILE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1185,10 +1185,6 @@ textarea{
 .chair-leg{position:absolute;top:76px;width:2px;height:31px;background:currentColor;border-radius:2px}
 .chair-leg.one{left:27px;transform:rotate(8deg)}
 .chair-leg.two{right:27px;transform:rotate(-8deg)}
-.chair-side{
-  position:absolute;top:51px;left:14px;width:36px;height:2px;
-  background:currentColor;transform:rotate(-36deg);transform-origin:left center;border-radius:2px;
-}
 .chair-position[data-chair="B"] .chair-drawing{transform:scaleX(-1)}
 .chair-position[data-chair="B"].active .chair-drawing{transform:scaleX(-1) translateY(-1px)}
 .chair-position[data-chair="B"] .chair-label{transform:none}
@@ -1305,6 +1301,69 @@ body.conversation-mode .chair-scene-note{display:none}
 }
 
 
+
+
+/* === SILVER FRONTEND 4.3 — CORREZIONI VISIVE IPHONE === */
+.chair-back{
+  z-index:2;
+  background:var(--bg);
+}
+.chair-role{
+  position:relative;
+  z-index:3;
+  padding:2px 3px;
+  background:var(--bg);
+  border-radius:3px;
+}
+
+/* La legenda appartiene all'intera relazione A—Silver—B, non alla sola colonna centrale. */
+.practice-legend{
+  grid-column:1 / -1;
+  width:100%;
+  max-width:680px;
+  margin:2px auto 0;
+  font-size:10.5px;
+  line-height:1.35;
+  letter-spacing:.025em;
+}
+
+/* Il pulsante di ripresa viene spostato sotto la scrittura solo sui telefoni. */
+body.conversation-mode .resume-from-opening{display:none !important;}
+
+@media(max-width:520px){
+  .shell{padding-left:12px;padding-right:12px;}
+  .identity{padding-bottom:3px;}
+  .chair-scene{
+    grid-template-columns:86px minmax(122px,1fr) 86px;
+    column-gap:4px;
+    row-gap:3px;
+    margin-bottom:3px;
+  }
+  .mascot{width:min(198px,50vw);}
+  .silver{margin-top:3px;font-size:13px;}
+  .observer-row{margin-top:2px;}
+  .observer-text{font-size:9px;}
+  .practice-legend{
+    font-size:10.5px;
+    line-height:1.35;
+    max-width:340px;
+    margin-top:4px;
+    padding:0 4px;
+  }
+  .hello{font-size:27px;line-height:1.08;margin-bottom:8px;}
+  .question{font-size:21px;line-height:1.18;}
+  .gentle{font-size:16px;line-height:1.28;margin-top:6px;}
+  .stage{flex:none;padding-bottom:4px;}
+  .composer{margin-top:4px;}
+  .resume-from-opening.mobile-resume{
+    display:block;
+    width:min(330px,92vw);
+    margin:6px auto 8px;
+    padding:9px 13px;
+    font-size:10px;
+  }
+  .dictation-help-row{margin-bottom:4px;}
+}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -1319,7 +1378,7 @@ body.conversation-mode .chair-scene-note{display:none}
         <span class="chair-label">A</span>
         <span class="chair-drawing" aria-hidden="true">
           <span class="chair-back"><span class="chair-role">FIGURA</span></span><span class="chair-seat"></span>
-          <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
+          <span class="chair-leg one"></span><span class="chair-leg two"></span>
         </span>
       </button>
 
@@ -1332,7 +1391,6 @@ body.conversation-mode .chair-scene-note{display:none}
           <button class="observer-button" id="chairCButton" type="button" aria-pressed="false" aria-label="Osserva da C con Silver">C</button>
           <span class="observer-text">OSSERVATORE</span>
         </div>
-        <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: Silver facilita</p>
         <div class="mode-badge" id="modeBadge" hidden></div>
       </div>
 
@@ -1340,9 +1398,11 @@ body.conversation-mode .chair-scene-note{display:none}
         <span class="chair-label">B</span>
         <span class="chair-drawing" aria-hidden="true">
           <span class="chair-back"><span class="chair-role">SFONDO</span></span><span class="chair-seat"></span>
-          <span class="chair-leg one"></span><span class="chair-leg two"></span><span class="chair-side"></span>
+          <span class="chair-leg one"></span><span class="chair-leg two"></span>
         </span>
       </button>
+
+      <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: Silver facilita</p>
     </div>
     <p class="chair-scene-note" aria-hidden="true"></p>
   </header>
@@ -1943,6 +2003,25 @@ resumeOpeningButton.addEventListener('click',()=>{
   resumeFileInput.value='';
   resumeFileInput.click();
 });
+
+/* Su iPhone/telefoni la scrittura viene prima di "Riprendi".
+   Su desktop il pulsante torna nella posizione originale. */
+const resumeOpeningHome = document.createComment('resume-opening-home');
+resumeOpeningButton.parentNode.insertBefore(resumeOpeningHome,resumeOpeningButton);
+
+function placeResumeOpeningButton(){
+  const mobile = window.matchMedia('(max-width:520px)').matches;
+  if(mobile){
+    dictationHelpRow.after(resumeOpeningButton);
+    resumeOpeningButton.classList.add('mobile-resume');
+  }else{
+    resumeOpeningHome.parentNode.insertBefore(resumeOpeningButton,resumeOpeningHome.nextSibling);
+    resumeOpeningButton.classList.remove('mobile-resume');
+  }
+}
+
+placeResumeOpeningButton();
+window.addEventListener('resize',placeResumeOpeningButton,{passive:true});
 
 
 let silverMediaRecorder = null;
