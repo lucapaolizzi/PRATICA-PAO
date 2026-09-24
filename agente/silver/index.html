@@ -1597,6 +1597,97 @@ body.conversation-mode .silver-inside{
 }
 body.conversation-mode .observer-row{height:28px;margin-top:2px;}
 body.conversation-mode .observer-text{left:calc(50% + 31px);}
+
+
+/* === SILVER FRONTEND 4.8 — FIRMA SILVER + INFO PRATICA === */
+/* Il nome appartiene al personaggio: piccolo, centrato e largo circa quanto la base del triangolo. */
+.mascot-wrap.mascot-identified{position:relative;}
+.silver-inside{
+  left:50% !important;
+  right:auto !important;
+  top:73.5% !important;
+  bottom:auto !important;
+  transform:translate(-50%,-50%) !important;
+  width:48px;
+  min-width:48px;
+  padding:1px 0 !important;
+  text-align:center;
+  font:700 7.5px/1 Arial,Helvetica,sans-serif !important;
+  letter-spacing:.10em !important;
+  background:rgba(245,240,230,.78) !important;
+  border-radius:999px;
+  white-space:nowrap;
+  box-shadow:none !important;
+}
+
+.practice-info-row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:10px auto 2px;
+}
+.practice-info-button{
+  border:1px solid rgba(36,35,31,.18);
+  background:rgba(255,255,255,.62);
+  color:var(--muted);
+  border-radius:999px;
+  padding:8px 12px 8px 9px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font:700 10px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.practice-info-button .practice-info-q{
+  width:22px;height:22px;min-width:22px;
+  border:1px solid rgba(36,35,31,.20);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink);
+  background:#fff;
+  font:700 12px/1 Arial,Helvetica,sans-serif;
+}
+.practice-info-button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.practice-info-sheet p{
+  color:var(--muted);
+  font:15px/1.55 Georgia,"Times New Roman",serif;
+  margin:0 6px 12px;
+}
+.practice-info-sheet strong{color:var(--ink)}
+.practice-info-sheet .practice-info-rule{
+  border:1px solid var(--line);
+  background:var(--paper);
+  border-radius:16px;
+  padding:12px 13px;
+  margin:12px 6px 6px;
+  color:var(--ink);
+  font:700 12px/1.45 Arial,Helvetica,sans-serif;
+  letter-spacing:.02em;
+}
+
+@media(max-width:520px){
+  .silver-inside{
+    width:45px;
+    min-width:45px;
+    top:73.5% !important;
+    font-size:7px !important;
+    letter-spacing:.09em !important;
+  }
+  .practice-info-row{margin-top:8px}
+  .practice-info-button{font-size:9.5px;padding:7px 11px 7px 8px}
+  .practice-info-sheet p{font-size:14px;line-height:1.5}
+}
+
+body.conversation-mode .silver-inside{
+  width:36px;
+  min-width:36px;
+  top:73% !important;
+  font-size:5.6px !important;
+  letter-spacing:.08em !important;
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -1652,7 +1743,14 @@ body.conversation-mode .observer-text{left:calc(50% + 31px);}
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.</p>
+      <p class="gentle" id="openingGentle">Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
+
+      <div class="practice-info-row">
+        <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri informazioni sulla pratica P.A.O.">
+          <span class="practice-info-q" aria-hidden="true">?</span>
+          <span>INFO PRATICA</span>
+        </button>
+      </div>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -1735,6 +1833,20 @@ body.conversation-mode .observer-text{left:calc(50% + 31px);}
         Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio e video compatibili da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
       <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
+    </section>
+  </div>
+
+
+  <div class="sheet-backdrop" id="practiceInfoBackdrop" aria-hidden="true">
+    <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
+      <div class="sheet-handle"></div>
+      <h2 class="sheet-title" id="practiceInfoTitle">Info pratica</h2>
+      <p><strong>A e B</strong> sono due posizioni della persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
+      <p>Puoi partire da <strong>A · FIGURA</strong>, passare a <strong>B · SFONDO</strong>, oppure entrare in <strong>C</strong>: uno <strong>spazio di osservazione</strong> da cui guardare la relazione tra A e B senza dover scegliere subito.</p>
+      <p>Da A o B una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
+      <p><strong>Silver facilita</strong> il passaggio tra le posizioni, ma non decide al posto tuo dove devi stare. Anche C può essere occupata da te quando vuoi osservare ciò che accade tra le parti.</p>
+      <div class="practice-info-rule">A ↔ B · due posizioni alla volta · C · spazio di osservazione · Silver facilita</div>
+      <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
   </div>
 
@@ -2008,6 +2120,9 @@ const resumeFileInput = document.getElementById('resumeFileInput');
 const helpButton = document.getElementById('helpButton');
 const helpBackdrop = document.getElementById('helpBackdrop');
 const helpClose = document.getElementById('helpClose');
+const practiceInfoButton = document.getElementById('practiceInfoButton');
+const practiceInfoBackdrop = document.getElementById('practiceInfoBackdrop');
+const practiceInfoClose = document.getElementById('practiceInfoClose');
 
 const languageButton = document.getElementById('languageButton');
 const translatorButton = document.getElementById('translatorButton');
@@ -2227,7 +2342,7 @@ function chooseSilverMode(){
   modeBadge.textContent = 'CRESCITA PERSONALE';
 
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = 'Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.';
+  openingGentle.textContent = 'Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.';
 }
 
 practiceDoor.addEventListener('click',()=>chooseSilverMode());
@@ -2732,7 +2847,7 @@ function resetConversationUi(){
   modeBadge.hidden = false;
   modeBadge.textContent = 'CRESCITA PERSONALE';
   openingQuestion.textContent = 'Da dove vuoi cominciare?';
-  openingGentle.textContent = 'Puoi esprimere una parte di te, A o B, oppure entrambe, una sensazione, una metafora o semplicemente ciò che c’è.';
+  openingGentle.textContent = 'Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.';
   setActiveChair('A');
 
   sessionMessages = [];
@@ -3000,6 +3115,12 @@ helpClose.addEventListener('click',()=>closeSheet(helpBackdrop));
 
 helpBackdrop.addEventListener('click',e=>{
   if(e.target === helpBackdrop) closeSheet(helpBackdrop);
+});
+
+practiceInfoButton?.addEventListener('click',()=>openSheet(practiceInfoBackdrop));
+practiceInfoClose?.addEventListener('click',()=>closeSheet(practiceInfoBackdrop));
+practiceInfoBackdrop?.addEventListener('click',e=>{
+  if(e.target === practiceInfoBackdrop) closeSheet(practiceInfoBackdrop);
 });
 
 languageButton.addEventListener('click',()=>{
