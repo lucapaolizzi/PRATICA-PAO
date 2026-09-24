@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 4.4 — SEDIE PULITE + FIGURA/SFONDO + LEGENDA LEGGIBILE + MOBILE COMPOSER VISIBILE -->
+<!-- SILVER FRONTEND 4.6 — SILVER NEL PERSONAGGIO + C OCCHIO / SPAZIO DI OSSERVAZIONE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -1364,6 +1364,141 @@ body.conversation-mode .resume-from-opening{display:none !important;}
   }
   .dictation-help-row{margin-bottom:4px;}
 }
+
+
+/* === SILVER FRONTEND 4.5 — ULTIMA RIFINITURA IPHONE === */
+@media(max-width:520px){
+  /* "INDIETRO" resta fuori dalla zona della sedia A. */
+  .topbar{
+    position:relative;
+    z-index:30;
+  }
+  .back{
+    font-size:10px;
+    letter-spacing:.08em;
+    transform:translate(-4px,-16px);
+    padding-right:6px;
+  }
+
+  /* Composer più compatto e più largo internamente: il placeholder resta leggibile. */
+  .composer{
+    grid-template-columns:42px minmax(0,1fr) 42px;
+    gap:4px;
+    padding:4px 6px;
+    margin-top:0 !important;
+  }
+  .composer-left{width:42px;min-width:42px;}
+  .plus{width:38px;height:38px;min-width:38px;min-height:38px;font-size:24px;}
+  .send{width:38px;height:38px;min-width:38px;min-height:38px;border-radius:19px;}
+  .send::before{font-size:20px;}
+  textarea{
+    min-height:38px;
+    padding:9px 4px;
+    font-size:14px;
+    line-height:1.2;
+    max-height:120px;
+  }
+  .gentle{margin-bottom:0;}
+  .dictation-help-row{margin-top:-2px;margin-bottom:2px;}
+}
+
+
+/* === SILVER FRONTEND 4.6 — IDENTITÀ DI SILVER SEPARATA DA C === */
+.mascot-wrap.mascot-identified{
+  position:relative;
+  display:inline-block;
+  margin-left:auto;
+  margin-right:auto;
+}
+.silver-inside{
+  position:absolute;
+  left:50%;
+  bottom:9%;
+  transform:translateX(-50%);
+  z-index:4;
+  color:var(--ink);
+  font:700 9px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.18em;
+  white-space:nowrap;
+  pointer-events:none;
+  text-shadow:0 1px 2px rgba(255,255,255,.92);
+}
+/* Il vecchio nome sotto il personaggio non viene più usato. */
+.facilitator-column > .silver{display:none !important;}
+
+/* C non è una terza sedia: è uno spazio di osservazione. */
+.observer-button.observer-eye{
+  position:relative;
+  width:50px;
+  min-width:50px;
+  height:30px;
+  border:1.5px solid rgba(36,35,31,.28);
+  border-radius:55% 55% 55% 55% / 70% 70% 70% 70%;
+  background:rgba(255,255,255,.76);
+  color:var(--ink);
+  font:700 13px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:.02em;
+  box-shadow:none;
+}
+.observer-button.observer-eye::before{
+  content:"";
+  position:absolute;
+  width:20px;
+  height:20px;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(36,35,31,.14);
+  border-radius:50%;
+  pointer-events:none;
+}
+.observer-button.observer-eye.active{
+  background:var(--ink);
+  color:#fff;
+  border-color:var(--ink);
+  box-shadow:0 4px 14px rgba(36,35,31,.14);
+}
+.observer-button.observer-eye.active::before{
+  border-color:rgba(255,255,255,.38);
+}
+.observer-text{
+  font-size:9px;
+  letter-spacing:.12em;
+}
+
+@media(max-width:520px){
+  .silver-inside{
+    bottom:8%;
+    font-size:7px;
+    letter-spacing:.15em;
+  }
+  .observer-button.observer-eye{
+    width:46px;
+    min-width:46px;
+    height:28px;
+    font-size:12px;
+  }
+  .observer-button.observer-eye::before{
+    width:18px;
+    height:18px;
+  }
+}
+
+body.conversation-mode .silver-inside{
+  font-size:6px;
+  bottom:6%;
+}
+body.conversation-mode .observer-button.observer-eye{
+  width:42px;
+  min-width:42px;
+  height:25px;
+  font-size:10px;
+}
+body.conversation-mode .observer-button.observer-eye::before{
+  width:16px;
+  height:16px;
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -1383,12 +1518,12 @@ body.conversation-mode .resume-from-opening{display:none !important;}
       </button>
 
       <div class="facilitator-column">
-        <div class="mascot-wrap">
+        <div class="mascot-wrap mascot-identified">
           <img class="mascot" src="silver.png" alt="Silver, Agente P.A.O.">
+          <span class="silver-inside" aria-hidden="true">SILVER</span>
         </div>
-        <div class="silver">SILVER</div>
         <div class="observer-row">
-          <button class="observer-button" id="chairCButton" type="button" aria-pressed="false" aria-label="Osserva da C con Silver">C</button>
+          <button class="observer-button observer-eye" id="chairCButton" type="button" aria-pressed="false" aria-label="Vai nello spazio C di osservazione">C</button>
           <span class="observer-text">OSSERVATORE</span>
         </div>
         <div class="mode-badge" id="modeBadge" hidden></div>
@@ -1402,7 +1537,7 @@ body.conversation-mode .resume-from-opening{display:none !important;}
         </span>
       </button>
 
-      <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: Silver facilita</p>
+      <p class="practice-legend"><strong>Pratica di crescita personale:</strong> A ↔ B · due posizioni alla volta · C: spazio di osservazione</p>
     </div>
     <p class="chair-scene-note" aria-hidden="true"></p>
   </header>
