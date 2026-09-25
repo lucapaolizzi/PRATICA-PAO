@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.20.7 — MOBILE COMPOSER 2 RIGHE · ISTRUZIONI LEGGIBILI · RESUME VISIBILE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.20.9 — INTRO PIÙ COMPATTA · ISTRUZIONI INTEGRATE · MIC SUBITO VISIBILE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3053,6 +3053,69 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
     width:min(236px,calc(100vw - 24px)) !important;
   }
 }
+
+
+/* === SILVER FRONTEND 5.20.9 — INTRO PIÙ COMPATTA / ISTRUZIONI INTEGRATE === */
+@media(max-width:760px){
+  /* Se non c'è uno stato microfono da mostrare, non riservare una riga vuota nel composer. */
+  .composer .mic-status:has(#micStatusText:empty){
+    display:none !important;
+    min-height:0 !important;
+    margin:0 !important;
+  }
+
+  /* Apertura mobile: tutto il necessario deve essere raggiungibile senza primo scroll. */
+  body:not(.conversation-mode) .identity{
+    margin:-18px auto -8px !important;
+  }
+  body:not(.conversation-mode) .mascot{
+    width:min(148px,39vw) !important;
+  }
+  body:not(.conversation-mode) .chair-position{
+    padding:3px 2px !important;
+    gap:4px !important;
+  }
+  body:not(.conversation-mode) .practice-info-under-c{
+    margin-top:4px !important;
+  }
+  body:not(.conversation-mode) .practice-info-button{
+    min-height:52px !important;
+    padding-top:5px !important;
+    padding-bottom:5px !important;
+  }
+  body:not(.conversation-mode) .practice-info-button .practice-info-q{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+  }
+  body:not(.conversation-mode) .stage{
+    padding-bottom:2px !important;
+  }
+  body:not(.conversation-mode) .hello{
+    font-size:22px !important;
+    line-height:1.04 !important;
+    margin:1px 0 3px !important;
+  }
+  body:not(.conversation-mode) .question{
+    font-size:17px !important;
+    line-height:1.12 !important;
+    margin:0 !important;
+  }
+  body:not(.conversation-mode) .gentle{
+    font-size:12.5px !important;
+    line-height:1.18 !important;
+    margin:4px 2px 0 !important;
+  }
+  .opening .resume-from-opening.mobile-resume{
+    min-height:36px !important;
+    margin:6px auto 2px !important;
+    padding:8px 12px !important;
+  }
+  body:not(.conversation-mode) .composer{
+    margin-top:4px !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3111,7 +3174,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
         </button>
       </div>
 
-      <p class="gentle" id="openingGentle">Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
+      <p class="gentle" id="openingGentle" hidden aria-hidden="true"></p>
 
       <button class="resume-from-opening" id="resumeOpeningButton" type="button">
         ↻ RIPRENDI UNA TUA SESSIONE
@@ -3226,7 +3289,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <p><strong>A e B</strong> ti permettono di dare voce a due posizioni, parti, interlocutori o punti di vista che sono realmente presenti nel tuo campo. L’altra sedia <strong>non è automaticamente lo sfondo</strong> e Silver non decide in anticipo che cosa deve rappresentare.</p>
       <p><strong>C</strong> è uno spazio di osservazione. Puoi guardare ciò che accade senza dover scegliere subito, ma C non è una posizione superiore e può a sua volta diventare figura.</p>
       <p>Puoi restare in una posizione quanto serve, usare un <strong>“come se”</strong>, una metafora o una frase intensa. Silver accompagna il movimento senza scrivere la risposta dell’altra posizione e senza obbligarti a integrare, perdonare o arrivare a una conclusione.</p>
-      <p class="practice-info-rule"><strong>Il filo viene prima della tecnica.</strong><br>Se non sai da dove iniziare, scrivi semplicemente ciò che c’è adesso.</p>
+      <p class="practice-info-rule"><strong>Il filo viene prima della tecnica.</strong><br>Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
   </div>
@@ -3469,7 +3532,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.20.7';
+const SILVER_FRONTEND_VERSION = '5.20.9';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
