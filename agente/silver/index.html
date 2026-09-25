@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.4 — MOBILE VIEWPORT BALANCE · TOOLS SAFE FOOTER · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.7 — PRACTICE INSTRUCTIONS · DYADIC FEELING · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3358,6 +3358,150 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
     margin:8px 0 0 !important;
   }
 }
+
+
+/* === SILVER FRONTEND 5.21.5 — ASSE CENTRALE REALE + ETICHETTA POSIZIONE === */
+/*
+   Il pulsante istruzioni non usa più left:50% + translate sulla propria box:
+   quando è più largo della colonna centrale quella combinazione lo spostava.
+   Ora C, Silver e ISTRUZIONI condividono lo stesso asse della colonna centrale.
+*/
+.facilitator-column{
+  align-items:center !important;
+}
+.practice-info-under-c{
+  left:auto !important;
+  transform:none !important;
+  align-self:center !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+.practice-info-under-c .practice-info-button{
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+
+/* Desktop: POSIZIONE è più lunga di FIGURA. Le diamo una larghezza utile reale
+   e togliamo il letter-spacing che la faceva apparire decentrata nello schienale. */
+@media(min-width:761px){
+  .chair-position[data-chair="B"] .chair-role{
+    width:100% !important;
+    box-sizing:border-box !important;
+    padding:0 2px !important;
+    text-align:center !important;
+    font-size:8px !important;
+    line-height:1 !important;
+    letter-spacing:0 !important;
+    transform:scaleX(-1) !important;
+    transform-origin:center center !important;
+    white-space:nowrap !important;
+  }
+}
+
+
+/* === SILVER FRONTEND 5.21.7 — DESKTOP CHAT PROPORTIONS / NO COLLAPSE === */
+/*
+   In conversazione desktop A–Silver–B resta leggibile e il pulsante istruzioni
+   vive sotto l'intera scena, non dentro l'altezza delle sedie. Questo evita
+   sia la miniaturizzazione sia l'incrocio del pulsante con gambe/etichette.
+*/
+@media(min-width:761px){
+  body.conversation-mode .identity{
+    width:100% !important;
+    margin:6px auto 12px !important;
+    padding:0 !important;
+  }
+  body.conversation-mode .chair-scene{
+    position:relative !important;
+    width:min(600px,100%) !important;
+    grid-template-columns:minmax(130px,1fr) minmax(190px,230px) minmax(130px,1fr) !important;
+    column-gap:12px !important;
+    align-items:start !important;
+    justify-content:center !important;
+    margin:0 auto 8px !important;
+    padding-bottom:82px !important;
+  }
+  body.conversation-mode .facilitator-column{
+    justify-self:stretch !important;
+    width:100% !important;
+    align-items:center !important;
+  }
+  body.conversation-mode .identity .mascot{
+    width:118px !important;
+    max-width:none !important;
+    margin:0 auto 2px !important;
+  }
+  body.conversation-mode .chair-position{
+    align-self:start !important;
+    padding-top:18px !important;
+    gap:6px !important;
+  }
+  body.conversation-mode .chair-drawing,
+  body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{
+    transform:scale(.88) !important;
+    transform-origin:top center !important;
+    margin-bottom:-8px !important;
+  }
+  body.conversation-mode .chair-position.active .chair-drawing,
+  body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scale(.88) translateY(-1px) !important;
+  }
+  body.conversation-mode .chair-label{
+    width:30px !important;
+    height:30px !important;
+    min-width:30px !important;
+    font-size:12px !important;
+  }
+  body.conversation-mode .chair-role{
+    width:100% !important;
+    max-width:100% !important;
+    padding:0 2px !important;
+    text-align:center !important;
+    font-size:8.4px !important;
+    line-height:1 !important;
+    letter-spacing:0 !important;
+    white-space:nowrap !important;
+    transform:none !important;
+  }
+  /* B non è specchiata sul desktop: anche POSIZIONE resta non specchiata e centrata. */
+  .chair-position[data-chair="B"] .chair-role{
+    transform:none !important;
+  }
+  body.conversation-mode .observer-row{
+    height:30px !important;
+    margin-top:4px !important;
+  }
+  body.conversation-mode .observer-button.observer-eye{
+    width:46px !important;
+    min-width:46px !important;
+    height:28px !important;
+    font-size:12px !important;
+  }
+  /* Sotto l'intera scena: stesso asse di Silver e C, senza toccare le sedie. */
+  body.conversation-mode .practice-info-under-c{
+    position:absolute !important;
+    left:50% !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:0 !important;
+    transform:translateX(-50%) !important;
+    width:250px !important;
+    max-width:250px !important;
+    margin:0 !important;
+    z-index:3 !important;
+  }
+  body.conversation-mode .practice-info-under-c .practice-info-button{
+    width:250px !important;
+    max-width:250px !important;
+    min-height:44px !important;
+    margin:0 auto !important;
+  }
+  body.conversation-mode .stage{
+    width:100% !important;
+    padding-top:0 !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3532,7 +3676,8 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <p class="practice-write-cue"><strong>Per iniziare, scegli una posizione e scrivi ciò che emerge.</strong> Puoi anche usare il microfono: le tue parole vengono trascritte nel campo di scrittura prima dell'invio.</p>
       <p><strong>A · B · C sono posizioni di esperienza, non ruoli rigidi.</strong> La posizione che stai vivendo può diventare figura; ciò che resta sullo sfondo può emergere in seguito oppure non emergere affatto.</p>
       <p><strong>A e B</strong> ti permettono di dare voce a due posizioni, parti, interlocutori o punti di vista che sono realmente presenti nel tuo campo. L’altra sedia <strong>non è automaticamente lo sfondo</strong> e Silver non decide in anticipo che cosa deve rappresentare.</p>
-      <p><strong>C</strong> è uno spazio di osservazione. Puoi guardare ciò che accade e <strong>scrivere ciò che noti</strong>, senza dover scegliere subito. C non è una posizione superiore e può a sua volta diventare figura.</p>
+      <p><strong>Se A e B entrano in dialogo, il movimento parte dal sentire.</strong> Una posizione si esprime; l’altra legge o ascolta e risponde da ciò che sente: <em>“Quando dici questo, io sento…”</em>. Poi la prima può sentire quella risposta e rispondere a sua volta. È un movimento simile a una partita di ping pong: risposta dopo risposta può emergere qualcosa che prima non era visibile.</p>
+      <p><strong>C è uno spazio di osservazione attraverso la scrittura.</strong> Da C puoi scrivere ciò che noti rileggendo quello che hai espresso in A, ciò che B ha risposto e, se tra A e B è nato uno scambio, ciò che hai vissuto nella loro relazione. Non serve stabilire chi ha ragione: puoi raccogliere ciò che è diventato più chiaro.</p>
       <p>Puoi restare in una posizione quanto serve, usare un <strong>“come se”</strong>, una metafora o una frase intensa. Silver accompagna il movimento senza scrivere la risposta dell’altra posizione e senza obbligarti a integrare, perdonare o arrivare a una conclusione.</p>
       <p class="practice-info-rule"><strong>Il filo viene prima della tecnica.</strong><br>Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
@@ -3777,7 +3922,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.4';
+const SILVER_FRONTEND_VERSION = '5.21.7';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
