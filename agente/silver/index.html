@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.0 — MOBILE STABLE · INTRO SENZA RIPETIZIONI · DICTATION FOLLOW · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.1 — PRACTICE COPY · WRITE CUE · TOOLS CLOSE EMPHASIS · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3134,6 +3134,63 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   body:not(.conversation-mode) .composer{margin-top:4px !important;}
 }
 
+
+/* === SILVER FRONTEND 5.21.1 — PRACTICE LABEL / WRITE CUE / TOOLS CLOSE === */
+.practice-info-title-detail{
+  font-weight:500;
+  color:var(--muted);
+}
+.practice-write-cue{
+  border:1px solid rgba(168,131,62,.34);
+  background:rgba(168,131,62,.08);
+  border-radius:14px;
+  padding:10px 12px;
+}
+#toolsClose.tools-close-emphasis{
+  border:2px solid var(--gold) !important;
+  background:#efe2c5 !important;
+  color:var(--ink) !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  letter-spacing:.08em !important;
+  box-shadow:0 -3px 12px rgba(36,35,31,.08) !important;
+}
+@media(max-width:760px){
+  /* Il titolo del pulsante è centrato sull'asse di C; il ? resta come affordance laterale. */
+  body:not(.conversation-mode) .practice-info-button,
+  body.conversation-mode .practice-info-button{
+    position:relative !important;
+    justify-content:center !important;
+    padding-left:46px !important;
+    padding-right:16px !important;
+  }
+  body:not(.conversation-mode) .practice-info-button .practice-info-q,
+  body.conversation-mode .practice-info-button .practice-info-q{
+    position:absolute !important;
+    left:8px !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+  }
+  .practice-info-copy{
+    width:100% !important;
+    align-items:center !important;
+    text-align:center !important;
+  }
+  .practice-info-copy strong{
+    text-align:center !important;
+    font-size:10.5px !important;
+    letter-spacing:.075em !important;
+  }
+  #practiceInfoBackdrop .sheet-title{
+    line-height:1.18 !important;
+  }
+  #practiceInfoBackdrop .practice-info-title-detail{
+    display:block;
+    margin-top:3px;
+    font-size:.72em;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3162,7 +3219,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
         <div class="practice-info-row practice-info-under-c">
           <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri le istruzioni della Pratica P.A.O.">
             <span class="practice-info-q" aria-hidden="true">?</span>
-            <span class="practice-info-copy"><strong>ISTRUZIONI PRATICA</strong><small>Come usare A · B · C</small></span>
+            <span class="practice-info-copy"><strong>ISTRUZIONI PRATICA P.A.O.</strong></span>
           </button>
         </div>
         <div class="mode-badge" id="modeBadge" hidden></div>
@@ -3274,7 +3331,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <p class="sheet-note" id="toolsNote">
         Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio e video compatibili da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
-      <button class="sheet-close" id="toolsClose" type="button">CHIUDI</button>
+      <button class="sheet-close tools-close-emphasis" id="toolsClose" type="button">↓ CHIUDI STRUMENTI</button>
     </section>
   </div>
 
@@ -3302,10 +3359,11 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   <div class="sheet-backdrop" id="practiceInfoBackdrop" aria-hidden="true">
     <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
       <div class="sheet-handle"></div>
-      <h2 class="sheet-title" id="practiceInfoTitle">Istruzioni pratica</h2>
+      <h2 class="sheet-title" id="practiceInfoTitle">Istruzioni pratica: <span class="practice-info-title-detail">Come usare A · B · C</span></h2>
+      <p class="practice-write-cue"><strong>Per iniziare, scegli una posizione e scrivi ciò che emerge.</strong> Puoi anche usare il microfono: le tue parole vengono trascritte nel campo di scrittura prima dell'invio.</p>
       <p><strong>A · B · C sono posizioni di esperienza, non ruoli rigidi.</strong> La posizione che stai vivendo può diventare figura; ciò che resta sullo sfondo può emergere in seguito oppure non emergere affatto.</p>
       <p><strong>A e B</strong> ti permettono di dare voce a due posizioni, parti, interlocutori o punti di vista che sono realmente presenti nel tuo campo. L’altra sedia <strong>non è automaticamente lo sfondo</strong> e Silver non decide in anticipo che cosa deve rappresentare.</p>
-      <p><strong>C</strong> è uno spazio di osservazione. Puoi guardare ciò che accade senza dover scegliere subito, ma C non è una posizione superiore e può a sua volta diventare figura.</p>
+      <p><strong>C</strong> è uno spazio di osservazione. Puoi guardare ciò che accade e <strong>scrivere ciò che noti</strong>, senza dover scegliere subito. C non è una posizione superiore e può a sua volta diventare figura.</p>
       <p>Puoi restare in una posizione quanto serve, usare un <strong>“come se”</strong>, una metafora o una frase intensa. Silver accompagna il movimento senza scrivere la risposta dell’altra posizione e senza obbligarti a integrare, perdonare o arrivare a una conclusione.</p>
       <p class="practice-info-rule"><strong>Il filo viene prima della tecnica.</strong><br>Puoi iniziare da A o B, osservarle da C, oppure semplicemente da ciò che c’è qui e ora.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
@@ -3550,7 +3608,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.0';
+const SILVER_FRONTEND_VERSION = '5.21.1';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
