@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.19.3 — STRESS FIX · LIVE VOICE CONTINUA · CAMBIO SEDIA NON NEGATO · WORKER 6.2.1 -->
+<!-- SILVER FRONTEND 5.20.0 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -997,8 +997,7 @@ textarea{
   cursor:default;
 }
 
-.translator-result-wrap{
-  display:none;
+.translator-result-wrap{display:none;
   margin-top:14px;
   padding-top:14px;
   border-top:1px solid var(--line);
@@ -1997,8 +1996,7 @@ body.conversation-mode .dictation-help-row{
 }
 body.conversation-mode .session-row.visible{
   order:4 !important;
-  margin:4px 0 10px !important;
-}
+  margin:4px 0 10px !important;}
 body.conversation-mode .dictation-help.voice-mic{
   width:38px;
   height:38px;
@@ -2294,6 +2292,361 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.20.0 — RESPONSIVE REBASE === */
+:root{
+  --silver-app-height:100dvh;
+  --silver-mobile-gutter:12px;
+}
+
+/* L'interfaccia usa l'altezza reale disponibile senza tirare il contenuto verso l'alto. */
+.shell{
+  min-height:var(--silver-app-height,100dvh) !important;
+}
+
+.practice-info-copy{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  text-align:left;
+  line-height:1.05;
+}
+.practice-info-copy strong{
+  color:var(--ink);
+  font:800 10.5px/1.05 Arial,Helvetica,sans-serif;
+  letter-spacing:.095em;
+}
+.practice-info-copy small{
+  color:var(--muted);
+  font:600 9px/1.1 Arial,Helvetica,sans-serif;
+  letter-spacing:.025em;
+  text-transform:none;
+}
+.practice-info-button{
+  min-height:48px;
+  padding:6px 14px 6px 7px !important;
+  gap:9px !important;
+  border-color:rgba(36,35,31,.28) !important;
+  background:rgba(255,255,255,.82) !important;
+  box-shadow:0 2px 9px rgba(36,35,31,.055);
+}
+.practice-info-button .practice-info-q{
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  font-size:15px !important;
+}
+
+/* Composer: la X occupa finalmente una propria cella. Nessun testo coperto. */
+.composer{
+  grid-template-columns:max-content minmax(0,1fr) 44px 48px !important;
+  column-gap:7px !important;
+  align-items:center !important;
+  width:100%;
+}
+.composer-left{
+  grid-column:1 !important;
+  width:auto !important;
+  min-width:0 !important;
+  display:grid !important;
+  grid-template-columns:44px 34px;
+  gap:5px;
+  align-items:center;
+  justify-content:start;
+}
+.plus{
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
+  min-height:44px !important;
+  border-radius:50% !important;
+}
+.clear-input{
+  position:static !important;
+  left:auto !important;
+  top:auto !important;
+  transform:none !important;
+  width:34px !important;
+  height:34px !important;
+  min-width:34px !important;
+  min-height:34px !important;
+  border-radius:50% !important;
+  z-index:auto !important;
+}
+.composer:not(.has-text) .composer-left{
+  grid-template-columns:44px 0;
+  gap:0;
+}
+.composer textarea,
+.composer.has-text textarea{
+  grid-column:2 !important;
+  min-width:0 !important;
+  width:100% !important;
+  padding:11px 5px 11px 7px !important;
+  text-align:left !important;
+  margin:0 !important;
+}
+.composer-mic-inline{grid-column:3 !important;}
+.composer .send{grid-column:4 !important;}
+
+/* I pannelli mobili devono ricevere il tap anche su Chrome Android. */
+.sheet-action,.sheet-close,.session-end{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  pointer-events:auto !important;
+}
+#sessionBackdrop .sheet-action{
+  position:relative;
+  z-index:2;
+  min-height:92px;
+}
+
+@media(max-width:760px){
+  html,body{
+    min-height:var(--silver-app-height,100dvh) !important;
+    scroll-padding-bottom:calc(110px + env(safe-area-inset-bottom));
+  }
+  body{
+    overflow-x:hidden;
+  }
+  .shell{
+    width:100% !important;
+    min-height:var(--silver-app-height,100dvh) !important;
+    padding:
+      calc(16px + env(safe-area-inset-top))
+      var(--silver-mobile-gutter)
+      calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+  .topbar{min-height:38px !important;}
+
+  /* Schermata iniziale: più bassa, più centrata, senza traslazioni negative. */
+  body:not(.conversation-mode) .identity{
+    transform:none !important;
+    margin:clamp(8px,2.4dvh,22px) auto 8px !important;
+    padding:0 !important;
+    width:100% !important;
+  }
+  body:not(.conversation-mode) .chair-scene{
+    width:min(430px,100%) !important;
+    grid-template-columns:minmax(82px,1fr) minmax(136px,1.35fr) minmax(82px,1fr) !important;
+    column-gap:2px !important;
+    align-items:center !important;
+    margin:0 auto 8px !important;
+  }
+  body:not(.conversation-mode) .facilitator-column{
+    justify-self:center !important;
+    align-self:center !important;
+    transform:none !important;
+  }
+  body:not(.conversation-mode) .mascot-wrap.mascot-identified{
+    transform:none !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+  }
+  body:not(.conversation-mode) .mascot{
+    width:min(190px,47vw) !important;
+    max-width:100% !important;
+  }
+  body:not(.conversation-mode) .observer-row{
+    width:100% !important;
+    margin-top:4px !important;
+  }
+  body:not(.conversation-mode) .observer-button.observer-eye{
+    left:50% !important;
+  }
+  body:not(.conversation-mode) .practice-info-under-c{
+    margin-top:8px !important;
+  }
+  body:not(.conversation-mode) .stage{
+    flex:0 0 auto !important;
+    transform:none !important;
+    justify-content:flex-start !important;
+    padding:0 0 8px !important;
+  }
+  body:not(.conversation-mode) .opening{
+    margin:0 !important;
+  }
+  body:not(.conversation-mode) .hello{
+    margin-top:4px !important;
+  }
+  body:not(.conversation-mode) .composer{
+    transform:none !important;
+    margin:10px auto 0 !important;
+    min-height:88px !important;
+    width:100% !important;
+    border-radius:30px !important;
+    padding:8px 8px !important;
+  }
+  body:not(.conversation-mode) .composer textarea{
+    min-height:66px !important;
+    max-height:156px !important;
+    font-size:16px !important;
+    line-height:1.28 !important;
+  }
+  .resume-from-opening.mobile-resume{
+    width:min(430px,100%) !important;
+    margin:20px auto 4px !important;
+    padding:12px 14px !important;
+  }
+
+  /* Conversazione: testata centrata, leggermente più bassa e leggibile. */
+  body.conversation-mode .identity{
+    width:100% !important;
+    margin:8px auto 10px !important;
+    padding:0 !important;
+  }
+  body.conversation-mode .chair-scene{
+    width:min(430px,100%) !important;
+    grid-template-columns:minmax(82px,1fr) minmax(128px,1.25fr) minmax(82px,1fr) !important;
+    gap:2px !important;
+    margin:0 auto 4px !important;
+  }
+  body.conversation-mode .facilitator-column,
+  body.conversation-mode .mascot-wrap.mascot-identified{
+    justify-self:center !important;
+    transform:none !important;
+  }
+  body.conversation-mode .identity .mascot{
+    width:82px !important;
+    max-width:24vw !important;
+  }
+  body.conversation-mode .observer-row{
+    width:100% !important;
+    margin-top:3px !important;
+  }
+  body.conversation-mode .observer-button.observer-eye{
+    left:50% !important;
+  }
+  body.conversation-mode .practice-info-under-c{
+    margin-top:6px !important;
+  }
+  body.conversation-mode .stage{
+    width:100% !important;
+    min-width:0 !important;
+    transform:none !important;
+    padding:0 0 6px !important;
+  }
+  body.conversation-mode .conversation{
+    width:100% !important;
+    min-width:0 !important;
+    padding:8px 2px 14px !important;
+  }
+  body.conversation-mode:not(.keyboard-open) .composer{
+    width:100% !important;
+    min-height:76px !important;
+    margin:8px auto 6px !important;
+    padding:7px 8px !important;
+    border-radius:28px !important;
+  }
+  body.conversation-mode:not(.keyboard-open) .composer textarea{
+    min-height:54px !important;
+    font-size:16px !important;
+    line-height:1.28 !important;
+  }
+  body.conversation-mode .session-row.visible{
+    width:100% !important;
+    margin:10px auto calc(12px + env(safe-area-inset-bottom)) !important;
+    padding:0 4px !important;
+  }
+  body.conversation-mode .session-end{
+    width:min(420px,100%) !important;
+    min-height:42px !important;
+    font-size:10.5px !important;
+  }
+
+  /* Tastiera: composer ancorato al visual viewport reale, mai sotto Safari/Chrome. */
+  body.keyboard-open .shell{
+    min-height:var(--silver-app-height,100dvh) !important;
+    padding-bottom:calc(var(--keyboard-reserve,90px) + 12px) !important;
+  }
+  body.keyboard-open .stage{
+    transform:none !important;
+    padding-bottom:calc(var(--keyboard-reserve,90px) + 22px) !important;
+  }
+  body.keyboard-open .conversation{
+    padding-bottom:calc(var(--keyboard-reserve,90px) + 26px) !important;
+  }
+  body.keyboard-open .composer{
+    position:fixed !important;
+    left:var(--silver-sheet-vv-left,0px) !important;
+    right:auto !important;
+    top:var(--composer-top,auto) !important;
+    bottom:auto !important;
+    transform:none !important;
+    width:var(--silver-sheet-vv-width,100vw) !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:7px calc(10px + env(safe-area-inset-right)) 7px calc(10px + env(safe-area-inset-left)) !important;
+    border-radius:28px 28px 0 0 !important;
+    z-index:160 !important;
+    box-shadow:0 -8px 22px rgba(36,35,31,.10) !important;
+  }
+  body.keyboard-open .composer textarea{
+    min-height:52px !important;
+    max-height:118px !important;
+  }
+  body.keyboard-open .session-row.visible{
+    display:none !important;
+  }
+
+  /* Sheet: tutto resta raggiungibile nel visual viewport, inclusi i pulsanti finali. */
+  .sheet-backdrop{
+    padding:
+      calc(8px + env(safe-area-inset-top))
+      8px
+      calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+  .sheet{
+    max-height:calc(var(--silver-sheet-vv-height,100dvh) - 16px) !important;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom:84px !important;
+  }
+  .sheet-close{
+    min-height:48px !important;
+  }
+}
+
+@media(max-width:430px){
+  :root{--silver-mobile-gutter:10px;}
+  .composer{
+    grid-template-columns:max-content minmax(0,1fr) 42px 46px !important;
+    column-gap:5px !important;
+  }
+  .composer-left{
+    grid-template-columns:42px 32px !important;
+    gap:4px !important;
+  }
+  .composer:not(.has-text) .composer-left{grid-template-columns:42px 0 !important;}
+  .plus{width:42px !important;height:42px !important;min-width:42px !important;min-height:42px !important;}
+  .clear-input{width:32px !important;height:32px !important;min-width:32px !important;min-height:32px !important;}
+  body:not(.conversation-mode) .chair-scene,
+  body.conversation-mode .chair-scene{
+    grid-template-columns:78px minmax(126px,1.25fr) 78px !important;
+  }
+  body:not(.conversation-mode) .mascot{width:min(178px,46vw) !important;}
+  .practice-info-copy strong{font-size:10px;}
+  .practice-info-copy small{font-size:8.5px;}
+}
+
+@media(min-width:761px){
+  /* Desktop: nessuna traslazione negativa e più equilibrio verticale. */
+  body:not(.conversation-mode) .identity{
+    transform:none !important;
+    margin-top:14px !important;
+  }
+  body:not(.conversation-mode) .stage,
+  body:not(.conversation-mode) .composer{
+    transform:none !important;
+  }
+  body:not(.conversation-mode) .stage{flex:0 0 auto !important;}
+  body:not(.conversation-mode) .composer{
+    width:min(720px,100%) !important;
+    margin:12px auto 0 !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -2320,9 +2673,9 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
           <button class="observer-button observer-eye" id="chairCButton" type="button" aria-pressed="false" aria-label="Vai nello spazio C di osservazione">C</button>
         </div>
         <div class="practice-info-row practice-info-under-c">
-          <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri informazioni sulla pratica P.A.O.">
+          <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri le istruzioni della Pratica P.A.O.">
             <span class="practice-info-q" aria-hidden="true">?</span>
-            <span>INFO PRATICA</span>
+            <span class="practice-info-copy"><strong>ISTRUZIONI PRATICA</strong><small>Come usare A · B · C</small></span>
           </button>
         </div>
         <div class="mode-badge" id="modeBadge" hidden></div>
@@ -2331,7 +2684,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <button class="chair-position" id="chairBButton" data-chair="B" type="button" aria-pressed="false" aria-label="Scrivi dalla sedia B">
         <span class="chair-label">B</span>
         <span class="chair-drawing" aria-hidden="true">
-          <span class="chair-back"><span class="chair-role">SFONDO</span></span><span class="chair-seat"></span>
+          <span class="chair-back"><span class="chair-role">POSIZIONE</span></span><span class="chair-seat"></span>
           <span class="chair-leg one"></span><span class="chair-leg two"></span>
         </span>
       </button>
@@ -2462,12 +2815,12 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   <div class="sheet-backdrop" id="practiceInfoBackdrop" aria-hidden="true">
     <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
       <div class="sheet-handle"></div>
-      <h2 class="sheet-title" id="practiceInfoTitle">Info pratica</h2>
-      <p><strong>Pratica di crescita personale: A ↔ B · due posizioni alla volta · C: spazio di osservazione.</strong></p>
-      <p><strong>A e B</strong> sono due parti della stessa persona. La pratica lavora sempre <strong>due alla volta</strong>: se emergono altre parti, vengono incontrate una coppia alla volta.</p>
-      <p>Da A o B, una parte può raccontare la propria storia, esprimere una sensazione, una metafora, un bisogno o semplicemente ciò che emerge <strong>qui e ora</strong>.</p>
-      <p><strong>C</strong> è uno spazio di osservazione da cui puoi guardare ciò che accade tra A e B senza dover scegliere subito. <strong>Silver facilita</strong> il passaggio e l’esplorazione, ma non decide al posto tuo dove devi stare.</p>
-      <p>A e B possono esprimersi anche con <strong>forte intensità</strong>: Silver distingue la voce della posizione dalla persona intera e non anticipa la risposta dell’altra sedia. La pratica sostiene libertà e mobilità, non la perdita di controllo.</p>
+      <h2 class="sheet-title" id="practiceInfoTitle">Istruzioni pratica</h2>
+      <p><strong>A · B · C sono posizioni di esperienza, non ruoli rigidi.</strong> La posizione che stai vivendo può diventare figura; ciò che resta sullo sfondo può emergere in seguito oppure non emergere affatto.</p>
+      <p><strong>A e B</strong> ti permettono di dare voce a due posizioni, parti, interlocutori o punti di vista che sono realmente presenti nel tuo campo. L’altra sedia <strong>non è automaticamente lo sfondo</strong> e Silver non decide in anticipo che cosa deve rappresentare.</p>
+      <p><strong>C</strong> è uno spazio di osservazione. Puoi guardare ciò che accade senza dover scegliere subito, ma C non è una posizione superiore e può a sua volta diventare figura.</p>
+      <p>Puoi restare in una posizione quanto serve, usare un <strong>“come se”</strong>, una metafora o una frase intensa. Silver accompagna il movimento senza scrivere la risposta dell’altra posizione e senza obbligarti a integrare, perdonare o arrivare a una conclusione.</p>
+      <p class="practice-info-rule"><strong>Il filo viene prima della tecnica.</strong><br>Se non sai da dove iniziare, scrivi semplicemente ciò che c’è adesso.</p>
       <button class="sheet-close" id="practiceInfoClose" type="button">CHIUDI</button>
     </section>
   </div>
@@ -2710,8 +3063,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.19.3';
-const SILVER_EXPECTED_WORKER_VERSION = '6.4.1';
+const SILVER_FRONTEND_VERSION = '5.20.0';
+const SILVER_EXPECTED_WORKER_VERSION = '7.0.0';
 
 
 const backLink = document.getElementById('backLink');
@@ -2900,7 +3253,7 @@ function normalizeChair(value){
 
 function chairPlaceholder(chair){
   if(chair === 'B') return 'B · Rispondi da questa parte…';
-  if(chair === 'C') return 'C · Osserva A e B…';
+  if(chair === 'C') return 'C · Osserva il campo…';
   return 'A · Inizia a scrivere da qui…';
 }
 
@@ -2947,6 +3300,12 @@ function setActiveChair(value,{announce=false,focus=false}={}){
   chairAButton?.setAttribute('aria-pressed',String(isA));
   chairBButton?.setAttribute('aria-pressed',String(isB));
   chairCButton?.setAttribute('aria-pressed',String(isC));
+
+  // 5.20 — FIGURA è una funzione dinamica, non una proprietà fissa della sedia A/B.
+  const roleA = chairAButton?.querySelector('.chair-role');
+  const roleB = chairBButton?.querySelector('.chair-role');
+  if(roleA) roleA.textContent = isA ? 'FIGURA' : 'POSIZIONE';
+  if(roleB) roleB.textContent = isB ? 'FIGURA' : 'POSIZIONE';
 
   input.placeholder = chairPlaceholder(activeChair);
   saveRecoveryDraft();
@@ -2997,8 +3356,7 @@ function setSilverLanguage(value){
 
   languageOptions.forEach(button=>{
     button.setAttribute(
-      'aria-pressed',
-      button.dataset.language === selectedLanguage ? 'true' : 'false'
+      'aria-pressed',button.dataset.language === selectedLanguage ? 'true' : 'false'
     );
   });
 
@@ -3997,9 +4355,7 @@ async function sendSessionReview(){
 
   if(history.length < 2){
     return {ok:true,event:false,reason:'sessione troppo breve'};
-  }
-
-  const controller = new AbortController();
+  }const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(),12000);
 
   try{
@@ -4114,6 +4470,41 @@ async function saveSilverFileOnDesktop(json,fileName){
 }
 
 
+
+function isSilverAndroid(){
+  return /Android/i.test(navigator.userAgent || '');
+}
+
+function downloadSilverBlob(blob,fileName){
+  try{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=fileName;
+    a.rel='noopener';
+    a.style.position='fixed';
+    a.style.left='-9999px';
+    a.style.top='0';
+    document.body.appendChild(a);
+
+    // dispatchEvent risulta più affidabile di click() su alcuni Chrome Android/WebView.
+    a.dispatchEvent(new MouseEvent('click',{
+      view:window,
+      bubbles:true,
+      cancelable:true
+    }));
+
+    setTimeout(()=>{
+      try{a.remove();}catch(_){}
+      try{URL.revokeObjectURL(url);}catch(_){}
+    },20000);
+    return {ok:true,method:'download'};
+  }catch(err){
+    console.error('Download Silver mobile:',err);
+    return {ok:false,error:err,method:'download'};
+  }
+}
+
 function buildSilverPlainTranscript(){
   const lines=[
     'CONVERSAZIONE SILVER',
@@ -4171,7 +4562,10 @@ async function exportConversationTxt(){
   const file=new File([text],fileName,{type:'text/plain;charset=utf-8'});
   exportTxtButton.disabled=true;
   try{
-    if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    if(isSilverAndroid()){
+      const result=downloadSilverBlob(new Blob([text],{type:'text/plain;charset=utf-8'}),fileName);
+      if(!result.ok) throw result.error || new Error('Download Android non riuscito');
+    }else if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file],title:'Conversazione Silver'});
     }else{
       const result=await savePlainTextOnDesktop(text,fileName);
@@ -4226,7 +4620,13 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
   let exported=false;
 
   try{
-    if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+    if(isSilverAndroid()){
+      if(strong) strong.textContent='SALVO SUL DISPOSITIVO…';
+      if(detail) detail.textContent='Creo il file della sessione nella cartella download del dispositivo.';
+      const result=downloadSilverBlob(new Blob([json],{type:'application/json;charset=utf-8'}),fileName);
+      exported=!!result.ok;
+      if(!exported) throw result.error || new Error('Download Android non riuscito');
+    }else if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       if(strong) strong.textContent='SALVA / CONDIVIDI…';
       if(detail) detail.textContent='Scegli dove conservare il file della sessione.';
       await navigator.share({files:[file],title:'Sessione Silver'});
@@ -4997,8 +5397,7 @@ async function sendPendingAttachments(optionalText=''){
     if(item.file.size > maxBytes){
       setMicStatus(
         `"${item.file.name}" supera il limite di ${maxLabel}.`
-      );
-      return null;
+      );return null;
     }
   }
 
@@ -5296,15 +5695,50 @@ attachmentFileInput.addEventListener('change',async ()=>{
   // L’utente può premere direttamente INVIA oppure toccare il campo testo se vuole aggiungere una nota.
 });
 
-exportTxtButton.addEventListener('click',exportConversationTxt);
-saveConversationButton.addEventListener('click',()=>saveConversationToDevice(null, saveConversationButton));
+function bindSilverTap(button,handler){
+  if(!button) return;
+  let lastPointerRun=0;
 
-deleteConversationButton.addEventListener('click',async ()=>{
-  const ok = window.confirm(
-    'Vuoi eliminare e chiudere questa sessione senza salvarla? Questa azione non può essere annullata.'
-  );
-  if(!ok) return;
+  button.addEventListener('pointerup',event=>{
+    const type=event.pointerType || '';
+    if(type && type !== 'touch' && type !== 'pen') return;
+    lastPointerRun=Date.now();
+    event.preventDefault();
+    handler(event);
+  },{passive:false});
 
+  button.addEventListener('click',event=>{
+    if(Date.now()-lastPointerRun < 700){
+      event.preventDefault();
+      return;
+    }
+    handler(event);
+  });
+}
+
+bindSilverTap(exportTxtButton,()=>exportConversationTxt());
+bindSilverTap(saveConversationButton,()=>saveConversationToDevice(null, saveConversationButton));
+
+let deleteConfirmTimer=0;
+bindSilverTap(deleteConversationButton,async ()=>{
+  const strong=deleteConversationButton.querySelector('strong');
+  const detail=deleteConversationButton.querySelector('span');
+
+  if(deleteConversationButton.dataset.confirmDelete !== '1'){
+    deleteConversationButton.dataset.confirmDelete='1';
+    if(strong) strong.textContent='TOCCA ANCORA PER ELIMINARE';
+    if(detail) detail.textContent='Secondo tocco entro 4 secondi: elimina definitivamente questa sessione.';
+    clearTimeout(deleteConfirmTimer);
+    deleteConfirmTimer=setTimeout(()=>{
+      deleteConversationButton.dataset.confirmDelete='0';
+      if(strong) strong.textContent='ELIMINA E TERMINA';
+      if(detail) detail.textContent='Elimina la conversazione corrente senza salvarla e torna all’ingresso di Silver.';
+    },4000);
+    return;
+  }
+
+  clearTimeout(deleteConfirmTimer);
+  deleteConversationButton.dataset.confirmDelete='0';
   closeSheet(sessionBackdrop);
 
   await sendSessionReview();
@@ -5312,9 +5746,6 @@ deleteConversationButton.addEventListener('click',async ()=>{
   clearRecoveryDraft();
   resetConversationUi();
   allowPageExit = false;
-
-  // È terminata la conversazione, non Silver:
-  // torniamo all’ingresso della CHAT DI CRESCITA PERSONALE.
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -5899,6 +6330,35 @@ form.addEventListener('submit', async e=>{
     },110));
   }
 });
+
+
+function updateSilverAppHeight(){
+  const vv=window.visualViewport;
+  const height=Math.max(320,Math.round(vv ? vv.height : window.innerHeight));
+  const width=Math.max(280,Math.round(vv ? vv.width : window.innerWidth));
+  const top=Math.max(0,Math.round(vv ? vv.offsetTop : 0));
+  const left=Math.max(0,Math.round(vv ? vv.offsetLeft : 0));
+
+  document.documentElement.style.setProperty('--silver-app-height',`${height}px`);
+  document.documentElement.style.setProperty('--silver-sheet-vv-height',`${height}px`);
+  document.documentElement.style.setProperty('--silver-sheet-vv-width',`${width}px`);
+  document.documentElement.style.setProperty('--silver-sheet-vv-top',`${top}px`);
+  document.documentElement.style.setProperty('--silver-sheet-vv-left',`${left}px`);
+}
+
+updateSilverAppHeight();
+window.addEventListener('resize',updateSilverAppHeight,{passive:true});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',()=>{
+    updateSilverAppHeight();
+    updateKeyboardLayout();
+    scheduleKeyboardReveal(120);
+  },{passive:true});
+  window.visualViewport.addEventListener('scroll',()=>{
+    updateSilverAppHeight();
+    if(document.body.classList.contains('keyboard-open')) scheduleKeyboardReveal(60);
+  },{passive:true});
+}
 
 setSilverLanguage('auto');
 chooseSilverMode();
