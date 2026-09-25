@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.20.4 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
+<!-- SILVER FRONTEND 5.20.6 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2896,6 +2896,20 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+/* === SILVER FRONTEND 5.20.6 — COMPACT TOP + CALM FOLLOW === */
+@media(max-width:760px){
+  /* Recupera spazio utile sopra la pratica senza finire sotto i controlli del browser. */
+  .topbar{min-height:30px !important;}
+  body:not(.conversation-mode) .identity{
+    margin:-12px auto -4px !important;
+  }
+  /* In conversazione la testata resta compatta: lo scroll appartiene ai messaggi, non al pulsante sessione. */
+  body.conversation-mode .identity{
+    margin:2px auto 6px !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3312,7 +3326,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.20.4';
+const SILVER_FRONTEND_VERSION = '5.20.6';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.0';
 
 
@@ -3656,7 +3670,7 @@ let silverMicBusy = false;
 let silverMicCancelled = false;
 let silverMicOperationPromise = Promise.resolve();
 
-// 5.19 — dettatura live: dove il browser espone SpeechRecognition,
+// 5.20.5 — dettatura live: dove il browser espone SpeechRecognition,
 // il testo compare nel composer mentre la persona parla.
 // Se non è disponibile, resta il percorso robusto MediaRecorder → /transcribe.
 let silverSpeechRecognition = null;
@@ -3667,6 +3681,20 @@ let silverLiveBaseText = '';
 let silverLiveFinalText = '';
 let silverLiveInterimText = '';
 let silverLiveRestartTimer = 0;
+
+// 5.20.5 — fallback progressivo per browser/webview senza SpeechRecognition.
+// Registra brevi segmenti indipendenti sullo stesso stream e li trascrive in coda,
+// così il testo compare nel composer mentre la persona continua a parlare.
+let silverProgressiveFallbackActive = false;
+let silverProgressiveFallbackStopping = false;
+let silverProgressiveSegmentTimer = 0;
+let silverProgressiveQueue = Promise.resolve();
+let silverProgressiveStopPromise = Promise.resolve();
+let silverProgressiveStopResolve = null;
+let silverProgressiveCancelCurrent = false;
+let silverProgressiveSilentStop = false;
+let silverProgressiveGeneration = 0;
+const SILVER_PROGRESSIVE_SEGMENT_MS = 4200;
 
 
 function speechRecognitionConstructor(){
@@ -3842,13 +3870,16 @@ async function finalizeSilverDictationBeforeAction(){
     });
   }
 
-  if(silverMediaRecorder && silverMediaRecorder.state==='recording'){
+  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
+    await stopSilverProgressiveFallback({cancelCurrent:false,silent:true});
+  }else if(silverMediaRecorder && silverMediaRecorder.state==='recording'){
     const recorder=silverMediaRecorder;
     try{ recorder.requestData?.(); }catch(_){}
     try{ recorder.stop(); }catch(_){}
   }
 
-  // Se la modalità fallback sta ancora trascrivendo l'audio, aspetta il testo prima di inviare.
+  // Se una modalità fallback sta ancora trascrivendo l'audio, aspetta il testo prima di inviare.
+  try{ await silverProgressiveQueue; }catch(_){}
   try{ await silverMicOperationPromise; }catch(_){}
   while(silverMicBusy){
     await new Promise(resolve=>setTimeout(resolve,40));
@@ -3985,6 +4016,211 @@ async function transcribeSilverRecording(blob){
   }
 }
 
+
+async function requestSilverProgressiveTranscription(blob){
+  if(!blob || blob.size < 220) return '';
+  const ext=micFileExtension(blob.type);
+
+  async function attemptOnce(attempt){
+    const formData=new FormData();
+    formData.append('audio',blob,`dettatura-live-silver.${ext}`);
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(), attempt===1 ? 11000 : 17000);
+    try{
+      const response=await fetch(TRANSCRIBE_URL,{
+        method:'POST',body:formData,signal:controller.signal,cache:'no-store'
+      });
+      let data={};
+      try{ data=await response.json(); }catch(_){ }
+      if(!response.ok || !data.ok){
+        const err=new Error(data.error || `Trascrizione non disponibile (${response.status})`);
+        err.httpStatus=response.status;
+        throw err;
+      }
+      return String(data.text || '').trim();
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  let lastError=null;
+  for(let attempt=1;attempt<=2;attempt++){
+    try{
+      const text=await attemptOnce(attempt);
+      if(text) return text;
+      throw new Error('Non ho riconosciuto parole');
+    }catch(err){
+      lastError=err;
+      const status=Number(err?.httpStatus || 0);
+      const retryable=err?.name==='AbortError' || !status || status>=500 || /load failed|failed to fetch|network|timeout/i.test(String(err?.message||''));
+      if(attempt===2 || !retryable) throw err;
+      await new Promise(resolve=>setTimeout(resolve,320));
+    }
+  }
+  throw lastError || new Error('Trascrizione non disponibile');
+}
+
+function queueSilverProgressiveSegment(blob){
+  if(!blob || blob.size < 220) return silverProgressiveQueue;
+  const generation=silverProgressiveGeneration;
+
+  silverProgressiveQueue=silverProgressiveQueue.then(async()=>{
+    try{
+      const spoken=await requestSilverProgressiveTranscription(blob);
+      if(!spoken || generation!==silverProgressiveGeneration) return;
+      input.value=joinDictationText(input.value,spoken);
+      resize();
+      updateComposerState();
+      saveRecoveryDraft();
+      if(silverProgressiveFallbackActive){
+        setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
+      }
+    }catch(err){
+      console.warn('Trascrizione progressiva Silver:',err);
+      if(silverProgressiveFallbackActive){
+        setMicStatus('Continuo ad ascoltare. Un segmento non è stato trascritto; puoi correggere il testo prima di inviare.');
+      }
+    }
+  });
+
+  return silverProgressiveQueue;
+}
+
+function finishSilverProgressiveFallback(){
+  clearTimeout(silverProgressiveSegmentTimer);
+  silverProgressiveSegmentTimer=0;
+  stopMicTracks();
+  silverMediaRecorder=null;
+  silverProgressiveFallbackActive=false;
+  silverProgressiveFallbackStopping=false;
+  silverProgressiveCancelCurrent=false;
+  resetMicButton();
+  if(!silverProgressiveSilentStop){
+    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
+  }
+  silverProgressiveSilentStop=false;
+  if(typeof silverProgressiveStopResolve==='function'){
+    const resolve=silverProgressiveStopResolve;
+    silverProgressiveStopResolve=null;
+    resolve();
+  }
+}
+
+function startSilverProgressiveSegment(){
+  if(!silverProgressiveFallbackActive || silverProgressiveFallbackStopping || !silverMicStream) return;
+  if(silverMediaRecorder && silverMediaRecorder.state==='recording') return;
+
+  try{
+    const mime=supportedMicMime();
+    const recorder=mime
+      ? new MediaRecorder(silverMicStream,{mimeType:mime})
+      : new MediaRecorder(silverMicStream);
+    const chunks=[];
+    silverMediaRecorder=recorder;
+
+    recorder.addEventListener('dataavailable',event=>{
+      if(event.data && event.data.size>0) chunks.push(event.data);
+    });
+
+    recorder.addEventListener('stop',()=>{
+      clearTimeout(silverProgressiveSegmentTimer);
+      silverProgressiveSegmentTimer=0;
+
+      const type=recorder.mimeType || chunks[0]?.type || 'audio/webm';
+      const blob=new Blob(chunks,{type});
+      const discard=silverProgressiveCancelCurrent;
+      silverProgressiveCancelCurrent=false;
+      if(silverMediaRecorder===recorder) silverMediaRecorder=null;
+
+      if(!discard && blob.size>=220){
+        queueSilverProgressiveSegment(blob);
+      }
+
+      if(silverProgressiveFallbackActive && !silverProgressiveFallbackStopping){
+        setTimeout(startSilverProgressiveSegment,25);
+      }else{
+        silverProgressiveQueue.finally(finishSilverProgressiveFallback);
+      }
+    },{once:true});
+
+    recorder.start(250);
+    silverProgressiveSegmentTimer=setTimeout(()=>{
+      if(!silverProgressiveFallbackActive || silverProgressiveFallbackStopping) return;
+      if(recorder.state==='recording'){
+        try{ recorder.requestData?.(); }catch(_){ }
+        try{ recorder.stop(); }catch(_){ }
+      }
+    },SILVER_PROGRESSIVE_SEGMENT_MS);
+  }catch(err){
+    console.warn('Segmento progressivo Silver:',err);
+    silverProgressiveFallbackActive=false;
+    silverProgressiveFallbackStopping=true;
+    silverProgressiveQueue.finally(finishSilverProgressiveFallback);
+  }
+}
+
+async function startSilverProgressiveFallback(){
+  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined') return false;
+  try{
+    try{ input.blur(); }catch(_){ }
+    silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    silverProgressiveGeneration++;
+    silverProgressiveFallbackActive=true;
+    silverProgressiveFallbackStopping=false;
+    silverProgressiveCancelCurrent=false;
+    silverProgressiveSilentStop=false;
+    silverProgressiveQueue=Promise.resolve();
+    silverProgressiveStopPromise=new Promise(resolve=>{ silverProgressiveStopResolve=resolve; });
+
+    dictationHelpButton.classList.add('recording');
+    dictationHelpButton.textContent='■';
+    dictationHelpButton.disabled=false;
+    dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
+    dictationHelpButton.title='Ferma la dettatura e rileggi';
+    setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
+    startSilverProgressiveSegment();
+    return true;
+  }catch(err){
+    stopMicTracks();
+    silverProgressiveFallbackActive=false;
+    silverProgressiveFallbackStopping=false;
+    resetMicButton();
+    const denied=err?.name==='NotAllowedError' || err?.name==='SecurityError';
+    setMicStatus(
+      denied
+        ? 'Per usare il microfono, autorizzalo nelle impostazioni del browser per praticapao.it.'
+        : 'Non riesco ad aprire il microfono in questo momento.'
+    );
+    return false;
+  }
+}
+
+async function stopSilverProgressiveFallback({cancelCurrent=false,silent=false}={}){
+  if(!silverProgressiveFallbackActive && !silverProgressiveFallbackStopping){
+    try{ await silverProgressiveQueue; }catch(_){ }
+    return;
+  }
+
+  silverProgressiveFallbackActive=false;
+  silverProgressiveFallbackStopping=true;
+  silverProgressiveCancelCurrent=Boolean(cancelCurrent);
+  silverProgressiveSilentStop=Boolean(silent);
+  clearTimeout(silverProgressiveSegmentTimer);
+  silverProgressiveSegmentTimer=0;
+
+  if(!silent) setMicStatus(cancelCurrent ? 'Dettatura annullata.' : 'Completo l’ultima trascrizione…');
+
+  const recorder=silverMediaRecorder;
+  if(recorder && recorder.state==='recording'){
+    try{ recorder.requestData?.(); }catch(_){ }
+    try{ recorder.stop(); }catch(_){ finishSilverProgressiveFallback(); }
+  }else{
+    silverProgressiveQueue.finally(finishSilverProgressiveFallback);
+  }
+
+  try{ await silverProgressiveStopPromise; }catch(_){ }
+}
+
 async function startSilverMic(){
   if(silverMicBusy) return;
 
@@ -3993,24 +4229,18 @@ async function startSilverMic(){
     return;
   }
 
-  if(silverMediaRecorder && silverMediaRecorder.state === 'recording'){
-    const recorder = silverMediaRecorder;
-    try{ recorder.requestData?.(); }catch(_){}
-    dictationHelpButton.disabled = true;
-    setMicStatus('Chiudo la registrazione…');
-    setTimeout(()=>{
-      try{
-        if(recorder.state === 'recording') recorder.stop();
-      }catch(_){
-        resetMicButton();
-      }
-    },60);
+  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
+    await stopSilverProgressiveFallback({cancelCurrent:false,silent:false});
     return;
   }
 
-  // Prima scelta 5.19: trascrizione progressiva direttamente nel composer.
+  // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
   // L'invio resta SEMPRE manuale.
   if(startSilverLiveDictation()) return;
+
+  // Seconda scelta 5.20.5: trascrizione progressiva a segmenti per browser/webview
+  // che non espongono SpeechRecognition (o lo disabilitano).
+  if(await startSilverProgressiveFallback()) return;
 
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
     setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
@@ -4466,12 +4696,9 @@ function followConversation({behavior='auto',force=false}={}){
     const composerRect = composer.getBoundingClientRect();
     let targetBottom = composerRect.bottom;
 
-    // 5.19: il riallineamento finale considera anche CHIUDI / SALVA SESSIONE.
-    // Un solo scroll porta in vista l'intero blocco di lavoro, senza rincorrere lo streaming.
-    if(sessionRow?.classList.contains('visible')){
-      const sessionRect=sessionRow.getBoundingClientRect();
-      targetBottom=Math.max(targetBottom,sessionRect.bottom);
-    }
+    // 5.20.5: l'auto-follow protegge il composer, non forza anche il comando
+    // CHIUDI / SALVA SESSIONE nello stesso viewport. Il comando resta raggiungibile
+    // con uno scroll volontario, evitando salti eccessivi dopo ogni risposta.
 
     // Compatibilità con vecchio contenitore microfono (ora il mic è inline).
     // L'auto-follow deve lasciare visibili entrambi, non solo il campo di scrittura.
@@ -4576,7 +4803,12 @@ function resetConversationUi(){
   updateSessionControls();
 
   if(silverLiveMicActive){ stopSilverLiveDictation({cancel:true}); }
-  if(silverMediaRecorder?.state === 'recording'){ try{ silverMediaRecorder.stop(); }catch(_){} }
+  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
+    silverProgressiveGeneration++;
+    stopSilverProgressiveFallback({cancelCurrent:true,silent:true});
+  }else if(silverMediaRecorder?.state === 'recording'){
+    try{ silverMediaRecorder.stop(); }catch(_){}
+  }
   stopMicTracks();
   resetMicButton();
 
@@ -6044,7 +6276,9 @@ function renderMessage(el, text, who){
   }
 }
 
-function splitForSpeech(text, maxLen=260){
+function splitForSpeech(text, maxLen=720){
+  // 5.20.6 — blocchi più lunghi: il Worker /speech accetta fino a 900 caratteri.
+  // Ridurre il numero di richieste evita le pause "PREPARO 3/10" tra un blocco e l'altro.
   const cleaned = cleanDisplayText(text)
     .replace(/\*\*/g,'')
     .replace(/\s+/g,' ')
@@ -6091,31 +6325,48 @@ function splitForSpeech(text, maxLen=260){
   return chunks.filter(Boolean);
 }
 
-async function fetchSpeechChunk(text, languageOverride=null){
-  const response = await fetch(SPEECH_URL,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      text,
-      voice:'marin',
-      style:'cedar2cplus',
-      language:languageOverride || selectedLanguage
-    })
-  });
+async function fetchSpeechChunk(text, languageOverride=null, attempt=0){
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), 18000);
 
-  if(!response.ok){
-    throw new Error('Voce non disponibile');
+  try{
+    const response = await fetch(SPEECH_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      signal:controller.signal,
+      body:JSON.stringify({
+        text,
+        voice:'marin',
+        style:'cedar2cplus',
+        language:languageOverride || selectedLanguage
+      })
+    });
+
+    if(!response.ok){
+      throw new Error('Voce non disponibile');
+    }
+
+    return await response.blob();
+  }catch(err){
+    // Una sola ripetizione automatica: evita che una richiesta lenta interrompa
+    // definitivamente una lettura lunga su rete mobile/webview.
+    if(attempt < 1){
+      await new Promise(resolve=>setTimeout(resolve, 350));
+      return fetchSpeechChunk(text, languageOverride, attempt + 1);
+    }
+    throw err;
+  }finally{
+    clearTimeout(timeout);
   }
-
-  return await response.blob();
 }
 
 async function speakSilver(text, button, languageOverride=null){
-  // 5.19.3 — TTS e riconoscimento non devono restare aperti insieme.
+  // TTS e riconoscimento non devono restare aperti insieme.
   // Chiudi/trascrivi prima il microfono per impedire che Silver trascriva la propria voce.
-  if(silverLiveMicActive || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
+  if(silverLiveMicActive || silverProgressiveFallbackActive || silverProgressiveFallbackStopping || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
     await finalizeSilverDictationBeforeAction();
   }
+
   // Se stiamo già ascoltando QUESTO messaggio:
   // tocco = PAUSA / RIPRENDI dallo stesso punto.
   if(activeListenButton === button && activeAudio){
@@ -6155,35 +6406,48 @@ async function speakSilver(text, button, languageOverride=null){
 
   const chunks = splitForSpeech(text);
   const myRunId = ++playbackRunId;
+  const prefetched = new Map();
+  const PREFETCH_AHEAD = 3;
 
   activeListenButton = button;
   activePaused = false;
   button.disabled = false;
-  button.textContent = chunks.length > 1 ? '… PREPARO AUDIO' : '…';
+  button.textContent = chunks.length > 1 ? '… PREPARO LA VOCE' : '…';
+
+  const startPrefetch = (index)=>{
+    if(index < 0 || index >= chunks.length || prefetched.has(index)) return;
+    prefetched.set(index, fetchSpeechChunk(chunks[index], languageOverride));
+  };
+
+  const fillPrefetchWindow = (fromIndex)=>{
+    for(let j=fromIndex; j<Math.min(chunks.length, fromIndex + PREFETCH_AHEAD); j++){
+      startPrefetch(j);
+    }
+  };
 
   try{
-    // AVVIO RAPIDO:
-    // prepara solo il primo blocco, lo riproduce subito e,
-    // mentre Silver parla, prepara già il blocco successivo.
-    let nextBlobPromise = fetchSpeechChunk(chunks[0], languageOverride);
+    // Tre blocchi vengono messi in preparazione contemporaneamente.
+    // Con blocchi da ~720 caratteri, il successivo normalmente è pronto
+    // molto prima che termini la lettura del precedente.
+    fillPrefetchWindow(0);
 
     for(let i=0;i<chunks.length;i++){
       if(myRunId !== playbackRunId) return;
 
-      button.textContent = i === 0
-        ? '… PREPARO LA VOCE'
-        : `… PREPARO ${i+1}/${chunks.length}`;
+      const promise = prefetched.get(i) || fetchSpeechChunk(chunks[i], languageOverride);
 
-      const blob = await nextBlobPromise;
+      // Mostra "preparo" solo prima dell'avvio o se la rete è davvero in ritardo.
+      if(i === 0){
+        button.textContent = '… PREPARO LA VOCE';
+      }
+
+      const blob = await promise;
+      prefetched.delete(i);
 
       if(myRunId !== playbackRunId) return;
 
-      // Avvia in anticipo la richiesta del blocco successivo
-      // mentre quello corrente sta per essere riprodotto.
-      nextBlobPromise =
-        i + 1 < chunks.length
-          ? fetchSpeechChunk(chunks[i+1], languageOverride)
-          : null;
+      // Mentre parte questo blocco, mantieni sempre 3 blocchi di anticipo.
+      fillPrefetchWindow(i + 1);
 
       if(activeAudioUrl){
         URL.revokeObjectURL(activeAudioUrl);
@@ -6192,6 +6456,7 @@ async function speakSilver(text, button, languageOverride=null){
 
       activeAudioUrl = URL.createObjectURL(blob);
       activeAudio = new Audio(activeAudioUrl);
+      activeAudio.preload = 'auto';
       activePaused = false;
 
       button.textContent = chunks.length > 1
@@ -6245,7 +6510,7 @@ async function speakSilver(text, button, languageOverride=null){
       activeAudioUrl = null;
     }
 
-    button.textContent = '🔊 ASCOLTA';
+    button.textContent = '↻ RIPROVA VOCE';
     button.disabled = false;
     activeListenButton = null;
     activePaused = false;
@@ -6359,8 +6624,11 @@ clearInputButton.addEventListener('pointerdown',e=>{
     stopSilverLiveDictation({cancel:true});
   }
 
-  // Nel fallback registrato scarta l'audio e non avvia la trascrizione.
-  if(silverMediaRecorder?.state === 'recording'){
+  // Nel fallback progressivo scarta soltanto il segmento ancora non trascritto.
+  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
+    silverProgressiveGeneration++;
+    stopSilverProgressiveFallback({cancelCurrent:true,silent:true});
+  }else if(silverMediaRecorder?.state === 'recording'){
     silverMicCancelled=true;
     try{ silverMediaRecorder.stop(); }catch(_){}
   }
@@ -6412,7 +6680,7 @@ form.addEventListener('submit', async e=>{
 
   if(send.disabled) return;
 
-  if(silverLiveMicActive || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
+  if(silverLiveMicActive || silverProgressiveFallbackActive || silverProgressiveFallbackStopping || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
     send.disabled=true;
     send.textContent='…';
     setMicStatus('Chiudo il microfono prima di inviare…');
