@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.3 — MOBILE CHAIR GAP · TOOLS ZOOM SAFE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.4 — MOBILE VIEWPORT BALANCE · TOOLS SAFE FOOTER · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3311,6 +3311,53 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
     max-height:calc(var(--silver-sheet-vv-height,100dvh) - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
   }
 }
+
+
+/* === SILVER FRONTEND 5.21.4 — MOBILE VIEWPORT BALANCE + TOOLS SAFE FOOTER === */
+@media(max-width:520px){
+  /* Crea un distacco leggibile tra C/sedie e il comando delle istruzioni. */
+  body:not(.conversation-mode) .practice-info-under-c{
+    margin-top:22px !important;
+  }
+  /* Recupera parte dello spazio senza sacrificare il microfono nel primo viewport. */
+  body:not(.conversation-mode) .hello{margin-top:0 !important;}
+  body:not(.conversation-mode) .resume-from-opening.mobile-resume{
+    margin-top:2px !important;
+    margin-bottom:4px !important;
+  }
+  body:not(.conversation-mode) .composer{margin-top:2px !important;}
+
+  /* Nei browser con viewport alto (Safari/WhatsApp) il contenuto viene bilanciato
+     verticalmente, invece di lasciare tutto lo spazio libero sotto il composer. */
+  @media(min-height:740px){
+    body:not(.conversation-mode) .identity{margin-top:34px !important;}
+  }
+  @media(min-height:800px){
+    body:not(.conversation-mode) .identity{margin-top:58px !important;}
+  }
+
+  /* Strumenti: le card scorrono, il tasto di chiusura ha una propria fascia
+     e non si sovrappone più a Lingua/Traduttore quando Safari cambia scala. */
+  #toolsBackdrop .sheet{
+    display:flex !important;
+    flex-direction:column !important;
+    overflow:hidden !important;
+    padding-bottom:10px !important;
+  }
+  #toolsBackdrop .tools-scroll-body{
+    min-height:0 !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:0 1px 8px !important;
+  }
+  #toolsBackdrop .sheet-close{
+    position:static !important;
+    flex:0 0 auto !important;
+    width:100% !important;
+    margin:8px 0 0 !important;
+  }
+}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3420,6 +3467,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="toolsTitle">
       <div class="sheet-handle"></div>
       <h2 class="sheet-title" id="toolsTitle">Strumenti</h2>
+      <div class="tools-scroll-body">
       <div class="sheet-grid">
         <button class="sheet-action primary" id="resumeButton" type="button">
           <strong>RIPRENDI</strong>
@@ -3451,6 +3499,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
       <p class="sheet-note" id="toolsNote">
         Con ALLEGA puoi leggere i formati di uso comune: immagini, PDF, Word/RTF/ODT, Excel/CSV, PowerPoint, testi e codice, oltre ad audio e video compatibili da trascrivere. Silver non esegue programmi, macro o script e non apre archivi o file eseguibili. Gli allegati vengono elaborati per la conversazione e non archiviati qui in modo permanente.
       </p>
+      </div>
       <button class="sheet-close tools-close-emphasis" id="toolsClose" type="button">↓ CHIUDI STRUMENTI</button>
     </section>
   </div>
@@ -3728,7 +3777,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.3';
+const SILVER_FRONTEND_VERSION = '5.21.4';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
