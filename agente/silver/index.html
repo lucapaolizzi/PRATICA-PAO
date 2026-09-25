@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.7 — PRACTICE INSTRUCTIONS · DYADIC FEELING · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.8 — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3502,6 +3502,64 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.21.8 — MOBILE MIC FAST / VIEWPORT SAFE === */
+@media(max-width:760px){
+  :root{--silver-browser-bottom-reserve:104px;}
+
+  /* In chat esiste sempre spazio reale sotto il composer: Safari/Chrome non possono coprire i comandi. */
+  body.conversation-mode .shell{
+    padding-bottom:calc(34px + env(safe-area-inset-bottom) + var(--silver-browser-bottom-reserve)) !important;
+  }
+  body.conversation-mode .composer{
+    scroll-margin-bottom:calc(var(--silver-browser-bottom-reserve) + 20px) !important;
+  }
+  body.conversation-mode .session-row.visible{
+    margin-bottom:calc(16px + env(safe-area-inset-bottom) + var(--silver-browser-bottom-reserve)) !important;
+  }
+
+  /* Durante la dettatura non ricostruiamo il layout: cambia solo lo stato del composer. */
+  body.conversation-mode.mic-active .identity{
+    display:block !important;
+    margin-top:10px !important;
+  }
+  body.conversation-mode.mic-active .stage{
+    display:block !important;
+  }
+  body.conversation-mode.mic-active .composer{
+    min-height:132px !important;
+    max-height:248px !important;
+    overflow:visible !important;
+    margin-top:8px !important;
+  }
+  body.conversation-mode.mic-active .composer textarea{
+    min-height:58px !important;
+    max-height:124px !important;
+  }
+  body.conversation-mode.mic-active .mic-status{
+    margin-top:0 !important;
+    padding:0 4px 2px !important;
+    font-size:11px !important;
+    line-height:1.22 !important;
+  }
+}
+
+
+
+/* 5.21.8 — desktop opening: il pulsante istruzioni può essere più largo della colonna centrale,
+   quindi viene centrato geometricamente sull'asse Silver/C invece di usare auto-margin. */
+@media(min-width:761px){
+  body:not(.conversation-mode) .practice-info-under-c{
+    position:relative !important;
+    left:auto !important;
+    transform:none !important;
+    align-self:center !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3922,7 +3980,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.7';
+const SILVER_FRONTEND_VERSION = '5.21.8';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
@@ -4295,7 +4353,8 @@ let silverProgressiveStopResolve = null;
 let silverProgressiveCancelCurrent = false;
 let silverProgressiveSilentStop = false;
 let silverProgressiveGeneration = 0;
-const SILVER_PROGRESSIVE_SEGMENT_MS = 4200;
+const SILVER_PROGRESSIVE_SEGMENT_MS = 2200;
+let silverProgressiveFirstSegment = true;
 
 
 function speechRecognitionConstructor(){
@@ -4311,6 +4370,19 @@ function joinDictationText(...parts){
   return parts.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
 }
 
+// 5.21.8 — margine reale per le toolbar mobili sovrapposte.
+function silverMobileBottomReserve(){
+  if(window.innerWidth > 760) return 16;
+  const vv=window.visualViewport;
+  const chromeGap=vv ? Math.max(0,window.innerHeight - vv.height - vv.offsetTop) : 0;
+  return Math.max(92,Math.min(132,chromeGap + 72));
+}
+
+let silverSuppressBlurFollowUntil = 0;
+function suppressBlurFollowForMic(ms=900){
+  silverSuppressBlurFollowUntil = Date.now() + ms;
+}
+
 // 5.21.0 — mentre la dettatura cresce, conserva visibili testo e comandi.
 // Non forza lo scroll se il composer è già interamente nel viewport.
 let silverDictationRevealFrame = 0;
@@ -4323,7 +4395,7 @@ function keepDictationComposerVisible(){
       const vv=window.visualViewport;
       const top=vv ? vv.offsetTop : 0;
       const height=vv ? vv.height : window.innerHeight;
-      const safeBottom=top+height-14;
+      const safeBottom=top+height-silverMobileBottomReserve();
       const rect=composer.getBoundingClientRect();
 
       if(rect.bottom>safeBottom+2){
@@ -4374,6 +4446,8 @@ function startSilverLiveDictation(){
   if(!Ctor || silverLiveMicDisabledForSession) return false;
 
   try{
+    suppressBlurFollowForMic();
+    try{ input.blur(); }catch(_){ }
     const recognition=new Ctor();
     recognition.continuous=true;
     recognition.interimResults=true;
@@ -4443,6 +4517,7 @@ function startSilverLiveDictation(){
     };
 
     recognition.start();
+    document.body.classList.add('mic-active');
     dictationHelpButton.classList.add('recording');
     dictationHelpButton.textContent='■';
     dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
@@ -4547,6 +4622,7 @@ function micFileExtension(type){
 
 function resetMicButton(){
   silverMicBusy=false;
+  document.body.classList.remove('mic-active');
   dictationHelpButton.classList.remove('recording','busy');
   dictationHelpButton.textContent='🎤';
   dictationHelpButton.disabled=false;
@@ -4689,9 +4765,12 @@ function queueSilverProgressiveSegment(blob){
   if(!blob || blob.size < 220) return silverProgressiveQueue;
   const generation=silverProgressiveGeneration;
 
+  // 5.21.8: la richiesta parte SUBITO, mentre il segmento successivo viene già registrato.
+  // L'append resta ordinato tramite la coda, ma la rete non aspetta il segmento precedente.
+  const transcriptionRequest=requestSilverProgressiveTranscription(blob);
   silverProgressiveQueue=silverProgressiveQueue.then(async()=>{
     try{
-      const spoken=await requestSilverProgressiveTranscription(blob);
+      const spoken=await transcriptionRequest;
       if(!spoken || generation!==silverProgressiveGeneration) return;
       input.value=joinDictationText(input.value,spoken);
       resize();
@@ -4769,14 +4848,16 @@ function startSilverProgressiveSegment(){
       }
     },{once:true});
 
-    recorder.start(250);
+    recorder.start(180);
+    const segmentMs=silverProgressiveFirstSegment ? 1700 : SILVER_PROGRESSIVE_SEGMENT_MS;
+    silverProgressiveFirstSegment=false;
     silverProgressiveSegmentTimer=setTimeout(()=>{
       if(!silverProgressiveFallbackActive || silverProgressiveFallbackStopping) return;
       if(recorder.state==='recording'){
         try{ recorder.requestData?.(); }catch(_){ }
         try{ recorder.stop(); }catch(_){ }
       }
-    },SILVER_PROGRESSIVE_SEGMENT_MS);
+    },segmentMs);
   }catch(err){
     console.warn('Segmento progressivo Silver:',err);
     silverProgressiveFallbackActive=false;
@@ -4788,9 +4869,16 @@ function startSilverProgressiveSegment(){
 async function startSilverProgressiveFallback(){
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined') return false;
   try{
+    // Feedback immediato: non lasciare il tap del microfono senza risposta visiva.
+    suppressBlurFollowForMic();
+    dictationHelpButton.classList.add('busy');
+    dictationHelpButton.textContent='…';
+    dictationHelpButton.disabled=true;
+    setMicStatus('Apro il microfono…');
     try{ input.blur(); }catch(_){ }
     silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
     silverProgressiveGeneration++;
+    silverProgressiveFirstSegment=true;
     silverProgressiveFallbackActive=true;
     silverProgressiveFallbackStopping=false;
     silverProgressiveCancelCurrent=false;
@@ -4798,6 +4886,8 @@ async function startSilverProgressiveFallback(){
     silverProgressiveQueue=Promise.resolve();
     silverProgressiveStopPromise=new Promise(resolve=>{ silverProgressiveStopResolve=resolve; });
 
+    document.body.classList.add('mic-active');
+    dictationHelpButton.classList.remove('busy');
     dictationHelpButton.classList.add('recording');
     dictationHelpButton.textContent='■';
     dictationHelpButton.disabled=false;
@@ -5056,7 +5146,7 @@ input.addEventListener('blur',()=>{
     document.documentElement.style.removeProperty('--composer-top');
     document.documentElement.style.removeProperty('--help-top');
     document.documentElement.style.removeProperty('--keyboard-reserve');
-    if(silverAutoFollow){
+    if(silverAutoFollow && Date.now() >= silverSuppressBlurFollowUntil && !document.body.classList.contains('mic-active')){
       setTimeout(()=>followConversation({behavior:'auto'}),180);
     }
   },120);
@@ -5317,7 +5407,7 @@ function followConversation({behavior='auto',force=false}={}){
     const viewportTop = vv ? vv.offsetTop : 0;
     const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
     const safeTop = viewportTop + 10;
-    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 72 : 16);
+    const safeBottom = viewportBottom - silverMobileBottomReserve();
 
     const composerRect = composer.getBoundingClientRect();
     let targetBottom = composerRect.bottom;
