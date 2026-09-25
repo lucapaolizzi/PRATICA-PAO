@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.1 — PRACTICE COPY · WRITE CUE · TOOLS CLOSE EMPHASIS · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.3 — MOBILE CHAIR GAP · TOOLS ZOOM SAFE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3191,6 +3191,126 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+/* === SILVER FRONTEND 5.21.2 — C + ISTRUZIONI SULLO STESSO ASSE === */
+/* C è il riferimento geometrico: nessun testo o icona deve spostarne la percezione. */
+.observer-row{
+  display:grid !important;
+  place-items:center !important;
+  position:relative !important;
+  width:100% !important;
+}
+.observer-button.observer-eye{
+  position:static !important;
+  left:auto !important;
+  top:auto !important;
+  transform:none !important;
+  margin:0 auto !important;
+}
+
+/* Il pulsante vive esattamente sotto C e il testo è centrato sul suo stesso asse. */
+.practice-info-under-c{
+  position:relative !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  width:min(276px,calc(100vw - 28px)) !important;
+  max-width:none !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
+  justify-content:center !important;
+}
+.practice-info-under-c .practice-info-button{
+  position:relative !important;
+  width:100% !important;
+  max-width:none !important;
+  justify-content:center !important;
+  padding-left:46px !important;
+  padding-right:46px !important;
+}
+.practice-info-under-c .practice-info-q{
+  position:absolute !important;
+  left:10px !important;
+  top:50% !important;
+  transform:translateY(-50%) !important;
+}
+.practice-info-under-c .practice-info-copy{
+  width:100% !important;
+  align-items:center !important;
+  text-align:center !important;
+}
+.practice-info-under-c .practice-info-copy strong{
+  display:block !important;
+  width:100% !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  font-size:10.2px !important;
+  letter-spacing:.065em !important;
+}
+
+@media(min-width:761px){
+  body:not(.conversation-mode) .facilitator-column,
+  body.conversation-mode .facilitator-column{
+    justify-self:stretch !important;
+    width:100% !important;
+  }
+  body:not(.conversation-mode) .observer-row,
+  body.conversation-mode .observer-row{
+    width:100% !important;
+  }
+  body:not(.conversation-mode) .practice-info-under-c,
+  body.conversation-mode .practice-info-under-c{
+    width:276px !important;
+  }
+}
+
+
+
+/* === SILVER FRONTEND 5.21.3 — MOBILE CHAIR GAP + TOOLS ZOOM SAFE === */
+@media(max-width:520px){
+  /* Più respiro tra sedie/C e il pulsante istruzioni, come richiesto su iPhone. */
+  body:not(.conversation-mode) .practice-info-under-c{
+    margin-top:13px !important;
+  }
+  /* Recupero i pixel più sotto per mantenere il microfono nel primo viewport. */
+  body:not(.conversation-mode) .opening .resume-from-opening.mobile-resume{
+    margin-top:4px !important;
+  }
+  body:not(.conversation-mode) .composer{
+    margin-top:2px !important;
+  }
+
+  /* Strumenti: resta interamente nel visual viewport anche con i controlli Safari aperti. */
+  #toolsBackdrop{
+    align-items:center !important;
+    padding-top:calc(12px + env(safe-area-inset-top)) !important;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom)) !important;
+  }
+  #toolsBackdrop .sheet{
+    width:min(620px,100%) !important;
+    max-height:calc(var(--silver-sheet-vv-height,100dvh) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    margin:0 auto !important;
+    border-radius:24px !important;
+    scroll-padding-top:14px !important;
+    scroll-padding-bottom:96px !important;
+  }
+  #toolsBackdrop .sheet-close{
+    position:sticky !important;
+    bottom:6px !important;
+    z-index:8 !important;
+    margin-top:10px !important;
+  }
+}
+
+/* Quando Safari ingrandisce la pagina, la larghezza CSS utile si riduce.
+   A quella scala teniamo CHIUDI STRUMENTI più lontano dalla barra nativa. */
+@media(max-width:340px){
+  #toolsBackdrop{
+    padding-bottom:calc(66px + env(safe-area-inset-bottom)) !important;
+  }
+  #toolsBackdrop .sheet{
+    max-height:calc(var(--silver-sheet-vv-height,100dvh) - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+  }
+}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3608,7 +3728,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.1';
+const SILVER_FRONTEND_VERSION = '5.21.3';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
