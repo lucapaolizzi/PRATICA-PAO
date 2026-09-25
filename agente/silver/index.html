@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.20.1 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
+<!-- SILVER FRONTEND 5.20.4 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2753,6 +2753,149 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+/* === SILVER FRONTEND 5.20.2 — MOBILE GEOMETRY TESTED / SCROLL RESERVE === */
+@media(max-width:760px){
+  :root{--silver-browser-bottom-reserve:64px;}
+
+  /* Non compensare la barra superiore con grandi salti: la pagina deve restare naturale e scrollabile. */
+  body:not(.conversation-mode) .identity,
+  body.conversation-mode .identity{
+    margin-top:10px !important;
+  }
+
+  /* Spazio reale di scorrimento sotto il composer per barre Safari/Chrome sovrapposte. */
+  .shell{
+    min-height:calc(var(--silver-app-height,100dvh) + var(--silver-browser-bottom-reserve)) !important;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom) + var(--silver-browser-bottom-reserve)) !important;
+  }
+
+  /* A — Silver — B restano geometricamente simmetrici. */
+  body:not(.conversation-mode) .chair-scene,
+  body.conversation-mode .chair-scene{
+    margin-left:auto !important;
+    margin-right:auto !important;
+    justify-content:center !important;
+  }
+
+  /* Le sedie sono già simmetriche: non specchiare l'intero disegno B. Evita spostamenti del testo. */
+  body:not(.conversation-mode) .chair-position[data-chair="B"] .chair-drawing,
+  body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{
+    transform:scale(.82) !important;
+  }
+  body:not(.conversation-mode) .chair-position[data-chair="B"].active .chair-drawing,
+  body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scale(.82) translateY(-1px) !important;
+  }
+  body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{
+    transform:scale(.74) !important;
+  }
+  body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scale(.74) translateY(-1px) !important;
+  }
+  .chair-position[data-chair="B"] .chair-role{
+    transform:none !important;
+  }
+
+  /* FIGURA / POSIZIONE devono stare DENTRO lo schienale, senza uscire dai bordi. */
+  body:not(.conversation-mode) .chair-role{
+    font-size:10px !important;
+    line-height:1 !important;
+    letter-spacing:.018em !important;
+    font-weight:800 !important;
+    padding:1px 2px !important;
+    max-width:calc(100% - 4px) !important;
+    white-space:nowrap !important;
+  }
+  body.conversation-mode .chair-role{
+    font-size:9px !important;
+    line-height:1 !important;
+    letter-spacing:.012em !important;
+    padding:1px 2px !important;
+    max-width:calc(100% - 4px) !important;
+    white-space:nowrap !important;
+  }
+
+  /* ISTRUZIONI PRATICA: larghezza propria e centratura sul vero asse di Silver/C. */
+  body:not(.conversation-mode) .practice-info-under-c,
+  body.conversation-mode .practice-info-under-c{
+    width:max-content !important;
+    max-width:calc(100vw - 28px) !important;
+    align-self:center !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    justify-content:center !important;
+  }
+  body:not(.conversation-mode) .practice-info-button,
+  body.conversation-mode .practice-info-button{
+    width:min(224px,calc(100vw - 28px)) !important;
+    max-width:100% !important;
+    justify-content:flex-start !important;
+  }
+  .practice-info-copy{min-width:0 !important;}
+  .practice-info-copy strong,
+  .practice-info-copy small{white-space:normal !important;}
+
+  /* C resta centrata sotto Silver, senza dipendere dalla larghezza del pulsante istruzioni. */
+  .observer-row{align-self:stretch !important;}
+  .observer-button.observer-eye{left:50% !important;}
+
+  /* Il blocco di scrittura ha sempre una piccola zona libera dalla toolbar inferiore. */
+  body:not(.conversation-mode) .composer,
+  body.conversation-mode:not(.keyboard-open) .composer{
+    scroll-margin-bottom:calc(var(--silver-browser-bottom-reserve) + 18px) !important;
+  }
+}
+
+/* La regola 5.20.1 per iOS era troppo aggressiva in chat: annullata qui. */
+@supports (-webkit-touch-callout:none){
+  @media(max-width:760px){
+    body.conversation-mode .identity{
+      margin-top:10px !important;
+    }
+  }
+}
+
+
+/* === SILVER FRONTEND 5.20.3 — AXIS LOCK / CONVERSATION PROPORTIONS === */
+@media(max-width:760px){
+  /* Centro assoluto del pulsante istruzioni rispetto all'asse della colonna centrale. */
+  body:not(.conversation-mode) .practice-info-under-c,
+  body.conversation-mode .practice-info-under-c{
+    position:relative !important;
+    left:50% !important;
+    transform:translateX(-50%) !important;
+  }
+
+  /* In chat Silver non deve diventare un'icona minuscola rispetto alle sedie. */
+  body.conversation-mode .identity .mascot{
+    width:92px !important;
+    max-width:27vw !important;
+  }
+
+  /* Il testo delle sedie resta centrato e leggibile anche sui telefoni stretti. */
+  .chair-back{
+    overflow:hidden !important;
+  }
+  .chair-role{
+    width:100% !important;
+    text-align:center !important;
+  }
+}
+
+@media(min-width:761px){
+  /* Anche desktop: POSIZIONE dentro lo schienale e nessun doppio mirroring. */
+  .chair-position[data-chair="B"] .chair-drawing{transform:none !important;}
+  .chair-position[data-chair="B"].active .chair-drawing{transform:translateY(-1px) !important;}
+  .chair-position[data-chair="B"] .chair-role{transform:none !important;}
+  .chair-role{
+    font-size:8.6px !important;
+    letter-spacing:.03em !important;
+    max-width:calc(100% - 4px) !important;
+    white-space:nowrap !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3169,7 +3312,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.20.1';
+const SILVER_FRONTEND_VERSION = '5.20.4';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.0';
 
 
@@ -4318,7 +4461,7 @@ function followConversation({behavior='auto',force=false}={}){
     const viewportTop = vv ? vv.offsetTop : 0;
     const viewportBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
     const safeTop = viewportTop + 10;
-    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 18 : 16);
+    const safeBottom = viewportBottom - (window.innerWidth <= 760 ? 72 : 16);
 
     const composerRect = composer.getBoundingClientRect();
     let targetBottom = composerRect.bottom;
@@ -5847,7 +5990,8 @@ bindSilverTap(deleteConversationButton,async ()=>{
   deleteConversationButton.dataset.confirmDelete='0';
   closeSheet(sessionBackdrop);
 
-  await sendSessionReview();
+  // La cancellazione locale non deve dipendere dalla rete: la review parte in background.
+  sendSessionReviewInBackground();
 
   clearRecoveryDraft();
   resetConversationUi();
