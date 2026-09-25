@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.20.0 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
+<!-- SILVER FRONTEND 5.20.1 — RESPONSIVE MOBILE · COMPOSER GRID · ISTRUZIONI PRATICA · ANDROID SESSION ACTIONS · WORKER 7.0.0 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -2647,6 +2647,112 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.20.1 — PROPORZIONI A/B/C + SAFE TOP iOS === */
+@media(max-width:760px){
+  /* Apertura: Silver meno dominante, sedie più presenti e più vicine al centro. */
+  body:not(.conversation-mode) .chair-scene{
+    width:min(390px,100%) !important;
+    grid-template-columns:96px minmax(128px,1fr) 96px !important;
+    column-gap:0 !important;
+    justify-content:center !important;
+  }
+  body:not(.conversation-mode) .mascot{
+    width:min(160px,41vw) !important;
+  }
+  body:not(.conversation-mode) .chair-position{
+    gap:4px !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+  }
+  body:not(.conversation-mode) .chair-drawing{
+    transform:scale(.82) !important;
+    transform-origin:top center !important;
+    margin-bottom:-18px !important;
+  }
+  body:not(.conversation-mode) .chair-position.active .chair-drawing{
+    transform:scale(.82) translateY(-1px) !important;
+  }
+  body:not(.conversation-mode) .chair-position[data-chair="B"] .chair-drawing{
+    transform:scaleX(-1) scale(.82) !important;
+  }
+  body:not(.conversation-mode) .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scaleX(-1) scale(.82) translateY(-1px) !important;
+  }
+  body:not(.conversation-mode) .chair-label{
+    width:32px !important;
+    height:32px !important;
+    min-width:32px !important;
+    font-size:13px !important;
+  }
+  /* Il testo è dentro il disegno e viene scalato: lo compensiamo qui. */
+  body:not(.conversation-mode) .chair-role{
+    font-size:12px !important;
+    letter-spacing:.055em !important;
+    font-weight:800 !important;
+  }
+  body:not(.conversation-mode) .observer-button.observer-eye{
+    width:50px !important;
+    min-width:50px !important;
+    height:31px !important;
+    font-size:13px !important;
+  }
+  body:not(.conversation-mode) .observer-row{
+    margin-top:2px !important;
+  }
+  body:not(.conversation-mode) .practice-info-under-c{
+    width:min(310px,88vw) !important;
+    margin:9px auto 0 !important;
+  }
+
+  /* Chat: proporzioni coerenti, senza rubare spazio alla conversazione. */
+  body.conversation-mode .chair-scene{
+    width:min(390px,100%) !important;
+    grid-template-columns:84px minmax(112px,1fr) 84px !important;
+    column-gap:0 !important;
+    justify-content:center !important;
+  }
+  body.conversation-mode .identity .mascot{
+    width:76px !important;
+    max-width:21vw !important;
+  }
+  body.conversation-mode .chair-drawing{
+    transform:scale(.74) !important;
+    transform-origin:top center !important;
+    margin-bottom:-26px !important;
+  }
+  body.conversation-mode .chair-position.active .chair-drawing{
+    transform:scale(.74) translateY(-1px) !important;
+  }
+  body.conversation-mode .chair-position[data-chair="B"] .chair-drawing{
+    transform:scaleX(-1) scale(.74) !important;
+  }
+  body.conversation-mode .chair-position[data-chair="B"].active .chair-drawing{
+    transform:scaleX(-1) scale(.74) translateY(-1px) !important;
+  }
+  body.conversation-mode .chair-role{
+    font-size:11px !important;
+    letter-spacing:.05em !important;
+    font-weight:800 !important;
+  }
+  body.conversation-mode .chair-label{
+    width:28px !important;
+    height:28px !important;
+    min-width:28px !important;
+    font-size:11px !important;
+  }
+}
+
+/* Safari / browser in-app iPhone: riserva spazio alla barra flottante superiore. */
+@supports (-webkit-touch-callout:none){
+  @media(max-width:760px){
+    body.conversation-mode .identity{
+      margin-top:clamp(54px,7dvh,76px) !important;
+    }
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3063,7 +3169,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.20.0';
+const SILVER_FRONTEND_VERSION = '5.20.1';
 const SILVER_EXPECTED_WORKER_VERSION = '7.0.0';
 
 
