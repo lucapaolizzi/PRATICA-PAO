@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.11 — CONTINUOUS DICTATION + MOBILE SCROLL REBASE v2 — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.12 — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.1.2 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -4032,8 +4032,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.11';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.1';
+const SILVER_FRONTEND_VERSION = '5.21.12';
+const SILVER_EXPECTED_WORKER_VERSION = '7.1.2';
 
 
 const backLink = document.getElementById('backLink');
@@ -4234,6 +4234,7 @@ function explicitChairRequestFromText(value){
   if(/^[abc][.!]?$/i.test(t)) return t.charAt(0).toUpperCase();
 
   // Negazioni, ipotesi e passaggi differiti non cambiano la sedia.
+  if(/\bnon\s+(?:passo|vado|torno|entro|mi\s+sposto|mi\s+metto|spostiamoci|mettiamoci|spostarmi|entrare|tornare|andare).{0,35}\b[abc]\b/i.test(t)) return '';
   if(/\bnon\s+(?:voglio|vorrei|posso|possiamo|intendo|intendiamo|devo|dobbiamo)?\s*(?:passare|andare|spostarmi|spostarci|entrare|tornare|passiamo|andiamo).{0,30}\b[abc]\b/i.test(t)) return '';
   if(/\bnon\s+(?:passiamo|andiamo|entriamo|torniamo).{0,30}\b[abc]\b/i.test(t)) return '';
   if(/\b(?:se|quando|prima di|dopo|poi|pi[uù] tardi|in seguito)\b.{0,45}(?:pass|and|spost|entr|torn).{0,35}\b[abc]\b/i.test(t)) return '';
@@ -5822,7 +5823,7 @@ window.addEventListener('scroll',()=>{
   if(Date.now() < silverProgrammaticScrollUntil) return;
   clearTimeout(silverScrollStateTimer);
   silverScrollStateTimer = setTimeout(()=>{
-    silverAutoFollow = documentBottomDistance() <= 40;
+    silverAutoFollow = documentBottomDistance() <= 12;
   },90);
 },{passive:true});
 
