@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.10 — MIC PROGRESSIVE STABLE — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.11 — CONTINUOUS DICTATION + MOBILE SCROLL REBASE v2 — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3560,6 +3560,58 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.21.11 — MOBILE CONVERSATION REBASE === */
+@media(max-width:760px){
+  /* Il composer resta raggiungibile mentre la persona scorre la conversazione.
+     Sticky evita il fragile posizionamento fixed sui browser mobili. */
+  body.conversation-mode:not(.keyboard-open) .composer{
+    position:sticky !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:calc(8px + env(safe-area-inset-bottom)) !important;
+    transform:none !important;
+    width:100% !important;
+    max-width:none !important;
+    z-index:40 !important;
+    margin:8px auto 10px !important;
+    box-shadow:0 8px 24px rgba(36,33,29,.09) !important;
+  }
+
+  /* La chat cresce naturalmente; il composer non deve coprire l'ultimo messaggio. */
+  body.conversation-mode .conversation{
+    padding-bottom:14px !important;
+    overflow:visible !important;
+  }
+
+  /* Il testo cresce dall'alto verso il basso, poi scorre DENTRO il campo. */
+  body.conversation-mode .composer textarea,
+  body.conversation-mode.keyboard-open .composer textarea{
+    min-height:58px !important;
+    max-height:min(190px,34dvh) !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain !important;
+    -webkit-overflow-scrolling:touch !important;
+    touch-action:pan-y !important;
+    scroll-behavior:auto !important;
+  }
+
+  body.conversation-mode .session-row.visible{
+    position:relative !important;
+    z-index:1 !important;
+    margin-top:18px !important;
+  }
+
+  /* La dettatura non cambia più la geometria della pagina. */
+  body.conversation-mode.mic-active .composer,
+  body.conversation-mode.mic-active .identity,
+  body.conversation-mode.mic-active .stage{
+    transform:none !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3980,8 +4032,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.10';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.0';
+const SILVER_FRONTEND_VERSION = '5.21.11';
+const SILVER_EXPECTED_WORKER_VERSION = '7.1.1';
 
 
 const backLink = document.getElementById('backLink');
@@ -4160,7 +4212,7 @@ const openingGentle = document.getElementById('openingGentle');
 const resumeOpeningButton = document.getElementById('resumeOpeningButton');
 
 let selectedMode = 'practice';
-let selectedLanguage = 'auto';
+let selectedLanguage = 'it';
 let activeChair = 'A';
 
 function normalizeChair(value){
@@ -4353,18 +4405,42 @@ let silverProgressiveStopResolve = null;
 let silverProgressiveCancelCurrent = false;
 let silverProgressiveSilentStop = false;
 let silverProgressiveGeneration = 0;
-const SILVER_PROGRESSIVE_SEGMENT_MS = 2800;
+const SILVER_PROGRESSIVE_SEGMENT_MS = 2200;
 let silverProgressiveFirstSegment = true;
 
+// 5.21.11 — registrazione continua con anteprima cumulativa.
+// Una sola registrazione, nessun taglio tra parole. Le anteprime trascrivono
+// tutto l'audio raccolto fino a quel momento e SOSTITUISCONO la preview precedente.
+let silverContinuousMicActive = false;
+let silverContinuousMicStopping = false;
+let silverContinuousBaseText = '';
+let silverContinuousPreviewText = '';
+let silverContinuousPreviewTimer = 0;
+let silverContinuousPreviewBusy = false;
+let silverContinuousPreviewPending = false;
+let silverContinuousGeneration = 0;
+let silverContinuousLastBlobSize = 0;
+let silverContinuousStopPromise = Promise.resolve();
+let silverContinuousStopResolve = null;
+const SILVER_CONTINUOUS_FIRST_PREVIEW_MS = 3400;
+const SILVER_CONTINUOUS_PREVIEW_MS = 4300;
 
 function speechRecognitionConstructor(){
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
-function isIOSLikeDevice(){
+function isSilverMobileDevice(){
   const ua=String(navigator.userAgent || '');
-  return /iPad|iPhone|iPod/i.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || window.innerWidth <= 760;
+}
+
+function preferredTranscriptionLanguage(){
+  if(selectedLanguage && selectedLanguage !== 'auto') return selectedLanguage;
+  const allowed=['it','en','ar','fr','es','de','pt'];
+  const candidates=[...(navigator.languages || []),navigator.language,document.documentElement.lang]
+    .map(x=>String(x||'').toLowerCase().split(/[-_]/)[0])
+    .filter(Boolean);
+  return candidates.find(x=>allowed.includes(x)) || 'auto';
 }
 
 function preferredSpeechLanguage(){
@@ -4438,7 +4514,7 @@ function stopSilverLiveDictation({cancel=false}={}){
   }else{
     // L'eventuale testo interim già visibile resta nel composer: la persona può correggerlo.
     renderLiveDictation();
-    setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
+    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
   }
 
   silverSpeechRecognition=null;
@@ -4539,7 +4615,257 @@ function startSilverLiveDictation(){
   }
 }
 
+
+function continuousMicMime(){
+  return supportedMicMime();
+}
+
+function clearSilverContinuousPreviewTimer(){
+  clearTimeout(silverContinuousPreviewTimer);
+  silverContinuousPreviewTimer=0;
+}
+
+function setContinuousTranscript(spoken){
+  silverContinuousPreviewText=String(spoken || '').trim();
+  const combined=joinDictationText(silverContinuousBaseText,silverContinuousPreviewText);
+  const maxLen=Number(input.maxLength || 3000);
+  input.value=maxLen>0 ? combined.slice(0,maxLen) : combined;
+  resize();
+  updateComposerState();
+  saveRecoveryDraft();
+  requestAnimationFrame(()=>{
+    try{ input.scrollTop=input.scrollHeight; }catch(_){ }
+  });
+}
+
+async function requestSilverContinuousTranscription(blob,{phase='preview',generation=silverContinuousGeneration}={}){
+  if(!blob || blob.size < 280) return '';
+  const ext=micFileExtension(blob.type);
+  const formData=new FormData();
+  formData.append('audio',blob,`dettatura-silver-${phase}.${ext}`);
+  formData.append('phase',phase);
+  formData.append('language',preferredTranscriptionLanguage());
+
+  const controller=new AbortController();
+  const timeoutMs=phase==='final' ? 20000 : 12000;
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    const response=await fetch(TRANSCRIBE_URL,{
+      method:'POST',body:formData,signal:controller.signal,cache:'no-store'
+    });
+    let data={};
+    try{ data=await response.json(); }catch(_){ }
+    if(!response.ok || !data.ok){
+      const err=new Error(data.error || `Trascrizione non disponibile (${response.status})`);
+      err.httpStatus=response.status;
+      throw err;
+    }
+    if(generation!==silverContinuousGeneration && phase!=='final') return '';
+    return String(data.text || '').trim();
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
+function currentSilverContinuousBlob(){
+  if(!silverMicChunks.length) return null;
+  const type=silverMediaRecorder?.mimeType || silverMicChunks[0]?.type || 'audio/webm';
+  return new Blob(silverMicChunks,{type});
+}
+
+function scheduleSilverContinuousPreview(delay=SILVER_CONTINUOUS_PREVIEW_MS){
+  clearSilverContinuousPreviewTimer();
+  if(!silverContinuousMicActive || silverContinuousMicStopping) return;
+  silverContinuousPreviewTimer=setTimeout(()=>{
+    requestSilverContinuousPreview().finally(()=>{
+      if(silverContinuousMicActive && !silverContinuousMicStopping){
+        scheduleSilverContinuousPreview(SILVER_CONTINUOUS_PREVIEW_MS);
+      }
+    });
+  },delay);
+}
+
+async function requestSilverContinuousPreview(){
+  if(!silverContinuousMicActive || silverContinuousMicStopping) return;
+  if(silverContinuousPreviewBusy){
+    silverContinuousPreviewPending=true;
+    return;
+  }
+  silverContinuousPreviewBusy=true;
+  silverContinuousPreviewPending=false;
+  const generation=silverContinuousGeneration;
+  try{
+    try{ silverMediaRecorder?.requestData?.(); }catch(_){ }
+    await new Promise(resolve=>setTimeout(resolve,120));
+    if(generation!==silverContinuousGeneration) return;
+    const blob=currentSilverContinuousBlob();
+    if(!blob || blob.size < 280 || blob.size===silverContinuousLastBlobSize) return;
+    silverContinuousLastBlobSize=blob.size;
+    const spoken=await requestSilverContinuousTranscription(blob,{phase:'preview',generation});
+    if(!spoken || generation!==silverContinuousGeneration || !silverContinuousMicActive) return;
+    setContinuousTranscript(spoken);
+    setMicStatus('Sto ascoltando… ■ per fermare.');
+  }catch(err){
+    console.warn('Anteprima dettatura Silver:',err);
+    if(generation===silverContinuousGeneration && silverContinuousMicActive){
+      setMicStatus('Sto ascoltando… la preview è in ritardo, continuo a registrare.');
+    }
+  }finally{
+    silverContinuousPreviewBusy=false;
+    if(silverContinuousPreviewPending && silverContinuousMicActive && !silverContinuousMicStopping){
+      silverContinuousPreviewPending=false;
+      setTimeout(()=>requestSilverContinuousPreview(),120);
+    }
+  }
+}
+
+async function startSilverContinuousDictation(){
+  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined') return false;
+  if(silverContinuousMicActive || silverContinuousMicStopping) return true;
+
+  try{
+    suppressBlurFollowForMic(1400);
+    try{ input.blur(); }catch(_){ }
+    silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    silverMicChunks=[];
+    silverContinuousBaseText=input.value.trim();
+    silverContinuousPreviewText='';
+    silverContinuousLastBlobSize=0;
+    silverContinuousPreviewBusy=false;
+    silverContinuousPreviewPending=false;
+    silverContinuousMicActive=true;
+    silverContinuousMicStopping=false;
+    silverContinuousGeneration++;
+    const generation=silverContinuousGeneration;
+
+    const mime=continuousMicMime();
+    const recorder=mime
+      ? new MediaRecorder(silverMicStream,{mimeType:mime})
+      : new MediaRecorder(silverMicStream);
+    silverMediaRecorder=recorder;
+
+    recorder.addEventListener('dataavailable',event=>{
+      // I chunk appartengono a questo recorder/sessione. Non scartarli quando
+      // incrementiamo la generation per invalidare una preview in volo: l'ultimo
+      // chunk serve alla trascrizione finale dopo STOP.
+      if(event.data && event.data.size>0) silverMicChunks.push(event.data);
+    });
+
+    recorder.start(500);
+    input.readOnly=true;
+    document.body.classList.remove('mic-active');
+    dictationHelpButton.classList.remove('busy');
+    dictationHelpButton.classList.add('recording');
+    dictationHelpButton.textContent='■';
+    dictationHelpButton.disabled=false;
+    dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
+    dictationHelpButton.title='Ferma la dettatura e rileggi';
+    setMicStatus('Sto ascoltando… ■ per fermare.');
+    scheduleSilverContinuousPreview(SILVER_CONTINUOUS_FIRST_PREVIEW_MS);
+    return true;
+  }catch(err){
+    console.warn('Microfono continuo Silver:',err);
+    silverContinuousMicActive=false;
+    silverContinuousMicStopping=false;
+    stopMicTracks();
+    resetMicButton();
+    input.readOnly=false;
+    const denied=err?.name==='NotAllowedError' || err?.name==='SecurityError';
+    setMicStatus(denied
+      ? 'Per usare il microfono, autorizzalo nelle impostazioni del browser.'
+      : 'Non riesco ad aprire il microfono in questo momento.');
+    return false;
+  }
+}
+
+async function stopSilverContinuousDictation({cancel=false,silent=false}={}){
+  if(!silverContinuousMicActive && !silverContinuousMicStopping){
+    try{ await silverContinuousStopPromise; }catch(_){ }
+    return;
+  }
+  if(silverContinuousMicStopping){
+    try{ await silverContinuousStopPromise; }catch(_){ }
+    return;
+  }
+
+  silverContinuousMicActive=false;
+  silverContinuousMicStopping=true;
+  clearSilverContinuousPreviewTimer();
+  // Invalida le preview già in volo: la finale ha sempre l'ultima parola.
+  silverContinuousGeneration++;
+  const finalGeneration=silverContinuousGeneration;
+
+  silverContinuousStopPromise=new Promise(resolve=>{ silverContinuousStopResolve=resolve; });
+  if(!silent) setMicStatus(cancel ? 'Dettatura annullata.' : 'Completo la trascrizione…');
+
+  const recorder=silverMediaRecorder;
+  if(!recorder || recorder.state!=='recording'){
+    silverContinuousMicStopping=false;
+    input.readOnly=false;
+    stopMicTracks();
+    resetMicButton();
+    if(typeof silverContinuousStopResolve==='function') silverContinuousStopResolve();
+    silverContinuousStopResolve=null;
+    return;
+  }
+
+  const finish=async()=>{
+    try{
+      // Un breve attimo permette all'ultimo dataavailable di entrare nella raccolta.
+      await new Promise(resolve=>setTimeout(resolve,80));
+      const blob=currentSilverContinuousBlob();
+      if(!cancel && blob && blob.size>=280){
+        let spoken='';
+        let lastError=null;
+        for(let attempt=1;attempt<=2;attempt++){
+          try{
+            spoken=await requestSilverContinuousTranscription(blob,{phase:'final',generation:finalGeneration});
+            break;
+          }catch(err){
+            lastError=err;
+            if(attempt===2) break;
+            await new Promise(resolve=>setTimeout(resolve,350));
+          }
+        }
+        if(spoken){
+          // La trascrizione completa sostituisce la preview cumulativa.
+          setContinuousTranscript(spoken);
+          if(!silent) setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
+        }else if(lastError && !silverContinuousPreviewText && !silent){
+          setMicStatus('La trascrizione finale non è arrivata. Puoi riprovare.');
+        }
+      }
+    }finally{
+      silverMediaRecorder=null;
+      silverMicChunks=[];
+      silverContinuousMicStopping=false;
+      silverContinuousPreviewBusy=false;
+      silverContinuousPreviewPending=false;
+      input.readOnly=false;
+      stopMicTracks();
+      resetMicButton();
+      resize();
+      updateComposerState();
+      saveRecoveryDraft();
+      requestAnimationFrame(()=>{
+        try{ input.scrollTop=input.scrollHeight; }catch(_){ }
+      });
+      if(typeof silverContinuousStopResolve==='function') silverContinuousStopResolve();
+      silverContinuousStopResolve=null;
+    }
+  };
+
+  recorder.addEventListener('stop',finish,{once:true});
+  try{ recorder.requestData?.(); }catch(_){ }
+  try{ recorder.stop(); }catch(_){ await finish(); }
+  try{ await silverContinuousStopPromise; }catch(_){ }
+}
+
 async function finalizeSilverDictationBeforeAction(){
+  if(silverContinuousMicActive || silverContinuousMicStopping){
+    await stopSilverContinuousDictation({cancel:false,silent:true});
+  }
+
   // 5.19.3 — se l'utente preme INVIA/ASCOLTA mentre il microfono è ancora attivo,
   // chiudi prima il riconoscimento. Nessuna risposta di Silver deve rientrare nel composer.
   clearTimeout(silverLiveRestartTimer);
@@ -4628,6 +4954,7 @@ function micFileExtension(type){
 
 function resetMicButton(){
   silverMicBusy=false;
+  input.readOnly=false;
   document.body.classList.remove('mic-active');
   dictationHelpButton.classList.remove('recording','busy');
   dictationHelpButton.textContent='🎤';
@@ -4784,12 +5111,12 @@ function queueSilverProgressiveSegment(blob){
       saveRecoveryDraft();
       keepDictationComposerVisible();
       if(silverProgressiveFallbackActive){
-        setMicStatus('Sto ascoltando… ■ per fermare.');
+        setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
       }
     }catch(err){
       console.warn('Trascrizione progressiva Silver:',err);
       if(silverProgressiveFallbackActive){
-        setMicStatus('Continuo ad ascoltare… un breve tratto non è stato trascritto.');
+        setMicStatus('Continuo ad ascoltare. Un segmento non è stato trascritto; puoi correggere il testo prima di inviare.');
       }
     }
   });
@@ -4807,7 +5134,7 @@ function finishSilverProgressiveFallback(){
   silverProgressiveCancelCurrent=false;
   resetMicButton();
   if(!silverProgressiveSilentStop){
-    setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
+    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
   }
   silverProgressiveSilentStop=false;
   if(typeof silverProgressiveStopResolve==='function'){
@@ -4855,9 +5182,7 @@ function startSilverProgressiveSegment(){
     },{once:true});
 
     recorder.start(180);
-    const segmentMs=silverProgressiveFirstSegment
-      ? (isIOSLikeDevice() ? 2400 : 1700)
-      : SILVER_PROGRESSIVE_SEGMENT_MS;
+    const segmentMs=silverProgressiveFirstSegment ? 1700 : SILVER_PROGRESSIVE_SEGMENT_MS;
     silverProgressiveFirstSegment=false;
     silverProgressiveSegmentTimer=setTimeout(()=>{
       if(!silverProgressiveFallbackActive || silverProgressiveFallbackStopping) return;
@@ -4894,20 +5219,14 @@ async function startSilverProgressiveFallback(){
     silverProgressiveQueue=Promise.resolve();
     silverProgressiveStopPromise=new Promise(resolve=>{ silverProgressiveStopResolve=resolve; });
 
-    if(isIOSLikeDevice()){
-      // Su iPhone il browser può cambiare chrome/viewport quando il microfono è attivo.
-      // Manteniamo quindi invariato il layout di Silver durante la dettatura.
-      document.body.classList.remove('mic-active');
-    }else{
-      document.body.classList.add('mic-active');
-    }
+    document.body.classList.add('mic-active');
     dictationHelpButton.classList.remove('busy');
     dictationHelpButton.classList.add('recording');
     dictationHelpButton.textContent='■';
     dictationHelpButton.disabled=false;
     dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
     dictationHelpButton.title='Ferma la dettatura e rileggi';
-    setMicStatus('Sto ascoltando… ■ per fermare.');
+    setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
     startSilverProgressiveSegment();
     return true;
   }catch(err){
@@ -4954,6 +5273,18 @@ async function stopSilverProgressiveFallback({cancelCurrent=false,silent=false}=
 async function startSilverMic(){
   if(silverMicBusy) return;
 
+  if(silverContinuousMicActive){
+    await stopSilverContinuousDictation({cancel:false,silent:false});
+    return;
+  }
+  if(silverContinuousMicStopping){
+    await silverContinuousStopPromise;
+    return;
+  }
+  if(isSilverMobileDevice()){
+    if(await startSilverContinuousDictation()) return;
+  }
+
   if(silverLiveMicActive){
     stopSilverLiveDictation({cancel:false});
     return;
@@ -4964,18 +5295,13 @@ async function startSilverMic(){
     return;
   }
 
-  // 5.21.10 — iPhone/iPad: saltiamo il riconoscimento live del browser.
-  // I test reali hanno mostrato che il microfono locale e /transcribe funzionano,
-  // mentre SpeechRecognition live è inaffidabile. Usiamo quindi piccoli segmenti
-  // inviati al Worker: il testo compare progressivamente, resta modificabile e
-  // l'invio del messaggio è sempre manuale.
-  if(isIOSLikeDevice()){
-    if(await startSilverProgressiveFallback()) return;
-  }else{
-    // Fuori da iOS manteniamo il comportamento 5.21.8.
-    if(startSilverLiveDictation()) return;
-    if(await startSilverProgressiveFallback()) return;
-  }
+  // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
+  // L'invio resta SEMPRE manuale.
+  if(startSilverLiveDictation()) return;
+
+  // Seconda scelta 5.20.5: trascrizione progressiva a segmenti per browser/webview
+  // che non espongono SpeechRecognition (o lo disabilitano).
+  if(await startSilverProgressiveFallback()) return;
 
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
     setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
@@ -5496,7 +5822,7 @@ window.addEventListener('scroll',()=>{
   if(Date.now() < silverProgrammaticScrollUntil) return;
   clearTimeout(silverScrollStateTimer);
   silverScrollStateTimer = setTimeout(()=>{
-    silverAutoFollow = documentBottomDistance() <= 150;
+    silverAutoFollow = documentBottomDistance() <= 40;
   },90);
 },{passive:true});
 
@@ -7100,7 +7426,7 @@ async function fetchSpeechChunk(text, languageOverride=null, attempt=0){
 async function speakSilver(text, button, languageOverride=null){
   // TTS e riconoscimento non devono restare aperti insieme.
   // Chiudi/trascrivi prima il microfono per impedire che Silver trascriva la propria voce.
-  if(silverLiveMicActive || silverProgressiveFallbackActive || silverProgressiveFallbackStopping || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
+  if(silverContinuousMicActive || silverContinuousMicStopping || silverLiveMicActive || silverProgressiveFallbackActive || silverProgressiveFallbackStopping || silverMicBusy || (silverMediaRecorder && silverMediaRecorder.state==='recording')){
     await finalizeSilverDictationBeforeAction();
   }
 
@@ -7357,12 +7683,14 @@ clearInputButton.addEventListener('pointerdown',e=>{
     document.body.classList.contains('keyboard-open');
 
   // Se la X viene premuta durante una dettatura, annulla davvero la registrazione/live preview.
-  if(silverLiveMicActive){
+  if(silverContinuousMicActive || silverContinuousMicStopping){
+    stopSilverContinuousDictation({cancel:true,silent:true});
+  }else if(silverLiveMicActive){
     stopSilverLiveDictation({cancel:true});
   }
 
   // Nel fallback progressivo scarta soltanto il segmento ancora non trascritto.
-  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
+  else if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
     silverProgressiveGeneration++;
     stopSilverProgressiveFallback({cancelCurrent:true,silent:true});
   }else if(silverMediaRecorder?.state === 'recording'){
@@ -7394,12 +7722,15 @@ clearInputButton.addEventListener('pointerdown',e=>{
 let resizeFrame = 0;
 function resize(){
   cancelAnimationFrame(resizeFrame);
+  const distanceFromBottom=Math.max(0,input.scrollHeight-input.scrollTop-input.clientHeight);
+  const keepBottom=silverContinuousMicActive || distanceFromBottom<28;
   resizeFrame = requestAnimationFrame(()=>{
     input.style.height='auto';
     input.style.height=Math.min(input.scrollHeight,190)+'px';
+    if(keepBottom){
+      try{ input.scrollTop=input.scrollHeight; }catch(_){ }
+    }
 
-    // Se il testo passa su più righe mentre la tastiera è aperta,
-    // ricalcola subito la posizione del composer nel visual viewport.
     if(document.body.classList.contains('keyboard-open')){
       requestAnimationFrame(updateKeyboardLayout);
     }
@@ -7587,6 +7918,52 @@ form.addEventListener('submit', async e=>{
 });
 
 
+
+// 5.21.11 — auto-follow segue l'ultimo messaggio, non il fondo dell'intero documento.
+function documentBottomDistance(){
+  if(!document.body.classList.contains('conversation-mode')) return 0;
+  const last=conversation.lastElementChild;
+  if(!last) return 0;
+  const vv=window.visualViewport;
+  const viewportBottom=vv ? vv.offsetTop+vv.height : window.innerHeight;
+  const composerRect=composer.getBoundingClientRect();
+  const safeBottom=Math.min(viewportBottom-10,composerRect.top-10);
+  const lastRect=last.getBoundingClientRect();
+  return Math.max(0,lastRect.bottom-safeBottom);
+}
+
+function followConversation({behavior='auto',force=false}={}){
+  if(!document.body.classList.contains('conversation-mode')) return;
+  if(!force && !silverAutoFollow) return;
+  if(document.body.classList.contains('keyboard-open')){
+    scheduleKeyboardReveal(120);
+  }
+
+  cancelAnimationFrame(silverFollowFrame);
+  silverFollowFrame=requestAnimationFrame(()=>{
+    const last=conversation.lastElementChild;
+    if(!last) return;
+    const vv=window.visualViewport;
+    const viewportTop=vv ? vv.offsetTop : 0;
+    const viewportBottom=vv ? vv.offsetTop+vv.height : window.innerHeight;
+    const composerRect=composer.getBoundingClientRect();
+    const safeBottom=Math.min(viewportBottom-10,composerRect.top-10);
+    const lastRect=last.getBoundingClientRect();
+    const overflow=lastRect.bottom-safeBottom;
+    if(overflow>4){
+      markProgrammaticScroll(behavior==='smooth'?650:260);
+      window.scrollBy({top:Math.ceil(overflow),left:0,behavior});
+    }else if(lastRect.top<viewportTop+8 && lastRect.height<Math.max(180,(viewportBottom-viewportTop)*.58)){
+      // Messaggio breve finito troppo in alto: riportalo in zona leggibile senza centrarlo forzatamente.
+      const delta=lastRect.top-(viewportTop+12);
+      if(delta<0){
+        markProgrammaticScroll(260);
+        window.scrollBy({top:Math.floor(delta),left:0,behavior:'auto'});
+      }
+    }
+  });
+}
+
 function updateSilverAppHeight(){
   const vv=window.visualViewport;
   const height=Math.max(320,Math.round(vv ? vv.height : window.innerHeight));
@@ -7615,7 +7992,7 @@ if(window.visualViewport){
   },{passive:true});
 }
 
-setSilverLanguage('auto');
+setSilverLanguage('it');
 chooseSilverMode();
 setActiveChair('A');
 updateComposerState();
