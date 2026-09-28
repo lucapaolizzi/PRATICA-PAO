@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.9 — MIC STABLE — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.10 — MIC PROGRESSIVE STABLE — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3980,7 +3980,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.9';
+const SILVER_FRONTEND_VERSION = '5.21.10';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.0';
 
 
@@ -4353,7 +4353,7 @@ let silverProgressiveStopResolve = null;
 let silverProgressiveCancelCurrent = false;
 let silverProgressiveSilentStop = false;
 let silverProgressiveGeneration = 0;
-const SILVER_PROGRESSIVE_SEGMENT_MS = 2200;
+const SILVER_PROGRESSIVE_SEGMENT_MS = 2800;
 let silverProgressiveFirstSegment = true;
 
 
@@ -4438,7 +4438,7 @@ function stopSilverLiveDictation({cancel=false}={}){
   }else{
     // L'eventuale testo interim già visibile resta nel composer: la persona può correggerlo.
     renderLiveDictation();
-    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
+    setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
   }
 
   silverSpeechRecognition=null;
@@ -4784,12 +4784,12 @@ function queueSilverProgressiveSegment(blob){
       saveRecoveryDraft();
       keepDictationComposerVisible();
       if(silverProgressiveFallbackActive){
-        setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
+        setMicStatus('Sto ascoltando… ■ per fermare.');
       }
     }catch(err){
       console.warn('Trascrizione progressiva Silver:',err);
       if(silverProgressiveFallbackActive){
-        setMicStatus('Continuo ad ascoltare. Un segmento non è stato trascritto; puoi correggere il testo prima di inviare.');
+        setMicStatus('Continuo ad ascoltare… un breve tratto non è stato trascritto.');
       }
     }
   });
@@ -4807,7 +4807,7 @@ function finishSilverProgressiveFallback(){
   silverProgressiveCancelCurrent=false;
   resetMicButton();
   if(!silverProgressiveSilentStop){
-    setMicStatus('Dettatura fermata. Rileggi o correggi il testo, poi premi invio.');
+    setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
   }
   silverProgressiveSilentStop=false;
   if(typeof silverProgressiveStopResolve==='function'){
@@ -4855,7 +4855,9 @@ function startSilverProgressiveSegment(){
     },{once:true});
 
     recorder.start(180);
-    const segmentMs=silverProgressiveFirstSegment ? 1700 : SILVER_PROGRESSIVE_SEGMENT_MS;
+    const segmentMs=silverProgressiveFirstSegment
+      ? (isIOSLikeDevice() ? 2400 : 1700)
+      : SILVER_PROGRESSIVE_SEGMENT_MS;
     silverProgressiveFirstSegment=false;
     silverProgressiveSegmentTimer=setTimeout(()=>{
       if(!silverProgressiveFallbackActive || silverProgressiveFallbackStopping) return;
@@ -4892,14 +4894,20 @@ async function startSilverProgressiveFallback(){
     silverProgressiveQueue=Promise.resolve();
     silverProgressiveStopPromise=new Promise(resolve=>{ silverProgressiveStopResolve=resolve; });
 
-    document.body.classList.add('mic-active');
+    if(isIOSLikeDevice()){
+      // Su iPhone il browser può cambiare chrome/viewport quando il microfono è attivo.
+      // Manteniamo quindi invariato il layout di Silver durante la dettatura.
+      document.body.classList.remove('mic-active');
+    }else{
+      document.body.classList.add('mic-active');
+    }
     dictationHelpButton.classList.remove('busy');
     dictationHelpButton.classList.add('recording');
     dictationHelpButton.textContent='■';
     dictationHelpButton.disabled=false;
     dictationHelpButton.setAttribute('aria-label','Ferma la dettatura e rileggi');
     dictationHelpButton.title='Ferma la dettatura e rileggi';
-    setMicStatus('Sto ascoltando… il testo si aggiorna mentre parli. Tocca ■ per fermare e rileggere.');
+    setMicStatus('Sto ascoltando… ■ per fermare.');
     startSilverProgressiveSegment();
     return true;
   }catch(err){
@@ -4956,44 +4964,26 @@ async function startSilverMic(){
     return;
   }
 
-  // 5.21.9 — se stiamo usando la registrazione completa, il secondo tap
-  // deve FERMARE la registrazione, non avviarne un'altra.
-  if(silverMediaRecorder?.state === 'recording'){
-    try{ silverMediaRecorder.requestData?.(); }catch(_){}
-    dictationHelpButton.disabled=true;
-    dictationHelpButton.classList.remove('recording');
-    dictationHelpButton.classList.add('busy');
-    dictationHelpButton.textContent='…';
-    setMicStatus('Trascrivo la tua voce…');
-    try{ silverMediaRecorder.stop(); }catch(_){ resetMicButton(); }
-    return;
-  }
-
-  const preferServerTranscription=isIOSLikeDevice();
-
-  // Fuori da iPhone/iPad manteniamo esattamente il comportamento 5.21.8.
-  if(!preferServerTranscription){
-    // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
-    // L'invio resta SEMPRE manuale.
+  // 5.21.10 — iPhone/iPad: saltiamo il riconoscimento live del browser.
+  // I test reali hanno mostrato che il microfono locale e /transcribe funzionano,
+  // mentre SpeechRecognition live è inaffidabile. Usiamo quindi piccoli segmenti
+  // inviati al Worker: il testo compare progressivamente, resta modificabile e
+  // l'invio del messaggio è sempre manuale.
+  if(isIOSLikeDevice()){
+    if(await startSilverProgressiveFallback()) return;
+  }else{
+    // Fuori da iOS manteniamo il comportamento 5.21.8.
     if(startSilverLiveDictation()) return;
-
-    // Seconda scelta: trascrizione progressiva a segmenti.
     if(await startSilverProgressiveFallback()) return;
   }
 
-  // Su iPhone/iPad usiamo direttamente MediaRecorder → /transcribe.
-  // I test reali hanno mostrato: echo locale OK, live browser KO,
-  // trascrizione Worker corretta.
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
     setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
     return;
   }
 
   try{
-    // Nessuna classe mic-active e nessuna modifica del layout.
-    // Evitiamo inoltre che il blur provochi auto-scroll durante l'avvio.
-    suppressBlurFollowForMic(1400);
-    document.body.classList.remove('mic-active');
+    // Evita che la tastiera rubi spazio mentre si detta.
     try{ input.blur(); }catch(_){}
 
     silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
