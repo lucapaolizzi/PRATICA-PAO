@@ -3504,12 +3504,6 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
 
 
 
-/* === SILVER FRONTEND 5.21.9 — IOS MIC ACCURACY + IN-APP VIEWPORT SAFE ===
-   - iOS: registrazione completa + /transcribe come percorso preferito
-   - reserve inferiore dinamico più ampio per browser in-app
-   - metadata allineati a Worker 7.1.0
-   La sezione 5.21.8 sottostante resta come base CSS storica. */
-
 /* === SILVER FRONTEND 5.21.8 — MOBILE MIC FAST / VIEWPORT SAFE === */
 @media(max-width:760px){
   :root{--silver-browser-bottom-reserve:104px;}
@@ -3986,8 +3980,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.9';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.0';
+const SILVER_FRONTEND_VERSION = '5.21.8';
+const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
 
 
 const backLink = document.getElementById('backLink');
@@ -4367,18 +4361,6 @@ function speechRecognitionConstructor(){
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
 
-function isIOSLikeDevice(){
-  const ua=String(navigator.userAgent || '');
-  return /iPad|iPhone|iPod/i.test(ua) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-function isLikelyIOSWebView(){
-  if(!isIOSLikeDevice()) return false;
-  const ua=String(navigator.userAgent || '');
-  return !/Safari/i.test(ua) || /ChatGPT|CriOS|FxiOS|EdgiOS|GSA/i.test(ua);
-}
-
 function preferredSpeechLanguage(){
   const map={it:'it-IT',en:'en-US',ar:'ar-SA',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-PT'};
   return map[selectedLanguage] || navigator.language || document.documentElement.lang || 'it-IT';
@@ -4393,17 +4375,7 @@ function silverMobileBottomReserve(){
   if(window.innerWidth > 760) return 16;
   const vv=window.visualViewport;
   const chromeGap=vv ? Math.max(0,window.innerHeight - vv.height - vv.offsetTop) : 0;
-
-  // Su iPhone le toolbar native o del browser in-app possono sovrapporsi
-  // al contenuto senza essere riflesse interamente nel visualViewport.
-  // Teniamo quindi un margine minimo più generoso, ancora dinamico.
-  const webview=isLikelyIOSWebView();
-  const ios=isIOSLikeDevice();
-  const floor=webview ? 164 : (ios ? 132 : 92);
-  const cap=webview ? 224 : (ios ? 196 : 160);
-  const extra=webview ? 92 : (ios ? 82 : 72);
-
-  return Math.max(floor,Math.min(cap,chromeGap + extra));
+  return Math.max(92,Math.min(132,chromeGap + 72));
 }
 
 let silverSuppressBlurFollowUntil = 0;
@@ -4978,19 +4950,13 @@ async function startSilverMic(){
     return;
   }
 
-  // 5.21.9 — su iPhone/iPad privilegiamo la registrazione completa e la
-  // trascrizione server dopo lo stop: è meno "live", ma evita gli errori
-  // frequenti del riconoscimento nativo/WebView su frasi brevi o veloci.
-  const preferRecordedTranscription=isIOSLikeDevice();
+  // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
+  // L'invio resta SEMPRE manuale.
+  if(startSilverLiveDictation()) return;
 
-  if(!preferRecordedTranscription){
-    // Prima scelta fuori da iOS: SpeechRecognition nativo, parola per parola.
-    // L'invio resta SEMPRE manuale.
-    if(startSilverLiveDictation()) return;
-
-    // Seconda scelta: trascrizione progressiva a segmenti.
-    if(await startSilverProgressiveFallback()) return;
-  }
+  // Seconda scelta 5.20.5: trascrizione progressiva a segmenti per browser/webview
+  // che non espongono SpeechRecognition (o lo disabilitano).
+  if(await startSilverProgressiveFallback()) return;
 
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
     setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
@@ -7614,7 +7580,6 @@ function updateSilverAppHeight(){
   document.documentElement.style.setProperty('--silver-sheet-vv-width',`${width}px`);
   document.documentElement.style.setProperty('--silver-sheet-vv-top',`${top}px`);
   document.documentElement.style.setProperty('--silver-sheet-vv-left',`${left}px`);
-  document.documentElement.style.setProperty('--silver-browser-bottom-reserve',`${silverMobileBottomReserve()}px`);
 }
 
 updateSilverAppHeight();
