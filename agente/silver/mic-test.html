@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silver — Test microfono</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#24211d;background:#f5f1e8}
+*{box-sizing:border-box}
+body{margin:0;background:#f5f1e8}
+main{width:min(760px,100%);margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom))}
+h1{font-size:28px;margin:0 0 8px}
+p{line-height:1.45}
+.card{background:#fff;border:1px solid #d9d2c7;border-radius:18px;padding:16px;margin:14px 0}
+button{width:100%;padding:14px 16px;border:0;border-radius:999px;background:#24211d;color:#fff;font-size:15px;font-weight:700;margin:6px 0}
+button.secondary{background:#fff;color:#24211d;border:1px solid #24211d}
+button:disabled{opacity:.45}
+pre{white-space:pre-wrap;word-break:break-word;background:#f3f0ea;border-radius:12px;padding:12px;min-height:70px}
+small{color:#6b6256}
+.status{font-weight:700;margin-top:8px}
+audio{width:100%;margin-top:10px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>Test microfono Silver</h1>
+<p>Pagina diagnostica separata: non modifica Silver. Serve a capire quale percorso funziona meglio sul tuo iPhone.</p>
+
+<div class="card">
+<h2>1 · Echo locale</h2>
+<p>Registra e riascolta l’audio <strong>senza inviarlo</strong>.</p>
+<button id="echoStart">REGISTRA</button>
+<button id="echoStop" class="secondary" disabled>STOP</button>
+<audio id="echoAudio" controls hidden></audio>
+<div id="echoStatus" class="status"></div>
+</div>
+
+<div class="card">
+<h2>2 · Riconoscimento live del browser</h2>
+<p>È il metodo usato dal vecchio frontend quando disponibile.</p>
+<button id="liveStart">AVVIA LIVE</button>
+<button id="liveStop" class="secondary" disabled>STOP</button>
+<pre id="liveText"></pre>
+<div id="liveStatus" class="status"></div>
+</div>
+
+<div class="card">
+<h2>3 · Trascrizione Silver Worker</h2>
+<p>Registra la frase, poi invia soltanto l’audio al Worker per la trascrizione.</p>
+<button id="serverStart">REGISTRA PER TRASCRIZIONE</button>
+<button id="serverStop" class="secondary" disabled>STOP E TRASCRIVI</button>
+<pre id="serverText"></pre>
+<div id="serverStatus" class="status"></div>
+</div>
+
+<div class="card">
+<h2>Viewport / browser</h2>
+<pre id="diag"></pre>
+<small>Se durante l’uso del microfono la barra superiore cambia, qui vediamo se cambia anche il visual viewport.</small>
+</div>
+</main>
+
+<script>
+const WORKER='https://silver-pao.paolizzi.workers.dev/';
+const $=id=>document.getElementById(id);
+function diag(){
+  const vv=window.visualViewport;
+  $('diag').textContent=[
+    'UA: '+navigator.userAgent,
+    'inner: '+window.innerWidth+' × '+window.innerHeight,
+    'visualViewport: '+(vv ? `${Math.round(vv.width)} × ${Math.round(vv.height)} / top ${Math.round(vv.offsetTop)} / left ${Math.round(vv.offsetLeft)}` : 'non disponibile'),
+    'scrollY: '+Math.round(window.scrollY)
+  ].join('\n');
+}
+diag();
+addEventListener('resize',diag,{passive:true});
+if(visualViewport){
+  visualViewport.addEventListener('resize',diag,{passive:true});
+  visualViewport.addEventListener('scroll',diag,{passive:true});
+}
+
+function mime(){
+  const list=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+  return list.find(t=>window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+}
+async function getMic(){ return navigator.mediaDevices.getUserMedia({audio:true}); }
+
+let echoRecorder, echoStream, echoChunks=[];
+$('echoStart').onclick=async()=>{
+  try{
+    echoStream=await getMic();
+    echoChunks=[];
+    const m=mime();
+    echoRecorder=m?new MediaRecorder(echoStream,{mimeType:m}):new MediaRecorder(echoStream);
+    echoRecorder.ondataavailable=e=>{if(e.data.size)echoChunks.push(e.data)};
+    echoRecorder.onstop=()=>{
+      const blob=new Blob(echoChunks,{type:echoRecorder.mimeType||echoChunks[0]?.type||'audio/mp4'});
+      $('echoAudio').src=URL.createObjectURL(blob);
+      $('echoAudio').hidden=false;
+      echoStream.getTracks().forEach(t=>t.stop());
+      $('echoStatus').textContent='Registrazione pronta: riascoltala.';
+    };
+    echoRecorder.start(250);
+    $('echoStart').disabled=true;$('echoStop').disabled=false;
+    $('echoStatus').textContent='Sto registrando…';
+  }catch(e){$('echoStatus').textContent='Errore: '+(e.message||e)}
+};
+$('echoStop').onclick=()=>{
+  if(echoRecorder?.state==='recording')echoRecorder.stop();
+  $('echoStart').disabled=false;$('echoStop').disabled=true;
+};
+
+let rec;
+const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition;
+$('liveStart').onclick=()=>{
+  if(!Ctor){$('liveStatus').textContent='SpeechRecognition non disponibile in questo browser.';return;}
+  rec=new Ctor();
+  rec.lang='it-IT'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+  let final='';
+  rec.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal) final += (final?' ':'')+t;
+      else interim += (interim?' ':'')+t;
+    }
+    $('liveText').textContent=(final+' '+interim).trim();
+  };
+  rec.onerror=e=>$('liveStatus').textContent='Errore live: '+e.error;
+  rec.onend=()=>{$('liveStart').disabled=false;$('liveStop').disabled=true;};
+  rec.start();
+  $('liveStart').disabled=true;$('liveStop').disabled=false;$('liveStatus').textContent='Sto ascoltando…';
+};
+$('liveStop').onclick=()=>{try{rec?.stop()}catch(e){} $('liveStatus').textContent='Fermato.'};
+
+let serverRecorder, serverStream, serverChunks=[];
+$('serverStart').onclick=async()=>{
+  try{
+    serverStream=await getMic(); serverChunks=[];
+    const m=mime();
+    serverRecorder=m?new MediaRecorder(serverStream,{mimeType:m}):new MediaRecorder(serverStream);
+    serverRecorder.ondataavailable=e=>{if(e.data.size)serverChunks.push(e.data)};
+    serverRecorder.start(250);
+    $('serverStart').disabled=true;$('serverStop').disabled=false;
+    $('serverStatus').textContent='Sto registrando…';
+  }catch(e){$('serverStatus').textContent='Errore: '+(e.message||e)}
+};
+$('serverStop').onclick=async()=>{
+  if(!serverRecorder || serverRecorder.state!=='recording')return;
+  $('serverStop').disabled=true;$('serverStatus').textContent='Fermo e trascrivo…';
+  await new Promise(resolve=>{
+    serverRecorder.onstop=resolve;
+    serverRecorder.stop();
+  });
+  serverStream.getTracks().forEach(t=>t.stop());
+  const type=serverRecorder.mimeType||serverChunks[0]?.type||'audio/mp4';
+  const ext=type.includes('mp4')?'m4a':type.includes('ogg')?'ogg':'webm';
+  const blob=new Blob(serverChunks,{type});
+  try{
+    const fd=new FormData(); fd.append('audio',blob,'test-silver.'+ext);
+    const res=await fetch(WORKER+'transcribe',{method:'POST',body:fd,cache:'no-store'});
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error(data.error||'Trascrizione non disponibile');
+    $('serverText').textContent=data.text||data.transcript||'';
+    $('serverStatus').textContent='Trascrizione ricevuta.';
+  }catch(e){
+    $('serverStatus').textContent='Errore server: '+(e.message||e);
+  }finally{
+    $('serverStart').disabled=false;
+  }
+};
+</script>
+</body>
+</html>
