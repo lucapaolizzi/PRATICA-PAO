@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.8 — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
+<!-- SILVER FRONTEND 5.21.9 — MIC STABLE — MOBILE MIC FAST · VIEWPORT SAFE · WORKER 7.0.1 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3980,8 +3980,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.8';
-const SILVER_EXPECTED_WORKER_VERSION = '7.0.1';
+const SILVER_FRONTEND_VERSION = '5.21.9';
+const SILVER_EXPECTED_WORKER_VERSION = '7.1.0';
 
 
 const backLink = document.getElementById('backLink');
@@ -4359,6 +4359,12 @@ let silverProgressiveFirstSegment = true;
 
 function speechRecognitionConstructor(){
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function isIOSLikeDevice(){
+  const ua=String(navigator.userAgent || '');
+  return /iPad|iPhone|iPod/i.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 function preferredSpeechLanguage(){
@@ -4950,21 +4956,44 @@ async function startSilverMic(){
     return;
   }
 
-  // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
-  // L'invio resta SEMPRE manuale.
-  if(startSilverLiveDictation()) return;
+  // 5.21.9 — se stiamo usando la registrazione completa, il secondo tap
+  // deve FERMARE la registrazione, non avviarne un'altra.
+  if(silverMediaRecorder?.state === 'recording'){
+    try{ silverMediaRecorder.requestData?.(); }catch(_){}
+    dictationHelpButton.disabled=true;
+    dictationHelpButton.classList.remove('recording');
+    dictationHelpButton.classList.add('busy');
+    dictationHelpButton.textContent='…';
+    setMicStatus('Trascrivo la tua voce…');
+    try{ silverMediaRecorder.stop(); }catch(_){ resetMicButton(); }
+    return;
+  }
 
-  // Seconda scelta 5.20.5: trascrizione progressiva a segmenti per browser/webview
-  // che non espongono SpeechRecognition (o lo disabilitano).
-  if(await startSilverProgressiveFallback()) return;
+  const preferServerTranscription=isIOSLikeDevice();
 
+  // Fuori da iPhone/iPad manteniamo esattamente il comportamento 5.21.8.
+  if(!preferServerTranscription){
+    // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
+    // L'invio resta SEMPRE manuale.
+    if(startSilverLiveDictation()) return;
+
+    // Seconda scelta: trascrizione progressiva a segmenti.
+    if(await startSilverProgressiveFallback()) return;
+  }
+
+  // Su iPhone/iPad usiamo direttamente MediaRecorder → /transcribe.
+  // I test reali hanno mostrato: echo locale OK, live browser KO,
+  // trascrizione Worker corretta.
   if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
     setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
     return;
   }
 
   try{
-    // Evita che la tastiera rubi spazio mentre si detta.
+    // Nessuna classe mic-active e nessuna modifica del layout.
+    // Evitiamo inoltre che il blur provochi auto-scroll durante l'avvio.
+    suppressBlurFollowForMic(1400);
+    document.body.classList.remove('mic-active');
     try{ input.blur(); }catch(_){}
 
     silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
