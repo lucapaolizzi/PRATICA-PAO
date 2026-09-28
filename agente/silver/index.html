@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.14 — WORKER 7.1.5 ALIGNMENT — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE -->
+<!-- SILVER FRONTEND 5.21.16 — WORKER 7.1.7 ALIGNMENT — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3612,6 +3612,67 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   }
 }
 
+
+/* === SILVER FRONTEND 5.21.16 — SESSION CTA PIÙ VISIBILE === */
+body.conversation-mode .session-row.visible{
+  width:100% !important;
+  margin:12px auto 16px !important;
+  padding:0 4px !important;
+  display:flex !important;
+  justify-content:center !important;
+}
+body.conversation-mode .session-end{
+  width:min(100%,560px) !important;
+  min-height:58px !important;
+  padding:10px 18px 9px !important;
+  border:1.5px solid rgba(168,131,62,.66) !important;
+  border-radius:24px !important;
+  background:#fff !important;
+  color:var(--ink) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:3px !important;
+  box-shadow:0 3px 12px rgba(36,35,31,.08) !important;
+  line-height:1.15 !important;
+}
+body.conversation-mode .session-end::before{
+  content:none !important;
+}
+.session-end-title{
+  display:block;
+  font:800 12.5px/1.15 Arial,Helvetica,sans-serif;
+  letter-spacing:.10em;
+}
+.session-end-sub{
+  display:block;
+  font:600 10.5px/1.2 Arial,Helvetica,sans-serif;
+  letter-spacing:.035em;
+  color:#71695f;
+  text-transform:none;
+}
+@media(max-width:520px){
+  body.conversation-mode .session-row.visible{
+    margin:10px auto 14px !important;
+  }
+  body.conversation-mode .session-end{
+    width:100% !important;
+    min-height:60px !important;
+    padding:10px 14px 9px !important;
+    border-radius:22px !important;
+  }
+  .session-end-title{font-size:12px !important;}
+  .session-end-sub{font-size:10px !important;}
+}
+/* Con tastiera aperta il CTA resta nascosto per non rubare spazio alla scrittura. */
+@media(max-width:760px){
+  body.keyboard-open .session-row.visible{
+    display:none !important;
+    visibility:hidden !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3708,7 +3769,11 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   </div>
 
   <div class="session-row" id="sessionRow">
-    <button class="session-end" id="sessionEndButton" type="button">CHIUDI / SALVA SESSIONE</button>
+    <button class="session-end" id="sessionEndButton" type="button"
+      aria-label="Salva, esporta o chiudi la sessione">
+      <span class="session-end-title">SALVA / CHIUDI SESSIONE</span>
+      <span class="session-end-sub">Salva · esporta · termina</span>
+    </button>
   </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
@@ -4001,7 +4066,7 @@ body.conversation-mode:not(.keyboard-open) .session-row.visible{
   <div class="sheet-backdrop" id="sessionBackdrop" aria-hidden="true">
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sessionTitle">
       <div class="sheet-handle"></div>
-      <h2 class="sheet-title" id="sessionTitle">Gestisci sessione</h2>
+      <h2 class="sheet-title" id="sessionTitle">Salva o chiudi la sessione</h2>
       <div class="sheet-grid">
         <button class="sheet-action primary" id="saveConversationButton" type="button">
           <strong>SALVA E TERMINA</strong>
@@ -4032,8 +4097,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.14';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.5';
+const SILVER_FRONTEND_VERSION = '5.21.16';
+const SILVER_EXPECTED_WORKER_VERSION = '7.1.7';
 
 
 const backLink = document.getElementById('backLink');
