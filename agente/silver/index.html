@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.19 — HYBRID ZERO-COST VOICE — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 -->
+<!-- SILVER FRONTEND 5.21.19 — HYBRID ZERO-COST VOICE — QUESTION PREFIX FIX — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -4511,12 +4511,13 @@ function isSilverMobileDevice(){
 // 5.21.19 — La voce standard non usa /transcribe.
 // Mobile: dettatura nativa della tastiera (iOS / Gboard / Samsung Keyboard).
 // Desktop: Web Speech del browser, se disponibile; altrimenti dettatura di sistema.
-// IMPORTANTE: per la voce non usiamo la larghezza del viewport. Una finestra PC stretta
-// resta desktop e deve continuare ad avere il vero pulsante microfono.
+// IMPORTANTE: per la voce non usiamo la larghezza del viewport né il solo touch.
+// Un PC con finestra stretta o touchscreen resta desktop e mantiene il vero microfono.
 function isSilverMobileVoiceDevice(){
   const ua=String(navigator.userAgent || '');
+  const uaDataMobile = navigator.userAgentData?.mobile === true;
   const ipadDesktopUA = /Macintosh|Mac OS X/i.test(ua) && Number(navigator.maxTouchPoints || 0) > 1;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || ipadDesktopUA;
+  return uaDataMobile || /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || ipadDesktopUA;
 }
 
 function silverDesktopOS(){
@@ -4623,6 +4624,7 @@ function silverPunctuateV5(raw){
   // declarative phrases such as "come previsto" and "dove necessario".
   const next = [
     CLOSED,
+    'pronto\\s+' + CLOSED,
     'da dove\\s+(?:vuoi|posso|possiamo|devo|dobbiamo)\\b',
     'dove\\s+(?:vuoi|sei|si\\s+trova|posso|possiamo|devo|dobbiamo)\\b',
     'come\\s+(?:stai|va|ti\\s+senti|posso|puoi|faccio|facciamo|si\\s+fa|si\\s+può|funziona|devo|dovrei)\\b',
@@ -4654,7 +4656,7 @@ function silverPunctuateV5(raw){
     return q.trimEnd() + '? ';
   });
 
-  const neutralPrefix = /^(?:(?:ciao|buongiorno|buonasera|ehi|hey)\b[\s,!.:;—-]*)?(?:(?:silver)\b[\s,!.:;—-]*)?(?:(?:allora|senti|scusa|per favore)\b[\s,!.:;—-]*)*/i;
+  const neutralPrefix = /^(?:(?:ciao|buongiorno|buonasera|ehi|hey|pronto)\b[\s,!.:;—-]*)?(?:(?:silver)\b[\s,!.:;—-]*)?(?:(?:allora|senti|scusa|per favore)\b[\s,!.:;—-]*)*/i;
 
   // Explicit declarative openings that must never be converted into a question.
   const obviousStatement = /^(?:come\s+(?:previsto|detto|sai|sempre|al\s+solito|prima|risultato|conseguenza|esempio|se|quando|dove|un|una)\b|dove\s+(?:necessario|possibile|previsto|indicato|richiesto)\b|la\s+frase\s+come\b|la\s+domanda\s+è\s+come\b)/i;
