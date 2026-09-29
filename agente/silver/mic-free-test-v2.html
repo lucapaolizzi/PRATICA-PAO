@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silver — Mic Free Test v2</title>
+<style>
+:root{--bg:#f5f0e6;--ink:#24211d;--muted:#71695f;--line:#d8d0c4;--card:#fff}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}body{min-height:100svh}
+main{width:min(100%,780px);margin:0 auto;padding:24px 16px 80px}h1{margin:0 0 8px;font-size:clamp(30px,8vw,48px)}h2{margin:0 0 10px;font-size:24px}p{line-height:1.5}.small{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;margin:16px 0}.target{font-family:Georgia,serif;font-size:21px;line-height:1.45;background:#faf8f3;border-radius:16px;padding:14px}
+button{appearance:none;border:0;border-radius:999px;background:var(--ink);color:#fff;padding:14px 18px;font-size:15px;font-weight:800}.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}button:disabled{opacity:.38}.row{display:flex;gap:10px;flex-wrap:wrap}
+textarea{width:100%;min-height:140px;max-height:260px;resize:vertical;border:1px solid var(--line);border-radius:18px;padding:14px;font:18px/1.45 Arial,sans-serif;color:var(--ink);background:#fff;overflow:auto}.status{margin-top:10px;font-size:14px;font-weight:700;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.metric{background:#faf8f3;border-radius:14px;padding:10px}.metric b{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}.metric span{font-size:18px;font-weight:800}.trial{padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.progress{height:10px;background:#ece7df;border-radius:999px;overflow:hidden;margin:10px 0}.progress>div{height:100%;width:0;background:var(--ink);transition:width .15s}.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap;background:#f1eee8;padding:12px;border-radius:14px;overflow:auto}.sticky{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 28%);padding-top:24px}
+@media(max-width:520px){.metrics{grid-template-columns:1fr 1fr}.row button{flex:1}}
+</style>
+</head>
+<body>
+<main>
+<h1>Silver · Mic Free Test v2</h1>
+<p>Test comparativo gratuito. Non modifica Silver. Esegui <strong>3 prove per modalità</strong> usando sempre la stessa frase.</p>
+<div class="card"><h2>Frase di prova</h2><div class="target">Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?</div><p class="small">Parla normalmente, senza dire “punto interrogativo”.</p></div>
+
+<div class="card">
+<h2>1 · Dettatura nativa del telefono</h2>
+<p>Premi AVVIA PROVA, poi usa il microfono della tastiera iPhone/Samsung/Google.</p>
+<textarea id="nativeText" placeholder="Qui comparirà il testo della dettatura nativa…"></textarea>
+<div class="row"><button id="nativeStart">AVVIA PROVA</button><button id="nativeStop" class="secondary" disabled>CHIUDI PROVA</button><button id="nativeClear" class="secondary">PULISCI</button></div>
+<div id="nativeStatus" class="status">Pronto.</div><div id="nativeMetrics" class="metrics"></div><div id="nativeTrials"></div>
+</div>
+
+<div class="card">
+<h2>2 · Web Speech API</h2>
+<p>Riconoscimento vocale del browser. Nessun costo API per Silver.</p>
+<textarea id="webText" placeholder="Premi AVVIA WEB SPEECH…"></textarea>
+<div class="row"><button id="webStart">AVVIA WEB SPEECH</button><button id="webStop" class="secondary" disabled>STOP</button><button id="webClear" class="secondary">PULISCI</button></div>
+<div id="webStatus" class="status">Controllo compatibilità…</div><div id="webMetrics" class="metrics"></div><div id="webTrials"></div>
+</div>
+
+<div class="card">
+<h2>3 · Whisper locale nel browser · sperimentale</h2>
+<p>Il modello viene scaricato sul dispositivo e l'audio viene elaborato localmente. Il primo caricamento può essere pesante.</p>
+<div class="row"><button id="whisperLoad">CARICA MODELLO LOCALE</button><button id="whisperStart" disabled>REGISTRA</button><button id="whisperStop" class="secondary" disabled>STOP E TRASCRIVI</button></div>
+<div class="progress"><div id="whisperProgress"></div></div>
+<textarea id="whisperText" placeholder="Risultato Whisper locale…"></textarea>
+<div id="whisperStatus" class="status">Modello non caricato.</div><div id="whisperMetrics" class="metrics"></div><div id="whisperTrials"></div>
+</div>
+
+<div class="card"><h2>Riepilogo</h2><div id="summary" class="code">Completa almeno una prova per modalità.</div><p class="small">Nessun PASS automatico: mostriamo dati grezzi e mediane.</p></div>
+<div class="sticky"><div class="row"><button id="exportBtn">ESPORTA RISULTATI JSON</button><button id="copyBtn" class="secondary">COPIA RIEPILOGO</button></div></div>
+</main>
+
+<script type="module">
+const TARGET="Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?", expectedQ=3;
+const state={version:2,savedAt:null,capabilities:{ua:navigator.userAgent,language:navigator.language,secureContext:window.isSecureContext,speechRecognition:!!(window.SpeechRecognition||window.webkitSpeechRecognition),mediaRecorder:typeof MediaRecorder!=="undefined",getUserMedia:!!navigator.mediaDevices?.getUserMedia,webAssembly:typeof WebAssembly!=="undefined",webGPU:!!navigator.gpu,hardwareConcurrency:navigator.hardwareConcurrency||null,deviceMemory:navigator.deviceMemory||null},native:[],webSpeech:[],localWhisper:[],notes:{nativeTiming:"firstTextMs include il tempo per toccare il microfono della tastiera dopo AVVIA PROVA.",webSpeechTiming:"firstTextMs parte da AVVIA WEB SPEECH.",localWhisperTiming:"modelLoadMs è separato da recordMs e inferenceMs; Whisper locale non è live."}};
+function normalize(s){return(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim()}
+function words(s){return normalize(s).split(" ").filter(Boolean)}
+function similarity(a,b){const A=words(a),B=words(b),m=A.length,n=B.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(A[i-1]===B[j-1]?0:1));return Math.max(0,1-dp[m][n]/Math.max(m,n,1))}
+function analyze(text){return{chars:text.length,words:words(text).length,questionMarks:(text.match(/\?/g)||[]).length,similarity:+similarity(TARGET,text).toFixed(3)}}
+function median(a){const x=a.filter(Number.isFinite).slice().sort((a,b)=>a-b);if(!x.length)return null;const i=Math.floor(x.length/2);return x.length%2?x[i]:(x[i-1]+x[i])/2}
+const ms=v=>v==null?"—":Math.round(v)+" ms", pct=v=>v==null?"—":Math.round(v*100)+"%";
+function escapeHtml(s){return(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
+function fmtMetrics(el,t){if(!t){el.innerHTML="";return}el.innerHTML=`<div class="metric"><b>Primo testo</b><span>${ms(t.firstTextMs)}</span></div><div class="metric"><b>Tempo totale</b><span>${ms(t.totalMs)}</span></div><div class="metric"><b>Somiglianza</b><span>${pct(t.analysis?.similarity)}</span></div><div class="metric"><b>Punti ?</b><span>${t.analysis?.questionMarks??"—"} / ${expectedQ}</span></div>`}
+function renderTrials(key,el){el.innerHTML=state[key].map((t,i)=>`<div class="trial"><strong>Prova ${i+1}</strong> · primo ${ms(t.firstTextMs)} · totale ${ms(t.totalMs)} · similarità ${pct(t.analysis?.similarity)} · ? ${t.analysis?.questionMarks??"—"}/${expectedQ}<br><span class="small">${escapeHtml(t.text||"")}</span></div>`).join("");updateSummary()}
+function block(name,list){if(!list.length)return`${name}: nessuna prova`;return`${name}:\n  prove=${list.length}\n  mediana primo testo=${ms(median(list.map(x=>x.firstTextMs)))}\n  mediana totale=${ms(median(list.map(x=>x.totalMs)))}\n  similarità mediana=${pct(median(list.map(x=>x.analysis?.similarity)))}\n  ? mediani=${median(list.map(x=>x.analysis?.questionMarks))}`}
+function updateSummary(){summary.textContent=[block("NATIVA",state.native),block("WEB SPEECH",state.webSpeech),block("WHISPER LOCALE",state.localWhisper)].join("\n\n")}
+function exportJSON(){const payload={...state,savedAt:new Date().toISOString(),target:TARGET};const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`silver-mic-free-v2-${new Date().toISOString().replace(/[:.]/g,"-")}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+exportBtn.onclick=exportJSON;copyBtn.onclick=async()=>{await navigator.clipboard.writeText(summary.textContent);copyBtn.textContent="COPIATO";setTimeout(()=>copyBtn.textContent="COPIA RIEPILOGO",1200)};
+
+let nTrial=null;nativeStart.onclick=()=>{nativeText.value="";nTrial={start:performance.now(),firstTextMs:null,totalMs:null,text:"",analysis:null};nativeStart.disabled=true;nativeStop.disabled=false;nativeStatus.textContent="Timer avviato. Usa il microfono della tastiera e detta la frase.";nativeText.focus()};nativeText.addEventListener("input",()=>{if(nTrial&&nTrial.firstTextMs==null&&nativeText.value.trim()){nTrial.firstTextMs=performance.now()-nTrial.start;nativeStatus.textContent="Primo testo ricevuto. Continua, poi CHIUDI PROVA."}});nativeStop.onclick=()=>{if(!nTrial)return;nTrial.totalMs=performance.now()-nTrial.start;nTrial.text=nativeText.value.trim();nTrial.analysis=analyze(nTrial.text);delete nTrial.start;state.native.push(nTrial);fmtMetrics(nativeMetrics,nTrial);renderTrials("native",nativeTrials);nTrial=null;nativeStart.disabled=false;nativeStop.disabled=true;nativeStatus.textContent="Prova salvata. Ripeti fino a 3 volte."};nativeClear.onclick=()=>nativeText.value="";
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,wTrial=null,wFinal="";if(!SR){webStart.disabled=true;webStatus.textContent="SpeechRecognition non disponibile."}else webStatus.textContent="Disponibile.";webText.addEventListener("pointerdown",()=>{if(rec&&wTrial){try{rec.stop()}catch{}webStatus.textContent="Fermato per consentire la correzione."}});webStart.onclick=()=>{if(!SR)return;webText.value="";wFinal="";wTrial={start:performance.now(),firstTextMs:null,totalMs:null,text:"",analysis:null,error:null};rec=new SR();rec.lang="it-IT";rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;rec.onstart=()=>webStatus.textContent="Sto ascoltando… Tocca il campo se vuoi fermarti e correggere.";rec.onresult=e=>{let interim="";for(let i=e.resultIndex;i<e.results.length;i++){const tr=e.results[i][0]?.transcript||"";if(e.results[i].isFinal)wFinal+=(wFinal?" ":"")+tr.trim();else interim+=(interim?" ":"")+tr.trim()}const combined=[wFinal,interim].filter(Boolean).join(" ").trim();if(combined&&wTrial.firstTextMs==null)wTrial.firstTextMs=performance.now()-wTrial.start;webText.value=combined;webText.scrollTop=webText.scrollHeight};rec.onerror=e=>{if(wTrial)wTrial.error=e.error||"errore";webStatus.textContent="Errore: "+(e.error||"sconosciuto")};rec.onend=()=>{if(!wTrial)return;wTrial.totalMs=performance.now()-wTrial.start;wTrial.text=webText.value.trim();wTrial.analysis=analyze(wTrial.text);delete wTrial.start;state.webSpeech.push(wTrial);fmtMetrics(webMetrics,wTrial);renderTrials("webSpeech",webTrials);wTrial=null;rec=null;webStart.disabled=false;webStop.disabled=true;webStatus.textContent="Prova salvata. Il testo ora è modificabile.";webText.focus()};webStart.disabled=true;webStop.disabled=false;rec.start()};webStop.onclick=()=>{if(rec)try{rec.stop()}catch{}};webClear.onclick=()=>webText.value="";
+
+let transcriber=null,recorder=null,chunks=[],lTrial=null,micStream=null;whisperLoad.onclick=async()=>{whisperLoad.disabled=true;whisperStatus.textContent="Carico libreria e modello Whisper tiny…";const t0=performance.now();try{const mod=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm");mod.env.allowLocalModels=false;mod.env.useBrowserCache=true;transcriber=await mod.pipeline("automatic-speech-recognition","onnx-community/whisper-tiny",{device:navigator.gpu?"webgpu":"wasm",progress_callback:p=>{if(p?.progress!=null)whisperProgress.style.width=Math.max(0,Math.min(100,p.progress))+"%";if(p?.status)whisperStatus.textContent=`Modello: ${p.status}${p.progress!=null?" · "+Math.round(p.progress)+"%":""}`}});const loadMs=performance.now()-t0;whisperLoad.dataset.loadMs=String(loadMs);whisperStatus.textContent=`Modello pronto in ${Math.round(loadMs)} ms.`;whisperProgress.style.width="100%";whisperStart.disabled=false}catch(e){whisperStatus.textContent="Caricamento fallito: "+(e?.message||e);whisperLoad.disabled=false}};
+whisperStart.onclick=async()=>{if(!transcriber)return;whisperText.value="";try{micStream=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];let opts={};for(const t of["audio/webm;codecs=opus","audio/mp4","audio/webm"]){if(MediaRecorder.isTypeSupported?.(t)){opts={mimeType:t};break}}recorder=new MediaRecorder(micStream,opts);recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};recorder.start();lTrial={recordStart:performance.now(),firstTextMs:null,totalMs:null,text:"",analysis:null,modelLoadMs:+whisperLoad.dataset.loadMs||null,recordMs:null,inferenceMs:null,error:null};whisperStart.disabled=true;whisperStop.disabled=false;whisperStatus.textContent="Sto registrando. Pronuncia la frase, poi STOP E TRASCRIVI."}catch(e){whisperStatus.textContent="Microfono non disponibile: "+(e?.message||e)}};
+whisperStop.onclick=async()=>{if(!recorder||!lTrial)return;whisperStop.disabled=true;const stopped=new Promise(r=>recorder.onstop=r);recorder.stop();await stopped;lTrial.recordMs=performance.now()-lTrial.recordStart;micStream?.getTracks().forEach(t=>t.stop());whisperStatus.textContent="Decodifico e trascrivo localmente…";const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});try{const pcm=await decode16(blob);const t0=performance.now();const out=await transcriber(pcm,{language:"italian",task:"transcribe",return_timestamps:false,chunk_length_s:30,stride_length_s:5});lTrial.inferenceMs=performance.now()-t0;lTrial.firstTextMs=lTrial.recordMs+lTrial.inferenceMs;lTrial.totalMs=lTrial.firstTextMs;lTrial.text=(out?.text||"").trim();lTrial.analysis=analyze(lTrial.text);whisperText.value=lTrial.text;state.localWhisper.push(lTrial);fmtMetrics(whisperMetrics,lTrial);renderTrials("localWhisper",whisperTrials);whisperStatus.textContent=`Trascrizione completata in ${Math.round(lTrial.inferenceMs)} ms (esclusa registrazione).`}catch(e){lTrial.error=e?.message||String(e);whisperStatus.textContent="Trascrizione locale fallita: "+lTrial.error}finally{lTrial=null;recorder=null;chunks=[];whisperStart.disabled=false;whisperStop.disabled=true}};
+async function decode16(blob){const ab=await blob.arrayBuffer(),ctx=new(window.AudioContext||window.webkitAudioContext)(),audio=await ctx.decodeAudioData(ab.slice(0)),len=audio.length,mono=new Float32Array(len);for(let c=0;c<audio.numberOfChannels;c++){const d=audio.getChannelData(c);for(let i=0;i<len;i++)mono[i]+=d[i]/audio.numberOfChannels}const src=audio.sampleRate,dst=16000;if(src===dst){await ctx.close();return mono}const outLen=Math.round(mono.length*dst/src),out=new Float32Array(outLen);for(let i=0;i<outLen;i++){const pos=i*src/dst,i0=Math.floor(pos),i1=Math.min(i0+1,mono.length-1),f=pos-i0;out[i]=mono[i0]*(1-f)+mono[i1]*f}await ctx.close();return out}
+updateSummary();
+</script>
+</body>
+</html>
