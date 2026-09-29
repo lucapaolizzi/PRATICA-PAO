@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.18 — NATIVE DEVICE DICTATION + LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 ALIGNMENT — COMPOSER ALWAYS EDITABLE -->
+<!-- SILVER FRONTEND 5.21.19 — HYBRID ZERO-COST VOICE — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3771,7 +3771,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 
   <div class="dictation-help-row" id="dictationHelpRow">
     <button class="dictation-help voice-mic" id="dictationHelpButton" type="button"
-      aria-label="Apri la tastiera per dettare" title="Apri la tastiera per dettare">🎤</button>
+      aria-label="Voce" title="Voce">🎤</button>
   </div>
 
   <div class="session-row" id="sessionRow">
@@ -3843,7 +3843,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
         </button>
         <button class="sheet-action" id="attachmentRejectContinue" type="button">
           <strong>CONTINUA SENZA FILE</strong>
-          <span>Puoi proseguire subito scrivendo o usando il microfono.</span>
+          <span>Puoi proseguire subito scrivendo o dettando dal tuo dispositivo.</span>
         </button>
       </div>
       <button class="sheet-close" id="attachmentRejectClose" type="button">CHIUDI</button>
@@ -4103,7 +4103,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.18';
+const SILVER_FRONTEND_VERSION = '5.21.19';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
 
 
@@ -4507,6 +4507,66 @@ function isSilverMobileDevice(){
   return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || window.innerWidth <= 760;
 }
 
+
+// 5.21.19 — La voce standard non usa /transcribe.
+// Mobile: dettatura nativa della tastiera (iOS / Gboard / Samsung Keyboard).
+// Desktop: Web Speech del browser, se disponibile; altrimenti dettatura di sistema.
+// IMPORTANTE: per la voce non usiamo la larghezza del viewport. Una finestra PC stretta
+// resta desktop e deve continuare ad avere il vero pulsante microfono.
+function isSilverMobileVoiceDevice(){
+  const ua=String(navigator.userAgent || '');
+  const ipadDesktopUA = /Macintosh|Mac OS X/i.test(ua) && Number(navigator.maxTouchPoints || 0) > 1;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || ipadDesktopUA;
+}
+
+function silverDesktopOS(){
+  const ua=String(navigator.userAgent || '');
+  if(/Windows/i.test(ua)) return 'windows';
+  if(/Macintosh|Mac OS X/i.test(ua)) return 'mac';
+  if(/Linux/i.test(ua)) return 'linux';
+  return 'other';
+}
+
+function silverSystemDictationHint(){
+  const os=silverDesktopOS();
+  if(os==='windows') return 'Il riconoscimento vocale del browser non è disponibile. Il campo è pronto: premi Windows + H per usare la dettatura di Windows.';
+  if(os==='mac') return 'Il riconoscimento vocale del browser non è disponibile. Il campo è pronto: usa la dettatura configurata in macOS.';
+  return 'Il riconoscimento vocale del browser non è disponibile. Il campo è pronto: puoi usare la dettatura vocale del sistema, se presente.';
+}
+
+function configureSilverVoiceButton(){
+  if(!dictationHelpButton) return;
+  dictationHelpButton.classList.remove('recording','busy');
+  dictationHelpButton.disabled=false;
+  if(isSilverMobileVoiceDevice()){
+    // Non fingere di poter avviare il microfono della tastiera: il browser non può farlo.
+    dictationHelpButton.textContent='⌨️';
+    dictationHelpButton.setAttribute('aria-label','Apri la tastiera per dettare');
+    dictationHelpButton.title='Apri la tastiera e usa il suo microfono';
+  }else{
+    dictationHelpButton.textContent='🎤';
+    dictationHelpButton.setAttribute('aria-label','Detta un messaggio a Silver');
+    dictationHelpButton.title='Detta un messaggio a Silver';
+  }
+}
+
+function focusSilverComposerForSystemDictation(message=''){
+  silverNativeDictationArmed=true;
+  input.readOnly=false;
+  document.body.classList.remove('mic-active');
+  const end=input.value.length;
+  try{
+    input.focus({preventScroll:false});
+    input.setSelectionRange(end,end);
+  }catch(_){
+    try{ input.focus(); }catch(__){}
+  }
+  updateComposerState();
+  resize();
+  configureSilverVoiceButton();
+  setMicStatus(message || silverSystemDictationHint());
+}
+
 function preferredTranscriptionLanguage(){
   if(selectedLanguage && selectedLanguage !== 'auto') return selectedLanguage;
   const allowed=['it','en','ar','fr','es','de','pt'];
@@ -4745,6 +4805,7 @@ function startSilverLiveDictation(){
       const code=String(event?.error || '');
       if(code==='aborted' && silverLiveMicStopping) return;
       if(code==='not-allowed' || code==='service-not-allowed'){
+        silverNativeDictationArmed=false;
         silverLiveMicDisabledForSession=true;
         silverLiveMicActive=false;
         silverSpeechRecognition=null;
@@ -4752,12 +4813,21 @@ function startSilverLiveDictation(){
         setMicStatus('Microfono non autorizzato. Puoi abilitarlo per praticapao.it nelle impostazioni del browser.');
         return;
       }
-      if(code==='network' || code==='audio-capture' || code==='no-speech'){
+      if(code==='no-speech'){
+        silverNativeDictationArmed=false;
+        silverLiveMicActive=false;
+        silverSpeechRecognition=null;
+        resetMicButton();
+        setMicStatus('Non ho rilevato voce. Puoi riprovare oppure usare la dettatura del sistema.');
+        return;
+      }
+      if(code==='network' || code==='audio-capture'){
         silverLiveMicDisabledForSession=true;
         silverLiveMicActive=false;
         silverSpeechRecognition=null;
         resetMicButton();
-        setMicStatus('Trascrizione live non disponibile su questo browser. Tocca di nuovo il microfono: userò la trascrizione dopo lo stop.');
+        focusSilverComposerForSystemDictation(silverSystemDictationHint());
+        return;
       }
     };
 
@@ -5141,11 +5211,7 @@ function resetMicButton(){
   silverMicBusy=false;
   input.readOnly=false;
   document.body.classList.remove('mic-active');
-  dictationHelpButton.classList.remove('recording','busy');
-  dictationHelpButton.textContent='🎤';
-  dictationHelpButton.disabled=false;
-  dictationHelpButton.setAttribute('aria-label','Apri la tastiera per dettare');
-  dictationHelpButton.title='Apri la tastiera per dettare';
+  configureSilverVoiceButton();
 }
 
 async function transcribeSilverRecording(blob){
@@ -5457,41 +5523,33 @@ async function stopSilverProgressiveFallback({cancelCurrent=false,silent=false}=
 }
 
 async function startSilverMic(){
-  // 5.21.18 — percorso vocale standard: dettatura nativa del dispositivo.
-  // Il browser non può premere in modo portabile il microfono della tastiera:
-  // Silver apre quindi il composer, che resta SEMPRE editabile, e la persona
-  // usa il microfono di iOS / Gboard / Samsung Keyboard.
-  // Qui NON partono MediaRecorder, SpeechRecognition né chiamate /transcribe.
-  if(send.disabled) return;
+  if(silverMicBusy || send.disabled) return;
 
-  silverNativeDictationArmed=true;
-  silverMicBusy=false;
-  input.readOnly=false;
-  document.body.classList.remove('mic-active');
-  dictationHelpButton.classList.remove('recording','busy');
-  dictationHelpButton.textContent='🎤';
-  dictationHelpButton.disabled=false;
-  dictationHelpButton.setAttribute('aria-label','Apri la tastiera per dettare');
-  dictationHelpButton.title='Apri la tastiera per dettare';
-
-  const end=input.value.length;
-  try{
-    input.focus({preventScroll:false});
-    input.setSelectionRange(end,end);
-  }catch(_){
-    try{ input.focus(); }catch(__){}
+  // Se Web Speech desktop è già attivo, il secondo tap lo ferma e lascia il testo editabile.
+  if(silverLiveMicActive){
+    stopSilverLiveDictation({cancel:false});
+    return;
   }
 
-  updateComposerState();
-  resize();
-  setMicStatus('Tastiera pronta: tocca il microfono della tastiera per dettare. Il testo resta modificabile; Silver rifinisce localmente la punteggiatura al momento dell’invio.');
+  // 5.21.19 — Su telefono il sito NON può premere il microfono della tastiera.
+  // Il pulsante è quindi dichiaratamente un helper tastiera, non un falso start-mic.
+  if(isSilverMobileVoiceDevice()){
+    silverNativeDictationArmed=true;
+    focusSilverComposerForSystemDictation(
+      'Tastiera aperta: per dettare tocca 🎤 nella tastiera del telefono. Il testo resta modificabile e Silver rifinisce localmente la punteggiatura all’invio.'
+    );
+    return;
+  }
 
-  setTimeout(()=>{
-    const current=String(micStatusText?.textContent || '');
-    if(current.startsWith('Tastiera pronta:')) setMicStatus('');
-  },9000);
+  // Desktop: prima scelta gratuita = Web Speech del browser.
+  silverNativeDictationArmed=true;
+  if(startSilverLiveDictation()) return;
+
+  // Nessuna chiamata /transcribe nello standard: fallback alla dettatura del sistema.
+  focusSilverComposerForSystemDictation(silverSystemDictationHint());
 }
 dictationHelpButton.addEventListener('click',startSilverMic);
+configureSilverVoiceButton();
 
 let maxVisibleViewportHeight = window.visualViewport
   ? window.visualViewport.height
@@ -7865,6 +7923,15 @@ input.addEventListener('input',()=>{
   saveRecoveryDraft();
 },{passive:true});
 
+
+// 5.21.19 — Sul desktop, un tap/click nel testo durante Web Speech significa "voglio correggere".
+// Ferma il riconoscimento prima dell'editing per evitare che un nuovo interim sovrascriva la correzione.
+input.addEventListener('pointerdown',()=>{
+  if(!isSilverMobileVoiceDevice() && silverLiveMicActive){
+    stopSilverLiveDictation({cancel:false});
+  }
+},{passive:true});
+
 form.addEventListener('submit', async e=>{
   e.preventDefault();
 
@@ -7880,8 +7947,8 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
   }
 
-  // 5.21.18 — Rifinitura locale solo per la dettatura avviata dal pulsante 🎤 di Silver.
-  // In questo modo il testo digitato normalmente non viene reinterpretato.
+  // 5.21.19 — Rifinitura locale solo dopo un percorso voce/helper esplicito.
+  // Il testo digitato normalmente continua a non essere reinterpretato.
   if(silverNativeDictationArmed){
     const preparedText=finalizeLocalDictationPunctuation(input.value);
     if(preparedText && preparedText !== input.value.trim()){
