@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silver — Native Mic Test v4</title>
+<style>
+:root{
+  --bg:#f5f0e6;--ink:#24211d;--muted:#71695f;--line:#d8d0c4;
+  --card:#fff;--soft:#faf8f3;--ok:#1f7a3f;--warn:#9a6a00;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+body{min-height:100svh}
+main{width:min(100%,760px);margin:auto;padding:22px 16px 100px}
+h1{font-size:clamp(30px,8vw,46px);line-height:1;margin:0 0 8px}
+h2{margin:0 0 10px}
+p{line-height:1.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;margin:16px 0}
+.target{font:20px/1.5 Georgia,serif;background:var(--soft);padding:14px;border-radius:16px}
+.small{font-size:13px;color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+button{
+  appearance:none;border:0;border-radius:999px;background:var(--ink);color:#fff;
+  padding:14px 18px;font-size:15px;font-weight:800
+}
+button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.38}
+.composer{
+  background:#fff;border:1px solid var(--line);border-radius:24px;padding:12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.04)
+}
+textarea{
+  width:100%;min-height:150px;max-height:280px;border:0;outline:0;resize:vertical;
+  padding:8px;font:18px/1.5 Arial,sans-serif;background:transparent;color:var(--ink)
+}
+.status{font-size:14px;font-weight:700;color:var(--muted);margin:10px 0}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.metric{background:var(--soft);border-radius:14px;padding:10px}
+.metric b{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.metric span{font-size:18px;font-weight:800}
+.preview{background:var(--soft);border-radius:16px;padding:14px;min-height:70px;font-size:18px;line-height:1.5}
+.change{border-top:1px solid var(--line);padding:10px 0;font-size:13px}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+pre{white-space:pre-wrap;background:#f1eee8;padding:12px;border-radius:14px;font-size:12px}
+.sticky{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding-top:28px}
+@media(max-width:480px){.row button{flex:1}.metrics{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>Silver · Native Mic Test v4</h1>
+<p>Prova della <strong>dettatura nativa</strong> come possibile microfono gratuito di Silver. Nessuna trascrizione OpenAI, nessun costo a minuto.</p>
+
+<section class="card">
+  <h2>Frase campione</h2>
+  <div class="target">Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?</div>
+  <p class="small">Usa il microfono della tastiera iPhone. Non dire “punto interrogativo”.</p>
+</section>
+
+<section class="card">
+  <h2>Composer tipo Silver</h2>
+  <div class="composer">
+    <textarea id="text" placeholder="Tocca ATTIVA TASTIERA, poi usa il microfono nativo della tastiera…"></textarea>
+    <div class="row">
+      <button id="focusBtn">ATTIVA TASTIERA</button>
+      <button id="clearBtn" class="secondary">PULISCI</button>
+    </div>
+  </div>
+
+  <div id="status" class="status">Pronto. Il campo resta sempre modificabile.</div>
+
+  <div class="metrics">
+    <div class="metric"><b>Primo testo</b><span id="firstText">—</span></div>
+    <div class="metric"><b>Eventi input</b><span id="inputEvents">0</span></div>
+    <div class="metric"><b>Modifiche cursore</b><span id="selectionEvents">0</span></div>
+    <div class="metric"><b>? nel testo raw</b><span id="rawQ">0</span></div>
+  </div>
+
+  <p class="small"><strong>Prova importante:</strong> mentre stai dettando, tocca un punto del testo e verifica se riesci a spostare il cursore/correggere senza un pulsante STOP di Silver.</p>
+</section>
+
+<section class="card">
+  <h2>Correzione locale prudente</h2>
+  <p>Il testo originale non viene toccato automaticamente. Premi <strong>PREPARA INVIO</strong>: il test crea una copia e applica soltanto correzioni conservative della punteggiatura.</p>
+  <div class="row">
+    <button id="prepareBtn">PREPARA INVIO</button>
+    <button id="useBtn" class="secondary" disabled>USA TESTO CORRETTO</button>
+  </div>
+  <div id="preview" class="preview">Nessuna anteprima.</div>
+  <div id="changes"></div>
+</section>
+
+<section class="card">
+  <h2>Salva prova</h2>
+  <div class="row">
+    <button id="saveTrialBtn">SALVA QUESTA PROVA</button>
+    <button id="exportBtn" class="secondary">ESPORTA JSON</button>
+  </div>
+  <div id="trialStatus" class="status">Fai 3 prove.</div>
+  <div id="trials"></div>
+</section>
+
+<section class="card">
+  <h2>Nota tecnica</h2>
+  <pre>La pagina NON può premere al posto tuo il microfono della tastiera iOS.
+Può però:
+• tenere il campo sempre editabile;
+• lasciare il cursore disponibile;
+• evitare uno STOP obbligatorio di Silver;
+• correggere localmente la punteggiatura prima dell'invio;
+• non usare alcuna API di trascrizione a pagamento.</pre>
+</section>
+
+<div class="sticky">
+  <div class="row">
+    <button id="resetBtn" class="secondary">NUOVA PROVA</button>
+  </div>
+</div>
+</main>
+
+<script>
+const TARGET="Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?";
+const els={
+ text:document.getElementById("text"),focus:document.getElementById("focusBtn"),
+ clear:document.getElementById("clearBtn"),status:document.getElementById("status"),
+ first:document.getElementById("firstText"),inputs:document.getElementById("inputEvents"),
+ selections:document.getElementById("selectionEvents"),rawQ:document.getElementById("rawQ"),
+ prepare:document.getElementById("prepareBtn"),use:document.getElementById("useBtn"),
+ preview:document.getElementById("preview"),changes:document.getElementById("changes"),
+ save:document.getElementById("saveTrialBtn"),export:document.getElementById("exportBtn"),
+ trials:document.getElementById("trials"),trialStatus:document.getElementById("trialStatus"),
+ reset:document.getElementById("resetBtn")
+};
+
+const state={
+ format:"silver-native-mic-v4",version:4,target:TARGET,
+ capabilities:{
+  ua:navigator.userAgent,language:navigator.language,secureContext:window.isSecureContext,
+  visualViewport:!!window.visualViewport
+ },
+ trials:[]
+};
+
+let run=null, lastPrepared=null;
+
+function qCount(s){return (s.match(/\?/g)||[]).length}
+function ms(v){return v==null?"—":Math.round(v)+" ms"}
+function capFirst(s){return s ? s.charAt(0).toUpperCase()+s.slice(1) : s}
+function esc(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]))}
+
+function newRun(){
+ run={
+  startedAt:performance.now(),
+  firstTextMs:null,
+  inputEvents:0,
+  selectionEvents:0,
+  rawText:"",
+  correctedText:"",
+  corrections:[],
+  usedCorrected:false
+ };
+ lastPrepared=null;
+ els.first.textContent="—";
+ els.inputs.textContent="0";
+ els.selections.textContent="0";
+ els.rawQ.textContent="0";
+ els.preview.textContent="Nessuna anteprima.";
+ els.changes.innerHTML="";
+ els.use.disabled=true;
+ els.status.textContent="Pronto. Il campo resta sempre modificabile.";
+}
+newRun();
+
+function conservativePunctuation(raw){
+ let text=(raw||"").trim();
+ const changes=[];
+ const original=text;
+
+ // 1) "mi senti come/da dove/dove/..." -> "mi senti? Come/Da dove/Dove/..."
+ const boundary1=/\b(mi senti|mi ascolti|riesci a sentirmi)\s+(come|da dove|dove|quando|perché|perche|chi|che cosa|cosa|quale|quali|quanto|quanta|quanti|quante)\b/gi;
+ text=text.replace(boundary1,(m,a,b)=>{
+   changes.push(`Inserito “?” dopo “${a}” prima di “${b}”.`);
+   return a+"? "+capFirst(b);
+ });
+
+ // 2) If a clause starts with a strong interrogative and ends without terminal punctuation,
+ // add ? only at end of the whole text.
+ if(!/[.!?…]$/.test(text)){
+   const lastClause=text.split(/[.!?]\s*/).pop().trim();
+   if(/^(come|da dove|dove|quando|perché|perche|chi|che cosa|cosa|quale|quali|quanto|quanta|quanti|quante)\b/i.test(lastClause)){
+     text+="?";
+     changes.push("Aggiunto “?” alla fine di una frase che inizia con una parola interrogativa.");
+   } else if(/\b(mi senti|mi ascolti|riesci a sentirmi)\s*$/i.test(lastClause)){
+     text+="?";
+     changes.push("Aggiunto “?” alla fine di una domanda diretta evidente.");
+   }
+ }
+
+ // 3) Normalize capitalization after ? only.
+ text=text.replace(/\?\s+([a-zà-ÿ])/g,(m,c)=>"? "+c.toUpperCase());
+
+ return {original,text,changes};
+}
+
+els.focus.onclick=()=>{
+ if(!run) newRun();
+ run.startedAt=performance.now();
+ run.firstTextMs=null;
+ els.first.textContent="—";
+ els.text.focus();
+ els.status.textContent="Tastiera attiva. Ora tocca il microfono nativo della tastiera.";
+};
+
+els.text.addEventListener("input",()=>{
+ if(!run) newRun();
+ run.inputEvents++;
+ if(run.firstTextMs==null && els.text.value.trim()){
+   run.firstTextMs=performance.now()-run.startedAt;
+   els.first.textContent=ms(run.firstTextMs);
+ }
+ run.rawText=els.text.value;
+ els.inputs.textContent=run.inputEvents;
+ els.rawQ.textContent=qCount(els.text.value);
+ els.status.textContent="Testo ricevuto. Puoi toccare il campo e correggere subito.";
+});
+
+document.addEventListener("selectionchange",()=>{
+ if(document.activeElement===els.text && run){
+   run.selectionEvents++;
+   els.selections.textContent=run.selectionEvents;
+ }
+});
+
+els.clear.onclick=()=>{
+ els.text.value="";
+ newRun();
+ els.text.focus();
+};
+
+els.prepare.onclick=()=>{
+ const raw=els.text.value;
+ lastPrepared=conservativePunctuation(raw);
+ run.rawText=raw;
+ run.correctedText=lastPrepared.text;
+ run.corrections=lastPrepared.changes.slice();
+ els.preview.textContent=lastPrepared.text || "Campo vuoto.";
+ els.changes.innerHTML=lastPrepared.changes.length
+   ? lastPrepared.changes.map(c=>`<div class="change">• ${esc(c)}</div>`).join("")
+   : `<div class="change ok">Nessuna correzione locale necessaria.</div>`;
+ els.use.disabled=!lastPrepared.text || lastPrepared.text===raw;
+};
+
+els.use.onclick=()=>{
+ if(!lastPrepared)return;
+ els.text.value=lastPrepared.text;
+ run.usedCorrected=true;
+ run.rawText=lastPrepared.original;
+ run.correctedText=lastPrepared.text;
+ els.rawQ.textContent=qCount(els.text.value);
+ els.text.focus();
+ els.status.textContent="Testo corretto copiato nel composer. Puoi ancora modificarlo liberamente.";
+};
+
+els.save.onclick=()=>{
+ const finalText=els.text.value.trim();
+ if(!finalText){els.trialStatus.textContent="Scrivi o detta qualcosa prima di salvare.";return}
+ if(!lastPrepared){
+   lastPrepared=conservativePunctuation(finalText);
+ }
+ const trial={
+   firstTextMs:run.firstTextMs,
+   inputEvents:run.inputEvents,
+   selectionEvents:run.selectionEvents,
+   rawText:run.rawText || finalText,
+   rawQuestionMarks:qCount(run.rawText || finalText),
+   preparedText:lastPrepared.text,
+   preparedQuestionMarks:qCount(lastPrepared.text),
+   corrections:lastPrepared.changes,
+   usedCorrected:run.usedCorrected,
+   finalComposerText:finalText
+ };
+ state.trials.push(trial);
+ renderTrials();
+ els.trialStatus.textContent=`Prova ${state.trials.length} salvata. ${state.trials.length<3?"Ripeti fino a 3.":"Puoi esportare il JSON."}`;
+};
+
+function renderTrials(){
+ els.trials.innerHTML=state.trials.map((t,i)=>`
+ <div class="change">
+ <strong>Prova ${i+1}</strong> · primo testo ${ms(t.firstTextMs)} · input ${t.inputEvents} · cursore ${t.selectionEvents}<br>
+ raw ?: ${t.rawQuestionMarks} · preparato ?: ${t.preparedQuestionMarks}<br>
+ <span class="small">RAW: ${esc(t.rawText)}</span><br>
+ <span class="small">PREPARATO: ${esc(t.preparedText)}</span>
+ </div>`).join("");
+}
+
+els.export.onclick=()=>{
+ const payload={...state,savedAt:new Date().toISOString()};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download=`silver-native-mic-v4-${new Date().toISOString().replace(/[:.]/g,"-")}.json`;
+ a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+
+els.reset.onclick=()=>{
+ els.text.value="";
+ newRun();
+ els.text.focus();
+};
+</script>
+</body>
+</html>
