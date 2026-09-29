@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silver — Web Speech Diagnostic v3</title>
+<style>
+:root{
+  --bg:#f5f0e6; --ink:#24211d; --muted:#71695f; --line:#d8d0c4;
+  --card:#fff; --ok:#1f7a3f; --warn:#9a6a00; --bad:#a53232; --soft:#faf8f3;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+body{min-height:100svh}
+main{width:min(100%,780px);margin:0 auto;padding:24px 16px 90px}
+h1{margin:0 0 8px;font-size:clamp(30px,8vw,46px);line-height:1}
+h2{margin:0 0 10px;font-size:24px}
+p{line-height:1.5}
+.small{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;margin:16px 0}
+.target{font-family:Georgia,serif;font-size:21px;line-height:1.5;background:var(--soft);border-radius:16px;padding:14px}
+button{
+  appearance:none;border:0;border-radius:999px;background:var(--ink);color:#fff;
+  padding:14px 18px;font-size:15px;font-weight:800;letter-spacing:.02em
+}
+button.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.38}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+textarea{
+  width:100%;min-height:150px;max-height:260px;resize:vertical;border:1px solid var(--line);
+  border-radius:18px;padding:14px;font:18px/1.45 Arial,sans-serif;color:var(--ink);background:#fff
+}
+.status{margin-top:10px;font-size:14px;font-weight:700;color:var(--muted)}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.metric{background:var(--soft);border-radius:14px;padding:10px}
+.metric b{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.metric span{font-size:18px;font-weight:800}
+.log{background:#f1eee8;border-radius:16px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.45;white-space:pre-wrap;max-height:360px;overflow:auto}
+.flag{padding:10px 12px;border-radius:14px;margin:10px 0;font-weight:700}
+.flag.ok{background:#e7f4ea;color:var(--ok)}
+.flag.warn{background:#fff4d6;color:var(--warn)}
+.flag.bad{background:#fde7e7;color:var(--bad)}
+.trial{padding:12px 0;border-top:1px solid var(--line)}
+.sticky{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding-top:26px}
+@media(max-width:480px){.row button{flex:1}.metrics{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Silver · Web Speech Diagnostic v3</h1>
+  <p>Questo test serve a capire <strong>se il browser mette “?” nell’interim e poi lo perde nel final</strong>. Non modifica Silver.</p>
+
+  <section class="card">
+    <h2>Frase campione</h2>
+    <div class="target">Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?</div>
+    <p class="small">Ripeti questa frase con ritmo normale. Non dire “punto interrogativo”.</p>
+  </section>
+
+  <section class="card">
+    <h2>Web Speech · diagnostica</h2>
+    <textarea id="liveText" placeholder="Il testo riconosciuto apparirà qui…"></textarea>
+    <div class="row">
+      <button id="startBtn">AVVIA PROVA</button>
+      <button id="stopBtn" class="secondary" disabled>STOP</button>
+      <button id="clearBtn" class="secondary">PULISCI</button>
+    </div>
+
+    <div id="status" class="status">Controllo compatibilità…</div>
+
+    <div id="metrics" class="metrics"></div>
+
+    <div id="diagnosis"></div>
+
+    <h3>Eventi interim / final</h3>
+    <div id="eventLog" class="log">Nessun evento.</div>
+  </section>
+
+  <section class="card">
+    <h2>Prove salvate</h2>
+    <div id="trials"></div>
+  </section>
+
+  <section class="card">
+    <h2>Riepilogo tecnico</h2>
+    <div id="summary" class="log">Completa almeno una prova.</div>
+  </section>
+
+  <div class="sticky">
+    <div class="row">
+      <button id="exportBtn">ESPORTA JSON</button>
+      <button id="copyBtn" class="secondary">COPIA RIEPILOGO</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const TARGET = "Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?";
+const EXPECTED_Q = 3;
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const state = {
+  format: "silver-web-speech-diagnostic",
+  version: 3,
+  target: TARGET,
+  capabilities: {
+    ua: navigator.userAgent,
+    language: navigator.language,
+    secureContext: window.isSecureContext,
+    speechRecognition: !!SR
+  },
+  trials: []
+};
+
+const els = {
+  text: document.getElementById("liveText"),
+  start: document.getElementById("startBtn"),
+  stop: document.getElementById("stopBtn"),
+  clear: document.getElementById("clearBtn"),
+  status: document.getElementById("status"),
+  metrics: document.getElementById("metrics"),
+  diagnosis: document.getElementById("diagnosis"),
+  log: document.getElementById("eventLog"),
+  trials: document.getElementById("trials"),
+  summary: document.getElementById("summary"),
+  export: document.getElementById("exportBtn"),
+  copy: document.getElementById("copyBtn")
+};
+
+let rec = null;
+let current = null;
+let finalText = "";
+
+function qCount(s){ return (s.match(/\?/g)||[]).length; }
+
+function nowMs(){ return performance.now(); }
+
+function ms(v){ return v == null ? "—" : Math.round(v) + " ms"; }
+
+function esc(s){
+  return (s||"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[m]));
+}
+
+function normalize(s){
+  return (s||"")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^\p{L}\p{N}\s]/gu," ")
+    .replace(/\s+/g," ").trim();
+}
+
+function words(s){ return normalize(s).split(" ").filter(Boolean); }
+
+function similarity(a,b){
+  const A=words(a), B=words(b), m=A.length, n=B.length;
+  const d=Array.from({length:m+1},()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) d[i][0]=i;
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      d[i][j]=Math.min(
+        d[i-1][j]+1,
+        d[i][j-1]+1,
+        d[i-1][j-1]+(A[i-1]===B[j-1]?0:1)
+      );
+    }
+  }
+  return Math.max(0,1-d[m][n]/Math.max(m,n,1));
+}
+
+function renderMetrics(trial){
+  const sim = similarity(TARGET, trial.finalText || trial.lastCombined || "");
+  els.metrics.innerHTML = `
+    <div class="metric"><b>Primo testo</b><span>${ms(trial.firstTextMs)}</span></div>
+    <div class="metric"><b>Tempo totale</b><span>${ms(trial.totalMs)}</span></div>
+    <div class="metric"><b>Massimo ? in interim</b><span>${trial.maxInterimQ}/${EXPECTED_Q}</span></div>
+    <div class="metric"><b>? nel final</b><span>${trial.finalQ}/${EXPECTED_Q}</span></div>
+    <div class="metric"><b>Similarità parole</b><span>${Math.round(sim*100)}%</span></div>
+    <div class="metric"><b>Eventi totali</b><span>${trial.events.length}</span></div>
+  `;
+}
+
+function diagnose(trial){
+  const lost = trial.maxInterimQ > trial.finalQ;
+  const exactLoss = trial.maxInterimQ >= 1 && trial.finalQ < trial.maxInterimQ;
+  const finalGood = trial.finalQ >= EXPECTED_Q;
+  let cls="ok", msg="Nessuna perdita di punteggiatura rilevata.";
+  if(finalGood){
+    cls="ok";
+    msg="Il final conserva tutti i punti interrogativi attesi.";
+  } else if(exactLoss){
+    cls="bad";
+    msg=`Confermato: l'interim è arrivato fino a ${trial.maxInterimQ} “?”, ma il final ne conserva ${trial.finalQ}. Il browser sta sostituendo una punteggiatura migliore con una finale peggiore.`;
+  } else {
+    cls="warn";
+    msg=`Il final contiene ${trial.finalQ}/${EXPECTED_Q} punti interrogativi, ma non abbiamo ancora visto una perdita interim→final abbastanza chiara.`;
+  }
+  els.diagnosis.innerHTML = `<div class="flag ${cls}">${msg}</div>`;
+  return {lostPunctuation:lost, message:msg};
+}
+
+function renderLog(events){
+  if(!events.length){ els.log.textContent="Nessun evento."; return; }
+  els.log.textContent = events.map((e,i)=>{
+    const type = e.isFinal ? "FINAL " : "INTERIM";
+    return `${String(i+1).padStart(2,"0")} · ${String(Math.round(e.tMs)).padStart(5," ")} ms · ${type} · ?=${e.q}\n${e.text}`;
+  }).join("\n\n");
+  els.log.scrollTop = els.log.scrollHeight;
+}
+
+function renderTrials(){
+  els.trials.innerHTML = state.trials.map((t,i)=>{
+    const d=t.diagnosis || {};
+    return `<div class="trial">
+      <strong>Prova ${i+1}</strong><br>
+      primo testo: ${ms(t.firstTextMs)} · totale: ${ms(t.totalMs)} · max interim ?: ${t.maxInterimQ} · final ?: ${t.finalQ}<br>
+      <span class="small">${esc(t.finalText || t.lastCombined || "")}</span><br>
+      <span class="small">${esc(d.message||"")}</span>
+    </div>`;
+  }).join("");
+  updateSummary();
+}
+
+function updateSummary(){
+  if(!state.trials.length){
+    els.summary.textContent="Completa almeno una prova.";
+    return;
+  }
+  const losses = state.trials.filter(t=>t.diagnosis?.lostPunctuation).length;
+  const finals = state.trials.map(t=>t.finalQ);
+  const maxes = state.trials.map(t=>t.maxInterimQ);
+  const firsts = state.trials.map(t=>t.firstTextMs).filter(Number.isFinite);
+  const avg = a => a.length ? Math.round(a.reduce((x,y)=>x+y,0)/a.length) : null;
+
+  els.summary.textContent =
+`prove: ${state.trials.length}
+perdita punteggiatura interim→final: ${losses}/${state.trials.length}
+media ? massimi interim: ${(maxes.reduce((a,b)=>a+b,0)/maxes.length).toFixed(2)}
+media ? final: ${(finals.reduce((a,b)=>a+b,0)/finals.length).toFixed(2)}
+media tempo primo testo: ${ms(avg(firsts))}
+
+Conclusione automatica:
+${losses >= 2 ? "La perdita di punteggiatura interim→final è ripetibile." :
+  losses === 1 ? "La perdita è stata osservata almeno una volta; servono altre prove." :
+  "Nessuna perdita interim→final ancora confermata."}`;
+}
+
+if(!SR){
+  els.start.disabled = true;
+  els.status.textContent = "SpeechRecognition non disponibile su questo browser.";
+} else {
+  els.status.textContent = "SpeechRecognition disponibile. Pronto.";
+}
+
+els.start.onclick = ()=>{
+  if(!SR) return;
+
+  finalText = "";
+  els.text.value = "";
+  els.log.textContent = "In ascolto…";
+  els.diagnosis.innerHTML = "";
+  els.metrics.innerHTML = "";
+
+  current = {
+    start: nowMs(),
+    firstTextMs: null,
+    totalMs: null,
+    events: [],
+    maxInterimQ: 0,
+    finalQ: 0,
+    finalText: "",
+    lastCombined: "",
+    diagnosis: null,
+    error: null
+  };
+
+  rec = new SR();
+  rec.lang = "it-IT";
+  rec.interimResults = true;
+  rec.continuous = true;
+  rec.maxAlternatives = 1;
+
+  rec.onstart = ()=>{
+    els.status.textContent = "Sto ascoltando… osserva se compare “?” e poi scompare.";
+  };
+
+  rec.onresult = ev=>{
+    let interim = "";
+    let sawFinalInEvent = false;
+
+    for(let i=ev.resultIndex;i<ev.results.length;i++){
+      const txt = (ev.results[i][0]?.transcript || "").trim();
+      if(ev.results[i].isFinal){
+        sawFinalInEvent = true;
+        finalText += (finalText ? " " : "") + txt;
+        current.events.push({
+          tMs: nowMs()-current.start,
+          isFinal: true,
+          text: txt,
+          q: qCount(txt)
+        });
+      } else {
+        interim += (interim ? " " : "") + txt;
+        current.events.push({
+          tMs: nowMs()-current.start,
+          isFinal: false,
+          text: txt,
+          q: qCount(txt)
+        });
+        current.maxInterimQ = Math.max(current.maxInterimQ, qCount(txt));
+      }
+    }
+
+    const combined = [finalText,interim].filter(Boolean).join(" ").trim();
+    current.lastCombined = combined;
+
+    if(combined && current.firstTextMs == null){
+      current.firstTextMs = nowMs()-current.start;
+    }
+
+    els.text.value = combined;
+    renderLog(current.events);
+
+    // Important: if a final arrives with fewer ? than a previous interim,
+    // show the loss immediately while still recording.
+    const currentFinalQ = qCount(finalText);
+    if(sawFinalInEvent && current.maxInterimQ > currentFinalQ){
+      els.diagnosis.innerHTML =
+        `<div class="flag bad">Perdita osservata in diretta: interim max ${current.maxInterimQ} “?” → final attuale ${currentFinalQ} “?”.</div>`;
+    }
+  };
+
+  rec.onerror = e=>{
+    current.error = e.error || "errore";
+    els.status.textContent = "Errore: " + current.error;
+  };
+
+  rec.onend = ()=>{
+    if(!current) return;
+
+    current.totalMs = nowMs()-current.start;
+    current.finalText = finalText.trim() || current.lastCombined.trim();
+    current.finalQ = qCount(current.finalText);
+
+    // Also include punctuation seen in all interim events, not only latest chunk.
+    current.maxInterimQ = Math.max(
+      current.maxInterimQ,
+      ...current.events.filter(e=>!e.isFinal).map(e=>e.q),
+      0
+    );
+
+    current.diagnosis = diagnose(current);
+    renderMetrics(current);
+
+    const saved = JSON.parse(JSON.stringify(current));
+    delete saved.start;
+    state.trials.push(saved);
+
+    renderTrials();
+
+    els.start.disabled = false;
+    els.stop.disabled = true;
+    els.status.textContent = "Prova salvata. Ripeti almeno 3 volte.";
+    rec = null;
+    current = null;
+  };
+
+  els.start.disabled = true;
+  els.stop.disabled = false;
+  rec.start();
+};
+
+els.stop.onclick = ()=>{
+  if(rec) try{ rec.stop(); }catch{}
+};
+
+els.clear.onclick = ()=>{
+  els.text.value = "";
+  els.log.textContent = "Nessun evento.";
+  els.metrics.innerHTML = "";
+  els.diagnosis.innerHTML = "";
+};
+
+els.export.onclick = ()=>{
+  const payload = {...state, savedAt:new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `silver-web-speech-v3-${new Date().toISOString().replace(/[:.]/g,"-")}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+
+els.copy.onclick = async()=>{
+  await navigator.clipboard.writeText(els.summary.textContent);
+  els.copy.textContent = "COPIATO";
+  setTimeout(()=>els.copy.textContent="COPIA RIEPILOGO",1200);
+};
+</script>
+</body>
+</html>
