@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.17 — DICTATION FINAL FALLBACK + SESSION CTA — WORKER 7.1.8 ALIGNMENT — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE -->
+<!-- SILVER FRONTEND 5.21.18 — NATIVE DEVICE DICTATION + LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 ALIGNMENT — COMPOSER ALWAYS EDITABLE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3771,7 +3771,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 
   <div class="dictation-help-row" id="dictationHelpRow">
     <button class="dictation-help voice-mic" id="dictationHelpButton" type="button"
-      aria-label="Detta un messaggio a Silver" title="Detta un messaggio a Silver">🎤</button>
+      aria-label="Apri la tastiera per dettare" title="Apri la tastiera per dettare">🎤</button>
   </div>
 
   <div class="session-row" id="sessionRow">
@@ -3854,7 +3854,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
     <section class="sheet practice-info-sheet" role="dialog" aria-modal="true" aria-labelledby="practiceInfoTitle">
       <div class="sheet-handle"></div>
       <h2 class="sheet-title" id="practiceInfoTitle">Istruzioni pratica: <span class="practice-info-title-detail">Come usare A · B · C</span></h2>
-      <p class="practice-write-cue"><strong>Per iniziare, scegli una posizione e scrivi ciò che emerge.</strong> Puoi anche usare il microfono: le tue parole vengono trascritte nel campo di scrittura prima dell'invio.</p>
+      <p class="practice-write-cue"><strong>Per iniziare, scegli una posizione e scrivi ciò che emerge.</strong> Puoi anche usare la dettatura del telefono: il testo resta sempre modificabile e la punteggiatura viene rifinita localmente prima dell'invio.</p>
       <p><strong>A · B · C sono posizioni di esperienza, non ruoli rigidi.</strong> La posizione che stai vivendo può diventare figura; ciò che resta sullo sfondo può emergere in seguito oppure non emergere affatto.</p>
       <p><strong>A e B</strong> ti permettono di dare voce a due posizioni, parti, interlocutori o punti di vista che sono realmente presenti nel tuo campo. L’altra sedia <strong>non è automaticamente lo sfondo</strong> e Silver non decide in anticipo che cosa deve rappresentare.</p>
       <p><strong>Se A e B entrano in dialogo, il movimento parte dal sentire.</strong> Una posizione si esprime; l’altra legge o ascolta e risponde da ciò che sente: <em>“Quando dici questo, io sento…”</em>. Poi la prima può sentire quella risposta e rispondere a sua volta. È un movimento simile a una partita di ping pong: risposta dopo risposta può emergere qualcosa che prima non era visibile.</p>
@@ -4103,7 +4103,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.17';
+const SILVER_FRONTEND_VERSION = '5.21.18';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
 
 
@@ -4452,6 +4452,7 @@ let silverMicTimer = null;
 let silverMicBusy = false;
 let silverMicCancelled = false;
 let silverMicOperationPromise = Promise.resolve();
+let silverNativeDictationArmed = false; // 5.21.18: true solo dopo tap sul microfono Silver.
 
 // 5.20.5 — dettatura live: dove il browser espone SpeechRecognition,
 // il testo compare nel composer mentre la persona parla.
@@ -4524,20 +4525,114 @@ function joinDictationText(...parts){
   return parts.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
 }
 
-// 5.21.17 — rete di sicurezza locale SOLO per la dettatura finale/fallback.
-function finalizeLocalDictationPunctuation(text, language=preferredTranscriptionLanguage()){
-  let out=String(text || '').trim();
-  const lang=String(language || '').toLowerCase().split(/[-_]/)[0];
-  if(!out || lang!=='it' || /[?？]\s*$/.test(out)) return out;
-  const low=out.toLowerCase().replace(/[“”"'’]/g,'').replace(/\s+/g,' ').trim();
-  const withoutGreeting=low.replace(/^(?:ciao|salve|ehi|hey)\s+(?:silver|silvia|silvio)\b[,:;\s-]*/i,'');
-  const startsLikeQuestion=/^(?:(?:come|cosa|che cosa|chi|dove|da dove|quando|quale|quali|quanto|quanta|quanti|quante)\b|perch[eé](?:\s|$))/.test(withoutGreeting) || /^(?:puoi|potresti|posso|devo|dovrei|vuoi|vorresti|sai|mi dici|mi puoi dire|mi sapresti dire)\b/.test(withoutGreeting);
-  const directQuestionPhrase=/\b(?:mi senti|mi ascolti|mi vedi|ci sei|come stai|come va|come ti senti|che ne pensi|cosa ne pensi|da dove vuoi cominciare|dove vuoi cominciare|da dove vuoi partire|dove vuoi partire)\b/.test(low);
-  const obviousStatement=/^(?:non so|so che|penso che|credo che|mi sembra che|ti dico che|volevo dirti che|come previsto|come detto|come sai|come sempre|come al solito|quando possibile|dove necessario)\b/.test(withoutGreeting);
-  if((startsLikeQuestion || directQuestionPhrase) && !obviousStatement){
-    return out.replace(/[.!…]+\s*$/,'').trimEnd() + '?';
+// 5.21.18 — Punctuation Engine V5.1.
+// La dettatura nativa riconosce le parole; Silver corregge SOLO punteggiatura e
+// maiuscola successiva nei casi interrogativi italiani ad alta confidenza.
+// Nessuna API di trascrizione viene chiamata da questo percorso.
+function silverPunctuateV5(raw){
+  let text = String(raw ?? '').trim();
+  const original = text;
+  const changes = [];
+  if (!text) return { original, text, changes };
+
+  text = text.replace(/[\t ]+/g, ' ');
+
+  const closed = [
+    'mi senti(?: bene)?',
+    'mi ascolti',
+    'mi capisci',
+    'riesci a sentirmi',
+    'puoi sentirmi',
+    'ci sei',
+    'sei qui',
+    'sei l[iì]',
+    'come stai',
+    'come va',
+    'come ti senti',
+    'tutto bene',
+    'va tutto bene',
+    'da dove vuoi (?:cominciare|continuare|partire)',
+    'dove vuoi (?:cominciare|continuare|partire)',
+    'cosa ne pensi',
+    'che ne pensi'
+  ];
+  const CLOSED = '(?:' + closed.join('|') + ')';
+
+  // Only high-confidence starts are allowed to open a new question boundary.
+  // Generic "come" / "dove" are intentionally excluded because they also begin
+  // declarative phrases such as "come previsto" and "dove necessario".
+  const next = [
+    CLOSED,
+    'da dove\\s+(?:vuoi|posso|possiamo|devo|dobbiamo)\\b',
+    'dove\\s+(?:vuoi|sei|si\\s+trova|posso|possiamo|devo|dobbiamo)\\b',
+    'come\\s+(?:stai|va|ti\\s+senti|posso|puoi|faccio|facciamo|si\\s+fa|si\\s+può|funziona|devo|dovrei)\\b',
+    '(?:cosa|che\\s+cosa)\\s+(?:vuoi|posso|devo|significa|succede|pensi|faccio)\\b',
+    'chi\\s+(?:è|sono|può|deve|ha)\\b',
+    '(?:quale|quali)\\s+(?:è|sono|posso|devo)\\b',
+    '(?:quanto|quanta|quanti|quante)\\s+(?:costa|costano|serve|servono|tempo|anni)\\b',
+    '(?:puoi|potresti)\\s+(?:dirmi|spiegarmi|aiutarmi|controllare|verificare|cercare|mostrarmi)\\b',
+    'mi\\s+(?:dici|puoi\\s+dire)\\b',
+    'sai\\s+dirmi\\b'
+  ];
+  const NEXT = '(?:' + next.join('|') + ')';
+
+  const boundary = new RegExp('\\b(' + CLOSED + ')(?=\\s+(' + NEXT + '))', 'gi');
+  text = text.replace(boundary, (m, q, nxt) => {
+    changes.push(`Inserito “?” dopo “${q}” prima di “${nxt}”.`);
+    return q + '?';
+  });
+
+  // If two dictation attempts were accidentally appended, close a high-confidence
+  // interrogative before the fresh greeting to Silver.
+  const restart = new RegExp(
+    '((?:' + CLOSED + '|da dove\\s+(?:vuoi|posso|devo)\\b[^.!?]{0,70}|dove\\s+(?:vuoi|sei|si\\s+trova)\\b[^.!?]{0,70}|come\\s+(?:stai|va|ti\\s+senti|posso|faccio|si\\s+fa|funziona)\\b[^.!?]{0,70})[^.!?]{0,20}?)\\s+(?=(?:ciao|ehi|hey|buongiorno|buonasera)\\s+silver\\b)',
+    'gi'
+  );
+  text = text.replace(restart, (m, q) => {
+    if (/\?$/.test(q.trim())) return m;
+    changes.push('Inserito “?” prima di un nuovo saluto a Silver.');
+    return q.trimEnd() + '? ';
+  });
+
+  const neutralPrefix = /^(?:(?:ciao|buongiorno|buonasera|ehi|hey)\b[\s,!.:;—-]*)?(?:(?:silver)\b[\s,!.:;—-]*)?(?:(?:allora|senti|scusa|per favore)\b[\s,!.:;—-]*)*/i;
+
+  // Explicit declarative openings that must never be converted into a question.
+  const obviousStatement = /^(?:come\s+(?:previsto|detto|sai|sempre|al\s+solito|prima|risultato|conseguenza|esempio|se|quando|dove|un|una)\b|dove\s+(?:necessario|possibile|previsto|indicato|richiesto)\b|la\s+frase\s+come\b|la\s+domanda\s+è\s+come\b)/i;
+
+  const terminalQuestion = new RegExp(
+    '^(?:' + CLOSED + ')' +
+    '|^da dove\\s+(?:vuoi|posso|possiamo|devo|dobbiamo)\\b' +
+    '|^dove\\s+(?:vuoi|sei|si\\s+trova|posso|possiamo|devo|dobbiamo)\\b' +
+    '|^come\\s+(?:stai|va|ti\\s+senti|posso|puoi|faccio|facciamo|si\\s+fa|si\\s+può|funziona|devo|dovrei)\\b' +
+    '|^(?:cosa|che\\s+cosa)\\s+(?:vuoi|posso|devo|significa|succede|pensi|faccio)\\b' +
+    '|^chi\\s+(?:è|sono|può|deve|ha)\\b' +
+    '|^(?:quale|quali)\\s+(?:è|sono|posso|devo)\\b' +
+    '|^(?:quanto|quanta|quanti|quante)\\s+(?:costa|costano|serve|servono|tempo|anni)\\b' +
+    '|^(?:puoi|potresti)\\s+(?:dirmi|spiegarmi|aiutarmi|controllare|verificare|cercare|mostrarmi)\\b' +
+    '|^mi\\s+(?:dici|puoi\\s+dire)\\b' +
+    '|^sai\\s+dirmi\\b',
+    'i'
+  );
+
+  if (!/[.!?…]\s*$/.test(text)) {
+    const last = text.split(/[.!?…]\s*/).pop().trim();
+    const probe = last.replace(neutralPrefix, '').trim();
+    if (probe && !obviousStatement.test(probe) && terminalQuestion.test(probe)) {
+      text += '?';
+      changes.push('Aggiunto “?” alla fine di una domanda diretta ad alta confidenza.');
+    }
   }
-  return out;
+
+  text = text.replace(/\?\s+([a-zà-ÿ])/g, (_, c) => '? ' + c.toUpperCase());
+  return { original, text, changes };
+}
+
+
+function finalizeLocalDictationPunctuation(text,language=preferredTranscriptionLanguage()){
+  const lang=String(language || '').toLowerCase().split(/[-_]/)[0];
+  const raw=String(text || '').trim();
+  if(!raw || lang!=='it') return raw;
+  return silverPunctuateV5(raw).text;
 }
 
 // 5.21.8 — margine reale per le toolbar mobili sovrapposte.
@@ -5049,8 +5144,8 @@ function resetMicButton(){
   dictationHelpButton.classList.remove('recording','busy');
   dictationHelpButton.textContent='🎤';
   dictationHelpButton.disabled=false;
-  dictationHelpButton.setAttribute('aria-label','Detta un messaggio a Silver');
-  dictationHelpButton.title='Detta un messaggio a Silver';
+  dictationHelpButton.setAttribute('aria-label','Apri la tastiera per dettare');
+  dictationHelpButton.title='Apri la tastiera per dettare';
 }
 
 async function transcribeSilverRecording(blob){
@@ -5362,105 +5457,40 @@ async function stopSilverProgressiveFallback({cancelCurrent=false,silent=false}=
 }
 
 async function startSilverMic(){
-  if(silverMicBusy) return;
+  // 5.21.18 — percorso vocale standard: dettatura nativa del dispositivo.
+  // Il browser non può premere in modo portabile il microfono della tastiera:
+  // Silver apre quindi il composer, che resta SEMPRE editabile, e la persona
+  // usa il microfono di iOS / Gboard / Samsung Keyboard.
+  // Qui NON partono MediaRecorder, SpeechRecognition né chiamate /transcribe.
+  if(send.disabled) return;
 
-  if(silverContinuousMicActive){
-    await stopSilverContinuousDictation({cancel:false,silent:false});
-    return;
-  }
-  if(silverContinuousMicStopping){
-    await silverContinuousStopPromise;
-    return;
-  }
-  if(isSilverMobileDevice()){
-    if(await startSilverContinuousDictation()) return;
-  }
+  silverNativeDictationArmed=true;
+  silverMicBusy=false;
+  input.readOnly=false;
+  document.body.classList.remove('mic-active');
+  dictationHelpButton.classList.remove('recording','busy');
+  dictationHelpButton.textContent='🎤';
+  dictationHelpButton.disabled=false;
+  dictationHelpButton.setAttribute('aria-label','Apri la tastiera per dettare');
+  dictationHelpButton.title='Apri la tastiera per dettare';
 
-  if(silverLiveMicActive){
-    stopSilverLiveDictation({cancel:false});
-    return;
-  }
-
-  if(silverProgressiveFallbackActive || silverProgressiveFallbackStopping){
-    await stopSilverProgressiveFallback({cancelCurrent:false,silent:false});
-    return;
-  }
-
-  // Prima scelta: SpeechRecognition nativo, parola per parola dove disponibile.
-  // L'invio resta SEMPRE manuale.
-  if(startSilverLiveDictation()) return;
-
-  // Seconda scelta 5.20.5: trascrizione progressiva a segmenti per browser/webview
-  // che non espongono SpeechRecognition (o lo disabilitano).
-  if(await startSilverProgressiveFallback()) return;
-
-  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined'){
-    setMicStatus('Il browser non consente la dettatura vocale. Puoi comunque scrivere normalmente.');
-    return;
-  }
-
+  const end=input.value.length;
   try{
-    // Evita che la tastiera rubi spazio mentre si detta.
-    try{ input.blur(); }catch(_){}
-
-    silverMicStream=await navigator.mediaDevices.getUserMedia({audio:true});
-    silverMicChunks=[];
-    const mime=supportedMicMime();
-    silverMediaRecorder = mime
-      ? new MediaRecorder(silverMicStream,{mimeType:mime})
-      : new MediaRecorder(silverMicStream);
-
-    silverMediaRecorder.addEventListener('dataavailable',event=>{
-      if(event.data && event.data.size>0) silverMicChunks.push(event.data);
-    });
-
-    silverMediaRecorder.addEventListener('stop',async ()=>{
-      if(silverMicTimer){ clearTimeout(silverMicTimer); silverMicTimer=null; }
-      const type=silverMediaRecorder?.mimeType || silverMicChunks[0]?.type || 'audio/webm';
-      const blob=new Blob(silverMicChunks,{type});
-      silverMicChunks=[];
-      stopMicTracks();
-      silverMediaRecorder=null;
-
-      if(silverMicCancelled){
-        silverMicCancelled=false;
-        resetMicButton();
-        setMicStatus('');
-        return;
-      }
-
-      silverMicOperationPromise = transcribeSilverRecording(blob);
-      try{ await silverMicOperationPromise; }finally{ silverMicOperationPromise=Promise.resolve(); }
-    },{once:true});
-
-    silverMicCancelled=false;
-    silverMediaRecorder.start(250);
-    dictationHelpButton.classList.add('recording');
-    dictationHelpButton.textContent='■';
-    dictationHelpButton.setAttribute('aria-label','Ferma la dettatura');
-    dictationHelpButton.title='Ferma la dettatura';
-    setMicStatus('Sto registrando… Tocca ■ per fermare; poi trascrivo nel composer senza inviare.');
-
-    // Limite di sicurezza/UX per una dettatura singola.
-    silverMicTimer=setTimeout(()=>{
-      if(silverMediaRecorder?.state === 'recording'){
-        try{ silverMediaRecorder.stop(); }catch(_){}
-      }
-    },90000);
-
-  }catch(err){
-    stopMicTracks();
-    silverMediaRecorder=null;
-    resetMicButton();
-    const denied = err?.name === 'NotAllowedError' || err?.name === 'SecurityError';
-    setMicStatus(
-      denied
-        ? 'Per usare il microfono, autorizzalo nelle impostazioni del browser per praticapao.it.'
-        : 'Non riesco ad aprire il microfono in questo momento.'
-    );
+    input.focus({preventScroll:false});
+    input.setSelectionRange(end,end);
+  }catch(_){
+    try{ input.focus(); }catch(__){}
   }
-}
 
+  updateComposerState();
+  resize();
+  setMicStatus('Tastiera pronta: tocca il microfono della tastiera per dettare. Il testo resta modificabile; Silver rifinisce localmente la punteggiatura al momento dell’invio.');
+
+  setTimeout(()=>{
+    const current=String(micStatusText?.textContent || '');
+    if(current.startsWith('Tastiera pronta:')) setMicStatus('');
+  },9000);
+}
 dictationHelpButton.addEventListener('click',startSilverMic);
 
 let maxVisibleViewportHeight = window.visualViewport
@@ -7790,6 +7820,7 @@ clearInputButton.addEventListener('pointerdown',e=>{
   }
 
   input.value = '';
+  silverNativeDictationArmed=false;
   input.style.height = '42px';
   composer.classList.remove('has-text');
   updateComposerState();
@@ -7849,6 +7880,18 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
   }
 
+  // 5.21.18 — Rifinitura locale solo per la dettatura avviata dal pulsante 🎤 di Silver.
+  // In questo modo il testo digitato normalmente non viene reinterpretato.
+  if(silverNativeDictationArmed){
+    const preparedText=finalizeLocalDictationPunctuation(input.value);
+    if(preparedText && preparedText !== input.value.trim()){
+      input.value=preparedText;
+      resize();
+      updateComposerState();
+      saveRecoveryDraft();
+    }
+  }
+
   const text=input.value.trim();
   const hasAttachments=pendingAttachments.length > 0;
   if(!text && !hasAttachments){
@@ -7858,6 +7901,7 @@ form.addEventListener('submit', async e=>{
     return;
   }
 
+  silverNativeDictationArmed=false;
   showConversationMode();
 
   if(hasAttachments){
