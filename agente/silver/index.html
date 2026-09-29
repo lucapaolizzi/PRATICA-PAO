@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.19 — HYBRID ZERO-COST VOICE — QUESTION PREFIX FIX — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.1 — WORKER 7.1.8 -->
+<!-- SILVER FRONTEND 5.21.20 — HYBRID ZERO-COST VOICE — STRUCTURAL QUESTION + SESSION FIX — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.2 — WORKER 7.1.8 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3679,6 +3679,25 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 .session-end-title{font-size:15.5px !important;line-height:1.12 !important;letter-spacing:.075em !important;}
 .session-end-sub{font-size:11.5px !important;line-height:1.2 !important;}
 @media(max-width:520px){body.conversation-mode .session-end{min-height:70px !important}.session-end-title{font-size:15px !important}.session-end-sub{font-size:11.5px !important}}
+
+
+/* === SILVER FRONTEND 5.21.20 — SESSIONE SEMPRE RAGGIUNGIBILE ===
+   Il CTA non viene più nascosto solo perché iOS/WebView mantiene uno stato
+   keyboard-open non affidabile. Durante la tastiera reale diventa più compatto. */
+@media(max-width:760px){
+  body.keyboard-open .session-row.visible{
+    display:flex !important;
+    visibility:visible !important;
+    margin:8px auto 12px !important;
+  }
+  body.keyboard-open .session-end{
+    min-height:50px !important;
+    padding:8px 12px 7px !important;
+    border-radius:20px !important;
+  }
+  body.keyboard-open .session-end-title{font-size:12px !important;}
+  body.keyboard-open .session-end-sub{font-size:9.5px !important;}
+}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3797,6 +3816,10 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
         <button class="sheet-action primary" id="resumeButton" type="button">
           <strong>RIPRENDI</strong>
           <span>Carica una conversazione Silver salvata.</span>
+        </button>
+        <button class="sheet-action" id="toolsSessionButton" type="button">
+          <strong>SESSIONE</strong>
+          <span>Salva, esporta, termina o continua anche se hai solo una bozza.</span>
         </button>
         <button class="sheet-action" id="attachmentButton" type="button">
           <strong>ALLEGA</strong>
@@ -4103,7 +4126,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.19';
+const SILVER_FRONTEND_VERSION = '5.21.20';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
 
 
@@ -4135,6 +4158,7 @@ const sessionEndButton = document.getElementById('sessionEndButton');
 const toolsBackdrop = document.getElementById('toolsBackdrop');
 const toolsClose = document.getElementById('toolsClose');
 const resumeButton = document.getElementById('resumeButton');
+const toolsSessionButton = document.getElementById('toolsSessionButton');
 const attachmentButton = document.getElementById('attachmentButton');
 const toolsNote = document.getElementById('toolsNote');
 const resumeFileInput = document.getElementById('resumeFileInput');
@@ -4586,10 +4610,10 @@ function joinDictationText(...parts){
   return parts.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
 }
 
-// 5.21.18 — Punctuation Engine V5.1.
-// La dettatura nativa riconosce le parole; Silver corregge SOLO punteggiatura e
-// maiuscola successiva nei casi interrogativi italiani ad alta confidenza.
-// Nessuna API di trascrizione viene chiamata da questo percorso.
+// 5.21.20 — Punctuation Engine V5.2.
+// Obiettivo: NON correggere mentre iOS/Gboard stanno ancora componendo il testo.
+// La rifinitura avviene solo all'invio (o nei vecchi percorsi voce espliciti),
+// preserva le parole e interviene solo su segnali ad alta confidenza.
 function silverPunctuateV5(raw){
   let text = String(raw ?? '').trim();
   const original = text;
@@ -4598,12 +4622,35 @@ function silverPunctuateV5(raw){
 
   text = text.replace(/[\t ]+/g, ' ');
 
+  // 1) Comandi vocali espliciti. Questo è un fallback locale quando la tastiera
+  // nativa lascia scritte le parole invece di trasformarle nel segno.
+  const spokenMarks = [
+    { re:/\s*(?:inserisci\s+)?punto\s+(?:interrogativo|di\s+domanda)\b\s*/gi, mark:'?', label:'punto interrogativo' },
+    { re:/\s*(?:inserisci\s+)?punto\s+esclamativo\b\s*/gi, mark:'!', label:'punto esclamativo' },
+    { re:/\s*(?:inserisci\s+)?punto\s+e\s+virgola\b\s*/gi, mark:';', label:'punto e virgola' },
+    { re:/\s*(?:inserisci\s+)?due\s+punti\b\s*/gi, mark:':', label:'due punti' },
+    { re:/\s*(?:inserisci\s+)?virgola\b\s*/gi, mark:',', label:'virgola' },
+    { re:/\s*(?:inserisci\s+)?punto\s+fermo\b\s*/gi, mark:'.', label:'punto fermo' }
+  ];
+  for(const item of spokenMarks){
+    text = text.replace(item.re, m=>{
+      changes.push(`Convertito comando vocale “${item.label}”.`);
+      return item.mark + ' ';
+    });
+  }
+  text = text
+    .replace(/\s+([,.;:?!])/g,'$1')
+    .replace(/([,.;:?!])(?=[^\s\n,.;:?!])/g,'$1 ')
+    .replace(/([?!])\1+/g,'$1')
+    .replace(/[ \t]+/g,' ')
+    .trim();
+
   const closed = [
-    'mi senti(?: bene)?',
-    'mi ascolti',
-    'mi capisci',
-    'riesci a sentirmi',
-    'puoi sentirmi',
+    'mi senti(?:\\s+(?:bene|adesso|ora|ancora|qui|chiaramente))?',
+    'mi ascolti(?:\\s+(?:bene|adesso|ora))?',
+    'mi capisci(?:\\s+(?:bene|adesso|ora))?',
+    'riesci a sentirmi(?:\\s+(?:bene|adesso|ora))?',
+    'puoi sentirmi(?:\\s+(?:bene|adesso|ora))?',
     'ci sei',
     'sei qui',
     'sei l[iì]',
@@ -4619,9 +4666,8 @@ function silverPunctuateV5(raw){
   ];
   const CLOSED = '(?:' + closed.join('|') + ')';
 
-  // Only high-confidence starts are allowed to open a new question boundary.
-  // Generic "come" / "dove" are intentionally excluded because they also begin
-  // declarative phrases such as "come previsto" and "dove necessario".
+  // 2) Catene di domande: "mi senti come stai da dove vuoi continuare".
+  // Solo inizi ad alta confidenza possono aprire una nuova domanda.
   const next = [
     CLOSED,
     'pronto\\s+' + CLOSED,
@@ -4644,8 +4690,18 @@ function silverPunctuateV5(raw){
     return q + '?';
   });
 
-  // If two dictation attempts were accidentally appended, close a high-confidence
-  // interrogative before the fresh greeting to Silver.
+  // 3) Caso reale emerso su iPhone: iOS può mostrare "?" e poi ritirarlo
+  // quando la dettatura continua. Se una domanda chiusa è seguita da una risposta
+  // o da un nuovo turno discorsivo evidente, chiudiamola nel punto corretto.
+  // Non scatta su continuazioni come "mi senti mentre parlo" o "mi senti sì o no".
+  const discourseRestart = '(?:s[iì](?!\\s+o\\s+no\\b)(?=\\s|$)|no(?!\\s+o\\s+s[iì]\\b)(?=\\s|$)|ok(?:ay)?(?=\\s|$)|perfett[oa](?=\\s|$)|bene(?=\\s|$)|esatt[oa](?=\\s|$)|giust[oa](?=\\s|$)|ottim[oa](?=\\s|$)|grazie(?=\\s|$)|brav[oa](?=\\s|$))';
+  const responseBoundary = new RegExp('\\b(' + CLOSED + ')(?=\\s+' + discourseRestart + ')', 'gi');
+  text = text.replace(responseBoundary, (m, q) => {
+    changes.push(`Ripristinato “?” dopo “${q}” prima di una nuova risposta/frase.`);
+    return q + '?';
+  });
+
+  // Se due dettature sono state accodate, chiudi la domanda prima del nuovo saluto.
   const restart = new RegExp(
     '((?:' + CLOSED + '|da dove\\s+(?:vuoi|posso|devo)\\b[^.!?]{0,70}|dove\\s+(?:vuoi|sei|si\\s+trova)\\b[^.!?]{0,70}|come\\s+(?:stai|va|ti\\s+senti|posso|faccio|si\\s+fa|funziona)\\b[^.!?]{0,70})[^.!?]{0,20}?)\\s+(?=(?:ciao|ehi|hey|buongiorno|buonasera)\\s+silver\\b)',
     'gi'
@@ -4658,8 +4714,8 @@ function silverPunctuateV5(raw){
 
   const neutralPrefix = /^(?:(?:ciao|buongiorno|buonasera|ehi|hey|pronto)\b[\s,!.:;—-]*)?(?:(?:silver)\b[\s,!.:;—-]*)?(?:(?:allora|senti|scusa|per favore)\b[\s,!.:;—-]*)*/i;
 
-  // Explicit declarative openings that must never be converted into a question.
-  const obviousStatement = /^(?:come\s+(?:previsto|detto|sai|sempre|al\s+solito|prima|risultato|conseguenza|esempio|se|quando|dove|un|una)\b|dove\s+(?:necessario|possibile|previsto|indicato|richiesto)\b|la\s+frase\s+come\b|la\s+domanda\s+è\s+come\b)/i;
+  // Frasi dichiarative da non convertire.
+  const obviousStatement = /^(?:come\s+(?:previsto|detto|sai|sempre|al\s+solito|prima|risultato|conseguenza|esempio|se|quando|dove|un|una)\b|dove\s+(?:necessario|possibile|previsto|indicato|richiesto)\b|la\s+frase\s+come\b|la\s+domanda\s+è\s+come\b|non\s+so\s+(?:se|come|dove|perché|perche)\b|ti\s+spiego\s+(?:come|dove|perché|perche)\b|oggi\s+(?:vediamo|parliamo)\s+(?:come|dove|perché|perche)\b)/i;
 
   const terminalQuestion = new RegExp(
     '^(?:' + CLOSED + ')' +
@@ -4676,6 +4732,7 @@ function silverPunctuateV5(raw){
     'i'
   );
 
+  // 4) Chiudi l'ultima frase solo se è una domanda diretta ad alta confidenza.
   if (!/[.!?…]\s*$/.test(text)) {
     const last = text.split(/[.!?…]\s*/).pop().trim();
     const probe = last.replace(neutralPrefix, '').trim();
@@ -4685,7 +4742,14 @@ function silverPunctuateV5(raw){
     }
   }
 
+  // 5) Rifiniture grafiche conservative.
+  // "Pronto mi senti?" -> "Pronto, mi senti?" senza toccare "Pronto per partire".
+  text = text.replace(/^(Pronto)\s+(?=(?:Silver\s+)?(?:mi\s+senti|mi\s+ascolti|mi\s+capisci|ci\s+sei)\b)/i, '$1, ');
   text = text.replace(/\?\s+([a-zà-ÿ])/g, (_, c) => '? ' + c.toUpperCase());
+  text = text.replace(/!\s+([a-zà-ÿ])/g, (_, c) => '! ' + c.toUpperCase());
+  text = text.replace(/\.\s+([a-zà-ÿ])/g, (_, c) => '. ' + c.toUpperCase());
+  text = text.replace(/([?!])\1+/g,'$1').trim();
+
   return { original, text, changes };
 }
 
@@ -5883,7 +5947,12 @@ window.addEventListener(
 
 
 function updateSessionControls(persistRecovery=true){
-  sessionRow.classList.toggle('visible', sessionMessages.length > 0);
+  const hasSessionWork =
+    sessionMessages.length > 0 ||
+    input.value.trim().length > 0 ||
+    pendingAttachments.length > 0;
+
+  sessionRow.classList.toggle('visible', hasSessionWork);
   if(persistRecovery){
     saveRecoveryDraft();
   }
@@ -6243,6 +6312,12 @@ function buildSilverPlainTranscript(){
     lines.push(String(message.content || ''));
     lines.push('');
   }
+  const draft=input.value.trim();
+  if(draft){
+    lines.push('BOZZA NON INVIATA:');
+    lines.push(draft);
+    lines.push('');
+  }
   return lines.join('\n').trim() + '\n';
 }
 
@@ -6278,8 +6353,8 @@ async function savePlainTextOnDesktop(text,fileName){
 }
 
 async function exportConversationTxt(){
-  if(!sessionMessages.length){
-    setMicStatus('Non c’è ancora una conversazione da esportare.');
+  if(!sessionMessages.length && !input.value.trim()){
+    setMicStatus('Non c’è ancora una conversazione o una bozza da esportare.');
     return;
   }
   const text=buildSilverPlainTranscript();
@@ -6311,8 +6386,9 @@ async function exportConversationTxt(){
 }
 
 async function saveConversationToDevice(exitAction=null, triggerButton=saveConversationButton){
-  if(!sessionMessages.length){
-    setMicStatus('Non c’è ancora una conversazione da salvare.');
+  const draftToSave=input.value.trim();
+  if(!sessionMessages.length && !draftToSave){
+    setMicStatus('Non c’è ancora una conversazione o una bozza da salvare.');
     return;
   }
 
@@ -6328,11 +6404,12 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
 
   const payload = {
     format: 'silver-pao-conversation',
-    version: 4,
+    version: 5,
     mode: 'practice',
     language: selectedLanguage,
     chair: activeChair,
     savedAt: new Date().toISOString(),
+    draft: draftToSave,
     messages: sessionMessages.map(m=>({
       role:m.role,
       content:String(m.content || '')
@@ -6432,6 +6509,7 @@ function normalizeSavedMessages(data){
 
   return {
     messages,
+    draft:typeof data.draft === 'string' ? data.draft : '',
     mode:'practice',
     language:normalizeUiLanguage(data.language || 'auto'),
     chair:normalizeChair(data.chair || 'A')
@@ -6812,6 +6890,11 @@ resumeButton.addEventListener('click',()=>{
   resumeFileInput.click();
 });
 
+toolsSessionButton?.addEventListener('click',()=>{
+  closeSheet(toolsBackdrop);
+  openSheet(sessionBackdrop);
+});
+
 resumeFileInput.addEventListener('change',async ()=>{
   const file = resumeFileInput.files?.[0];
   if(!file) return;
@@ -6821,15 +6904,21 @@ resumeFileInput.addEventListener('change',async ()=>{
     const data = JSON.parse(text);
     const restored = normalizeSavedMessages(data);
 
-    if(!restored.messages.length){
+    if(!restored.messages.length && !restored.draft.trim()){
       throw new Error('Conversazione vuota');
     }
 
     setSilverLanguage(restored.language || 'auto');
     chooseSilverMode();
     setActiveChair(restored.chair || 'A');
-    renderRestoredConversation(restored.messages);
-    setMicStatus('Conversazione ripresa. Puoi continuare da qui.');
+    if(restored.messages.length){
+      renderRestoredConversation(restored.messages);
+    }
+    input.value=restored.draft || '';
+    resize();
+    updateComposerState();
+    updateSessionControls();
+    setMicStatus(restored.draft.trim() ? 'Sessione ripresa con la bozza non inviata.' : 'Conversazione ripresa. Puoi continuare da qui.');
     setTimeout(()=>{ setMicStatus(''); },3500);
   }catch(err){
     console.error('Riprendi conversazione:',err);
@@ -7922,7 +8011,7 @@ function resize(){
 input.addEventListener('input',()=>{
   resize();
   updateComposerState();
-  saveRecoveryDraft();
+  updateSessionControls();
 },{passive:true});
 
 
@@ -7949,7 +8038,7 @@ form.addEventListener('submit', async e=>{
     setMicStatus('');
   }
 
-  // 5.21.19 — Rifinitura locale solo dopo un percorso voce/helper esplicito.
+  // 5.21.20 — Rifinitura locale V5.2 solo dopo un percorso voce/helper esplicito.
   // Il testo digitato normalmente continua a non essere reinterpretato.
   if(silverNativeDictationArmed){
     const preparedText=finalizeLocalDictationPunctuation(input.value);
