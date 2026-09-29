@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Silver — Test microfono gratuito</title>
+<style>
+:root{
+  --bg:#f5f0e6; --ink:#24211d; --muted:#71695f; --line:#d9d1c5;
+  --card:#fff; --soft:#f1eee8; --ok:#275c3c; --warn:#8b5b18; --bad:#8a2e2e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh}
+main{width:min(100%,760px);margin:0 auto;padding:24px 18px 70px}
+header{text-align:center;padding:8px 0 20px}
+.symbol{font-size:30px;line-height:.75;margin:5px 0 14px}
+h1{margin:0;font-size:clamp(30px,8vw,48px);line-height:1.03}
+.sub{margin:14px auto 0;max-width:620px;font:18px/1.5 Georgia,serif;color:#403b35}
+.notice{margin:18px 0;padding:15px 16px;border:1px solid var(--line);border-radius:18px;background:#fff9}
+.testphrase{font-size:20px;line-height:1.45;font-weight:700}
+.grid{display:grid;gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:20px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+.card h2{margin:0 0 8px;font-size:24px}
+.tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;border:1px solid var(--line);border-radius:999px;padding:6px 9px;margin-bottom:12px}
+p{line-height:1.5}
+.small{font-size:13px;color:var(--muted)}
+textarea{width:100%;min-height:126px;max-height:240px;resize:vertical;border:1px solid #cfc7bc;border-radius:18px;padding:16px;font:19px/1.42 Arial,sans-serif;color:var(--ink);background:#fff;outline:none}
+textarea:focus{border-color:#49433b;box-shadow:0 0 0 2px rgba(36,33,29,.08)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+button{appearance:none;border:1px solid #26231f;border-radius:999px;padding:13px 18px;background:#24211d;color:white;font-size:13px;font-weight:800;letter-spacing:.04em;cursor:pointer}
+button.secondary{background:white;color:#24211d}
+button:disabled{opacity:.38;cursor:not-allowed}
+.status{min-height:24px;margin:8px 0 0;font-weight:700}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.metric{background:var(--soft);padding:10px 12px;border-radius:14px}
+.metric b{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.cap{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;background:var(--soft);padding:12px;border-radius:14px}
+.checks{display:grid;gap:8px;margin-top:14px}
+.checks label{display:flex;gap:9px;align-items:flex-start;line-height:1.35}
+.checks input{margin-top:2px;transform:scale(1.15)}
+.sep{height:1px;background:var(--line);margin:18px 0}
+summary{cursor:pointer;font-weight:800}
+.good{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+footer{margin-top:28px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:430px){
+  main{padding:16px 14px 60px}
+  .card{padding:17px;border-radius:22px}
+  textarea{font-size:18px}
+  .metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="symbol">∞<br>△</div>
+  <h1>TEST MICROFONO GRATUITO</h1>
+  <p class="sub">Tre strade senza costo variabile per Silver. Le proviamo sullo stesso telefono con la stessa frase.</p>
+</header>
+
+<div class="notice">
+  <div class="small">FRASE STANDARD</div>
+  <div class="testphrase">“Ciao Silver, mi senti? Come stai? Da dove vuoi cominciare?”</div>
+  <p class="small">Parlala in modo naturale. Non pronunciare la parola “punto interrogativo”.</p>
+</div>
+
+<section class="card">
+  <h2>Diagnostica dispositivo</h2>
+  <div id="caps" class="cap">Caricamento…</div>
+</section>
+
+<div class="grid">
+
+<section class="card" data-mode="native">
+  <span class="tag">1 · COSTO SILVER €0</span>
+  <h2>Dettatura nativa della tastiera</h2>
+  <p>È la dettatura già presente su iPhone / Samsung / Gboard. La pagina non può premere da sola il microfono della tastiera: tocchi il campo, poi il microfono della tastiera.</p>
+  <div class="row">
+    <button id="nativePrepare">PREPARA IL TEST</button>
+    <button class="secondary" id="nativeClear">PULISCI</button>
+  </div>
+  <textarea id="nativeText" placeholder="Tocca qui, poi usa il microfono della tastiera del telefono…"></textarea>
+  <div id="nativeStatus" class="status"></div>
+  <div class="metrics">
+    <div class="metric"><b>Primo testo</b><span id="nativeFirst">—</span></div>
+    <div class="metric"><b>Caratteri</b><span id="nativeChars">0</span></div>
+  </div>
+  <div class="checks">
+    <label><input type="checkbox" data-score="native_reactive"> Testo abbastanza reattivo</label>
+    <label><input type="checkbox" data-score="native_question"> Ha scritto correttamente i “?”</label>
+    <label><input type="checkbox" data-score="native_editable"> Posso correggere mentre / subito dopo detto</label>
+  </div>
+</section>
+
+<section class="card" data-mode="webspeech">
+  <span class="tag">2 · COSTO SILVER €0</span>
+  <h2>Riconoscimento vocale del browser</h2>
+  <p>Usa <code>SpeechRecognition</code> quando il browser lo offre. Il testo può comparire in diretta. Su alcuni browser il riconoscimento può essere gestito dal fornitore del browser e non essere offline.</p>
+  <div id="webSpeechLocalBox" class="small"></div>
+  <div class="row">
+    <button id="webStart">AVVIA</button>
+    <button id="webStop" class="secondary" disabled>STOP</button>
+    <button id="webClear" class="secondary">PULISCI</button>
+  </div>
+  <textarea id="webText" placeholder="Qui comparirà il testo live…"></textarea>
+  <div id="webStatus" class="status"></div>
+  <div class="metrics">
+    <div class="metric"><b>Primo testo</b><span id="webFirst">—</span></div>
+    <div class="metric"><b>Tempo totale</b><span id="webTotal">—</span></div>
+  </div>
+  <div class="checks">
+    <label><input type="checkbox" data-score="web_reactive"> Testo abbastanza reattivo</label>
+    <label><input type="checkbox" data-score="web_question"> Ha scritto correttamente i “?”</label>
+    <label><input type="checkbox" data-score="web_editable"> Posso toccare e correggere il testo senza comportamento strano</label>
+  </div>
+</section>
+
+<section class="card" data-mode="localwhisper">
+  <span class="tag">3 · COSTO A MINUTO €0</span>
+  <h2>Whisper locale nel browser</h2>
+  <p>Il modello gira sul telefono via WebAssembly. La prima volta deve scaricare il modello e può essere lenta; poi il browser può conservarlo in cache. Non usa il Worker Silver e non ha costo per minuto.</p>
+  <p class="small"><strong>Nota:</strong> questo test serve soprattutto a capire se iPhone e S23+ hanno prestazioni sufficienti. Non è ancora il motore di Silver.</p>
+  <div class="row">
+    <button id="localLoad">1 · CARICA MOTORE</button>
+    <button id="localRecord" disabled>2 · REGISTRA</button>
+    <button id="localStop" class="secondary" disabled>3 · STOP + TRASCRIVI</button>
+  </div>
+  <textarea id="localText" placeholder="La trascrizione locale apparirà qui dopo STOP…"></textarea>
+  <div id="localStatus" class="status"></div>
+  <div class="metrics">
+    <div class="metric"><b>Caricamento modello</b><span id="localLoadTime">—</span></div>
+    <div class="metric"><b>Trascrizione</b><span id="localInferTime">—</span></div>
+  </div>
+  <div class="checks">
+    <label><input type="checkbox" data-score="local_quality"> Trascrizione abbastanza corretta</label>
+    <label><input type="checkbox" data-score="local_question"> Ha scritto correttamente i “?”</label>
+    <label><input type="checkbox" data-score="local_speed"> Tempo accettabile sul telefono</label>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Report finale</h2>
+  <p>Alla fine salva il report su ciascun telefono. Il file contiene solo risultati tecnici e i testi dei tre test; nessun audio.</p>
+  <div class="row">
+    <button id="saveReport">SALVA REPORT JSON</button>
+    <button id="copyReport" class="secondary">COPIA REPORT</button>
+  </div>
+  <pre id="reportPreview" class="cap"></pre>
+</section>
+
+</div>
+
+<footer>PRATICA P.A.O. · SILVER · MIC FREE TEST v1</footer>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const now = () => performance.now();
+  const fmtMs = (ms) => Number.isFinite(ms) ? (ms < 1000 ? `${Math.round(ms)} ms` : `${(ms/1000).toFixed(2)} s`) : '—';
+
+  const state = {
+    native:{startedAt:null,firstAt:null},
+    web:{startedAt:null,firstAt:null,stopAt:null,active:false,finalText:'',interimText:''},
+    local:{loadMs:null,inferMs:null,recordMs:null},
+  };
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const hasProcessLocally = !!(window.SpeechRecognition && 'processLocally' in window.SpeechRecognition.prototype);
+  const hasAvailable = !!(window.SpeechRecognition && typeof window.SpeechRecognition.available === 'function');
+  const hasInstall = !!(window.SpeechRecognition && typeof window.SpeechRecognition.install === 'function');
+
+  const caps = {
+    ua:navigator.userAgent,
+    language:navigator.language,
+    secureContext:window.isSecureContext,
+    speechRecognition:!!SR,
+    speechRecognitionProcessLocally:hasProcessLocally,
+    speechRecognitionAvailableAPI:hasAvailable,
+    speechRecognitionInstallAPI:hasInstall,
+    mediaRecorder:typeof MediaRecorder !== 'undefined',
+    getUserMedia:!!navigator.mediaDevices?.getUserMedia,
+    webAssembly:typeof WebAssembly !== 'undefined',
+    webGPU:!!navigator.gpu,
+    hardwareConcurrency:navigator.hardwareConcurrency || null,
+    deviceMemory:navigator.deviceMemory || null,
+  };
+  $('caps').textContent = JSON.stringify(caps,null,2);
+
+  // 1) Native keyboard dictation
+  $('nativePrepare').addEventListener('click', () => {
+    state.native.startedAt = now();
+    state.native.firstAt = null;
+    $('nativeFirst').textContent = 'in attesa…';
+    $('nativeStatus').textContent = 'Campo pronto. Ora usa il microfono della tastiera.';
+    $('nativeText').focus();
+  });
+  $('nativeText').addEventListener('input', () => {
+    if(state.native.startedAt && !state.native.firstAt){
+      state.native.firstAt = now();
+      $('nativeFirst').textContent = fmtMs(state.native.firstAt - state.native.startedAt);
+    }
+    $('nativeChars').textContent = $('nativeText').value.length;
+    updateReport();
+  });
+  $('nativeClear').addEventListener('click', () => {
+    $('nativeText').value='';
+    $('nativeChars').textContent='0';
+    $('nativeFirst').textContent='—';
+    $('nativeStatus').textContent='';
+    state.native={startedAt:null,firstAt:null};
+    updateReport();
+  });
+
+  // 2) Web Speech API
+  let recognition = null;
+  if(!SR){
+    $('webStatus').innerHTML = '<span class="bad">SpeechRecognition non disponibile in questo browser.</span>';
+    $('webStart').disabled = true;
+    $('webSpeechLocalBox').textContent = 'Modalità locale browser: non disponibile.';
+  } else {
+    $('webSpeechLocalBox').textContent = hasProcessLocally
+      ? 'Il browser espone anche processLocally: il test prova prima la modalità normale per massima compatibilità.'
+      : 'processLocally non esposto: il browser decide come eseguire il riconoscimento.';
+  }
+
+  function makeRecognition(){
+    const r = new SR();
+    r.lang = 'it-IT';
+    r.continuous = true;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+    if('unspokenPunctuation' in r){
+      try{ r.unspokenPunctuation = true; }catch(_){}
+    }
+    return r;
+  }
+
+  $('webStart').addEventListener('click', () => {
+    if(!SR) return;
+    recognition = makeRecognition();
+    state.web={startedAt:now(),firstAt:null,stopAt:null,active:true,finalText:'',interimText:''};
+    $('webText').value='';
+    $('webFirst').textContent='in attesa…';
+    $('webTotal').textContent='—';
+    $('webStatus').textContent='Sto ascoltando…';
+    $('webStart').disabled=true;
+    $('webStop').disabled=false;
+
+    recognition.onresult = (ev) => {
+      let finalAdd='', interim='';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        const t = ev.results[i][0]?.transcript || '';
+        if(ev.results[i].isFinal) finalAdd += t + ' ';
+        else interim += t;
+      }
+      if(finalAdd) state.web.finalText += finalAdd;
+      state.web.interimText = interim;
+      const combined = (state.web.finalText + interim).replace(/\s+/g,' ').trim();
+      $('webText').value = combined;
+      if(combined && !state.web.firstAt){
+        state.web.firstAt=now();
+        $('webFirst').textContent=fmtMs(state.web.firstAt-state.web.startedAt);
+      }
+      updateReport();
+    };
+    recognition.onerror = (ev) => {
+      $('webStatus').innerHTML=`<span class="bad">Errore: ${ev.error || 'riconoscimento'}</span>`;
+    };
+    recognition.onend = () => {
+      if(state.web.active){
+        // Alcuni browser chiudono presto una sessione continua.
+        try{ recognition.start(); }catch(_){}
+      }else{
+        const end=now();
+        state.web.stopAt=end;
+        $('webTotal').textContent=fmtMs(end-state.web.startedAt);
+        $('webStatus').textContent='Fermato. Puoi correggere il testo.';
+        $('webStart').disabled=false;
+        $('webStop').disabled=true;
+        $('webText').focus();
+        updateReport();
+      }
+    };
+    try{recognition.start()}catch(err){
+      $('webStatus').innerHTML=`<span class="bad">${err.message || err}</span>`;
+      $('webStart').disabled=false;
+      $('webStop').disabled=true;
+    }
+  });
+
+  $('webStop').addEventListener('click', () => {
+    state.web.active=false;
+    try{recognition?.stop()}catch(_){}
+  });
+  $('webClear').addEventListener('click', () => {
+    state.web.active=false;
+    try{recognition?.abort()}catch(_){}
+    recognition=null;
+    $('webText').value='';
+    $('webFirst').textContent='—';
+    $('webTotal').textContent='—';
+    $('webStatus').textContent='';
+    $('webStart').disabled=!SR;
+    $('webStop').disabled=true;
+    updateReport();
+  });
+  $('webText').addEventListener('input', updateReport);
+
+  // 3) Local Whisper via Transformers.js
+  let transcriber = null;
+  let localStream = null;
+  let localRecorder = null;
+  let localChunks = [];
+  let localRecordStartedAt = null;
+
+  async function loadTransformers(){
+    const url='https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0';
+    return await import(url);
+  }
+
+  $('localLoad').addEventListener('click', async () => {
+    $('localLoad').disabled=true;
+    $('localStatus').textContent='Carico libreria e modello… la prima volta può richiedere tempo.';
+    const t0=now();
+    try{
+      const { pipeline } = await loadTransformers();
+      transcriber = await pipeline(
+        'automatic-speech-recognition',
+        'onnx-community/whisper-tiny',
+        {
+          device:'wasm',
+          progress_callback:(p) => {
+            if(p && p.status){
+              const pct = Number.isFinite(p.progress) ? ` ${Math.round(p.progress)}%` : '';
+              $('localStatus').textContent=`Modello: ${p.status}${pct}`;
+            }
+          }
+        }
+      );
+      state.local.loadMs=now()-t0;
+      $('localLoadTime').textContent=fmtMs(state.local.loadMs);
+      $('localStatus').innerHTML='<span class="good">Motore locale pronto.</span>';
+      $('localRecord').disabled=false;
+    }catch(err){
+      $('localStatus').innerHTML=`<span class="bad">Caricamento non riuscito: ${String(err.message||err)}</span>`;
+      $('localLoad').disabled=false;
+    }
+    updateReport();
+  });
+
+  $('localRecord').addEventListener('click', async () => {
+    if(!transcriber) return;
+    if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined'){
+      $('localStatus').innerHTML='<span class="bad">Registrazione non disponibile su questo browser.</span>';
+      return;
+    }
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+      localChunks=[];
+      const prefs=['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+      const mime=prefs.find(x=>MediaRecorder.isTypeSupported?.(x));
+      localRecorder = mime ? new MediaRecorder(localStream,{mimeType:mime}) : new MediaRecorder(localStream);
+      localRecorder.ondataavailable=(e)=>{if(e.data?.size)localChunks.push(e.data)};
+      localRecorder.start(250);
+      localRecordStartedAt=now();
+      $('localStatus').textContent='Sto registrando… parla la frase standard.';
+      $('localRecord').disabled=true;
+      $('localStop').disabled=false;
+    }catch(err){
+      $('localStatus').innerHTML=`<span class="bad">Microfono: ${String(err.message||err)}</span>`;
+    }
+  });
+
+  function stopRecorder(){
+    return new Promise((resolve,reject)=>{
+      if(!localRecorder || localRecorder.state==='inactive') return resolve();
+      const done=()=>resolve();
+      localRecorder.addEventListener('stop',done,{once:true});
+      try{localRecorder.stop()}catch(e){reject(e)}
+    });
+  }
+
+  async function blobTo16kMono(blob){
+    const array=await blob.arrayBuffer();
+    const AC=window.AudioContext || window.webkitAudioContext;
+    if(!AC) throw new Error('AudioContext non disponibile');
+    const ctx=new AC();
+    let decoded;
+    try{
+      decoded=await ctx.decodeAudioData(array.slice(0));
+    }finally{
+      try{await ctx.close()}catch(_){}
+    }
+    const frames=Math.max(1,Math.ceil(decoded.duration*16000));
+    const offline=new OfflineAudioContext(1,frames,16000);
+    const src=offline.createBufferSource();
+    src.buffer=decoded;
+    src.connect(offline.destination);
+    src.start(0);
+    const rendered=await offline.startRendering();
+    return new Float32Array(rendered.getChannelData(0));
+  }
+
+  $('localStop').addEventListener('click', async () => {
+    $('localStop').disabled=true;
+    $('localStatus').textContent='Chiudo registrazione…';
+    try{
+      await stopRecorder();
+      if(localStream){
+        localStream.getTracks().forEach(t=>t.stop());
+        localStream=null;
+      }
+      state.local.recordMs=localRecordStartedAt ? now()-localRecordStartedAt : null;
+      const type=localRecorder?.mimeType || localChunks[0]?.type || 'audio/webm';
+      const blob=new Blob(localChunks,{type});
+      if(blob.size<200) throw new Error('Audio troppo breve o vuoto');
+      $('localStatus').textContent='Converto audio e trascrivo tutto sul telefono…';
+      const audio=await blobTo16kMono(blob);
+      const t0=now();
+      const out=await transcriber(audio,{language:'italian',task:'transcribe'});
+      state.local.inferMs=now()-t0;
+      $('localInferTime').textContent=fmtMs(state.local.inferMs);
+      $('localText').value=String(out?.text||'').trim();
+      $('localStatus').innerHTML='<span class="good">Trascrizione locale completata. Puoi correggere il testo.</span>';
+      $('localText').focus();
+      $('localRecord').disabled=false;
+    }catch(err){
+      $('localStatus').innerHTML=`<span class="bad">Errore locale: ${String(err.message||err)}</span>`;
+      $('localRecord').disabled=!transcriber;
+    }
+    localRecorder=null;
+    localChunks=[];
+    updateReport();
+  });
+  $('localText').addEventListener('input', updateReport);
+
+  // Report
+  function collectScores(){
+    const obj={};
+    document.querySelectorAll('[data-score]').forEach(el=>obj[el.dataset.score]=!!el.checked);
+    return obj;
+  }
+  document.querySelectorAll('[data-score]').forEach(el=>el.addEventListener('change',updateReport));
+
+  function buildReport(){
+    return {
+      format:'silver-mic-free-test',
+      version:1,
+      savedAt:new Date().toISOString(),
+      capabilities:caps,
+      results:{
+        native:{
+          text:$('nativeText').value,
+          firstTextMs: state.native.startedAt && state.native.firstAt ? Math.round(state.native.firstAt-state.native.startedAt) : null,
+        },
+        webSpeech:{
+          supported:!!SR,
+          text:$('webText').value,
+          firstTextMs: state.web.startedAt && state.web.firstAt ? Math.round(state.web.firstAt-state.web.startedAt) : null,
+          totalMs: state.web.startedAt && state.web.stopAt ? Math.round(state.web.stopAt-state.web.startedAt) : null,
+        },
+        localWhisper:{
+          text:$('localText').value,
+          modelLoadMs: state.local.loadMs ? Math.round(state.local.loadMs) : null,
+          inferenceMs: state.local.inferMs ? Math.round(state.local.inferMs) : null,
+          recordMs: state.local.recordMs ? Math.round(state.local.recordMs) : null,
+        }
+      },
+      scores:collectScores()
+    };
+  }
+
+  function updateReport(){
+    $('reportPreview').textContent=JSON.stringify(buildReport(),null,2);
+  }
+
+  $('saveReport').addEventListener('click',()=>{
+    const data=JSON.stringify(buildReport(),null,2);
+    const blob=new Blob([data],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`silver-mic-free-test-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+
+  $('copyReport').addEventListener('click',async()=>{
+    const data=JSON.stringify(buildReport(),null,2);
+    try{
+      await navigator.clipboard.writeText(data);
+      $('copyReport').textContent='COPIATO ✓';
+      setTimeout(()=>$('copyReport').textContent='COPIA REPORT',1400);
+    }catch(_){
+      $('reportPreview').focus?.();
+    }
+  });
+
+  updateReport();
+})();
+</script>
+</body>
+</html>
