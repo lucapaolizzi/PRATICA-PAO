@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.16 — WORKER 7.1.7 ALIGNMENT — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE -->
+<!-- SILVER FRONTEND 5.21.17 — DICTATION FINAL FALLBACK + SESSION CTA — WORKER 7.1.8 ALIGNMENT — CHAIR NEGATION HARDENING — MOBILE MIC FAST · VIEWPORT SAFE -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3673,6 +3673,12 @@ body.conversation-mode .session-end::before{
   }
 }
 
+
+/* === SILVER FRONTEND 5.21.17 — SESSION CTA COMMERCIALE === */
+body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px 11px !important;border-radius:24px !important;}
+.session-end-title{font-size:15.5px !important;line-height:1.12 !important;letter-spacing:.075em !important;}
+.session-end-sub{font-size:11.5px !important;line-height:1.2 !important;}
+@media(max-width:520px){body.conversation-mode .session-end{min-height:70px !important}.session-end-title{font-size:15px !important}.session-end-sub{font-size:11.5px !important}}
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3770,9 +3776,9 @@ body.conversation-mode .session-end::before{
 
   <div class="session-row" id="sessionRow">
     <button class="session-end" id="sessionEndButton" type="button"
-      aria-label="Salva, esporta o chiudi la sessione">
-      <span class="session-end-title">SALVA / CHIUDI SESSIONE</span>
-      <span class="session-end-sub">Salva · esporta · termina</span>
+      aria-label="Gestisci la sessione: salva, esporta, termina o continua">
+      <span class="session-end-title">GESTISCI LA SESSIONE</span>
+      <span class="session-end-sub">Salva · esporta · termina · continua</span>
     </button>
   </div>
 
@@ -4097,8 +4103,8 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.16';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.7';
+const SILVER_FRONTEND_VERSION = '5.21.17';
+const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
 
 
 const backLink = document.getElementById('backLink');
@@ -4518,6 +4524,22 @@ function joinDictationText(...parts){
   return parts.map(x=>String(x||'').trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
 }
 
+// 5.21.17 — rete di sicurezza locale SOLO per la dettatura finale/fallback.
+function finalizeLocalDictationPunctuation(text, language=preferredTranscriptionLanguage()){
+  let out=String(text || '').trim();
+  const lang=String(language || '').toLowerCase().split(/[-_]/)[0];
+  if(!out || lang!=='it' || /[?？]\s*$/.test(out)) return out;
+  const low=out.toLowerCase().replace(/[“”"'’]/g,'').replace(/\s+/g,' ').trim();
+  const withoutGreeting=low.replace(/^(?:ciao|salve|ehi|hey)\s+(?:silver|silvia|silvio)\b[,:;\s-]*/i,'');
+  const startsLikeQuestion=/^(?:(?:come|cosa|che cosa|chi|dove|da dove|quando|quale|quali|quanto|quanta|quanti|quante)\b|perch[eé](?:\s|$))/.test(withoutGreeting) || /^(?:puoi|potresti|posso|devo|dovrei|vuoi|vorresti|sai|mi dici|mi puoi dire|mi sapresti dire)\b/.test(withoutGreeting);
+  const directQuestionPhrase=/\b(?:mi senti|mi ascolti|mi vedi|ci sei|come stai|come va|come ti senti|che ne pensi|cosa ne pensi|da dove vuoi cominciare|dove vuoi cominciare|da dove vuoi partire|dove vuoi partire)\b/.test(low);
+  const obviousStatement=/^(?:non so|so che|penso che|credo che|mi sembra che|ti dico che|volevo dirti che|come previsto|come detto|come sai|come sempre|come al solito|quando possibile|dove necessario)\b/.test(withoutGreeting);
+  if((startsLikeQuestion || directQuestionPhrase) && !obviousStatement){
+    return out.replace(/[.!…]+\s*$/,'').trimEnd() + '?';
+  }
+  return out;
+}
+
 // 5.21.8 — margine reale per le toolbar mobili sovrapposte.
 function silverMobileBottomReserve(){
   if(window.innerWidth > 760) return 16;
@@ -4894,11 +4916,13 @@ async function stopSilverContinuousDictation({cancel=false,silent=false}={}){
           }
         }
         if(spoken){
-          // La trascrizione completa sostituisce la preview cumulativa.
-          setContinuousTranscript(spoken);
+          setContinuousTranscript(finalizeLocalDictationPunctuation(spoken));
           if(!silent) setMicStatus('Dettatura fermata. Rileggi o correggi, poi invia.');
-        }else if(lastError && !silverContinuousPreviewText && !silent){
-          setMicStatus('La trascrizione finale non è arrivata. Puoi riprovare.');
+        }else if(lastError && silverContinuousPreviewText){
+          setContinuousTranscript(finalizeLocalDictationPunctuation(silverContinuousPreviewText));
+          if(!silent) setMicStatus('La trascrizione finale non è arrivata: ho mantenuto l’anteprima. Rileggila prima di inviare.');
+        }else if(lastError && !silent){
+          setMicStatus('La trascrizione finale non è arrivata. Tocca il microfono e riprova.');
         }
       }
     }finally{
@@ -5092,6 +5116,7 @@ async function transcribeSilverRecording(blob){
     }
     if(!spoken) throw lastError || new Error('Trascrizione non disponibile');
 
+    spoken=finalizeLocalDictationPunctuation(spoken);
     const before=input.value.trim();
     input.value = before ? `${before} ${spoken}` : spoken;
     resize();
