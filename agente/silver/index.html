@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.20 — HYBRID ZERO-COST VOICE — STRUCTURAL QUESTION + SESSION FIX — MOBILE NATIVE KEYBOARD + DESKTOP WEB SPEECH — LOCAL PUNCTUATION V5.2 — WORKER 7.1.8 -->
+<!-- SILVER FRONTEND 5.21.21 — CUSTOM .SILVER SESSION FILE + BACKWARD-COMPATIBLE RESTORE — BASE 5.21.20 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3681,6 +3681,11 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 @media(max-width:520px){body.conversation-mode .session-end{min-height:70px !important}.session-end-title{font-size:15px !important}.session-end-sub{font-size:11.5px !important}}
 
 
+/* === SILVER FRONTEND 5.21.21 — SESSION FILE .SILVER ===
+   Le nuove sessioni usano estensione .silver per evitare associazioni automatiche JSON su Android/ColorOS.
+   RIPRENDI SESSIONE resta retrocompatibile con i vecchi .json e accetta .txt solo se il contenuto è JSON Silver valido.
+   Il formato interno resta silver-pao-conversation; è il contenuto, non l'estensione, a validare la sessione. */
+
 /* === SILVER FRONTEND 5.21.20 — SESSIONE SEMPRE RAGGIUNGIBILE ===
    Il CTA non viene più nascosto solo perché iOS/WebView mantiene uno stato
    keyboard-open non affidabile. Durante la tastiera reale diventa più compatto. */
@@ -3802,7 +3807,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
   </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
-    accept=".json,application/json">
+    accept=".silver,.json,.txt,application/vnd.praticapao.silver+json,application/json,text/plain,application/octet-stream">
 
   <input class="hidden-file" id="attachmentFileInput" type="file" multiple
     accept=".pdf,.doc,.docx,.dot,.odt,.rtf,.pages,.ppt,.pptx,.pps,.pot,.ppa,.pwz,.wiz,.key,.xls,.xlsx,.xla,.xlb,.xlc,.xlm,.xlt,.xlw,.csv,.tsv,.iif,.txt,.text,.md,.markdown,.json,.jsonl,.html,.htm,.xml,.eml,.ics,.vcf,.srt,.vtt,.log,.conf,.rst,.css,.js,.mjs,.ts,.tsx,.jsx,.py,.sql,.c,.cc,.cpp,.cxx,.h,.hh,.java,.go,.rs,.rb,.php,.swift,.kt,.kts,.r,.lua,.pl,.asm,.s,.bat,.sh,.ksh,.ps1,.yaml,.yml,.toml,.ini,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.mp3,.mp4,.mov,.mpeg,.mpga,.m4a,.wav,.webm,.ogg,.flac,image/*,application/pdf,text/plain,text/markdown,application/json,text/csv,text/tsv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,audio/mpeg,audio/mp4,audio/wav,audio/webm,audio/ogg,audio/flac,video/quicktime">
@@ -4126,7 +4131,9 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.20';
+const SILVER_FRONTEND_VERSION = '5.21.21';
+const SILVER_SESSION_EXTENSION = '.silver';
+const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
 
 
@@ -6217,7 +6224,7 @@ async function saveSilverFileOnDesktop(json,fileName){
         suggestedName:fileName,
         types:[{
           description:'Sessione Silver',
-          accept:{'application/json':['.json']}
+          accept:{[SILVER_SESSION_MIME]:[SILVER_SESSION_EXTENSION]}
         }]
       });
       const writable = await handle.createWritable();
@@ -6232,7 +6239,7 @@ async function saveSilverFileOnDesktop(json,fileName){
   }
 
   try{
-    const blob=new Blob([json],{type:'application/json;charset=utf-8'});
+    const blob=new Blob([json],{type:SILVER_SESSION_MIME});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;
@@ -6417,15 +6424,15 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
   };
 
   const json=JSON.stringify(payload,null,2);
-  const fileName=`Silver_conversazione_${safeFileDate()}.json`;
-  const file=new File([json],fileName,{type:'application/json;charset=utf-8'});
+  const fileName=`Silver_conversazione_${safeFileDate()}${SILVER_SESSION_EXTENSION}`;
+  const file=new File([json],fileName,{type:SILVER_SESSION_MIME});
   let exported=false;
 
   try{
     if(isSilverAndroid()){
       if(strong) strong.textContent='SALVO SUL DISPOSITIVO…';
-      if(detail) detail.textContent='Creo il file della sessione nella cartella download del dispositivo.';
-      const result=downloadSilverBlob(new Blob([json],{type:'application/json;charset=utf-8'}),fileName);
+      if(detail) detail.textContent='Creo un file .silver riconoscibile nella cartella Download del dispositivo.';
+      const result=downloadSilverBlob(new Blob([json],{type:SILVER_SESSION_MIME}),fileName);
       exported=!!result.ok;
       if(!exported) throw result.error || new Error('Download Android non riuscito');
     }else if(isSilverMobileDevice() && navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
@@ -6922,7 +6929,7 @@ resumeFileInput.addEventListener('change',async ()=>{
     setTimeout(()=>{ setMicStatus(''); },3500);
   }catch(err){
     console.error('Riprendi conversazione:',err);
-    setMicStatus('Questo file non è una conversazione Silver valida.');
+    setMicStatus('File non riconosciuto: scegli una sessione .silver oppure un vecchio .json Silver valido.');
   }
 });
 
