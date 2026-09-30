@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.21 — CUSTOM .SILVER SESSION FILE + BACKWARD-COMPATIBLE RESTORE — BASE 5.21.20 -->
+<!-- SILVER FRONTEND 5.21.22 — UX CLEANUP: ONE HOME FOR RESUME / SESSION MANAGEMENT — BASE 5.21.21 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3681,7 +3681,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 @media(max-width:520px){body.conversation-mode .session-end{min-height:70px !important}.session-end-title{font-size:15px !important}.session-end-sub{font-size:11.5px !important}}
 
 
-/* === SILVER FRONTEND 5.21.21 — SESSION FILE .SILVER ===
+/* === SILVER FRONTEND 5.21.22 — SESSION FILE .SILVER + UX CLEANUP ===
    Le nuove sessioni usano estensione .silver per evitare associazioni automatiche JSON su Android/ColorOS.
    RIPRENDI SESSIONE resta retrocompatibile con i vecchi .json e accetta .txt solo se il contenuto è JSON Silver valido.
    Il formato interno resta silver-pao-conversation; è il contenuto, non l'estensione, a validare la sessione. */
@@ -3800,9 +3800,9 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
 
   <div class="session-row" id="sessionRow">
     <button class="session-end" id="sessionEndButton" type="button"
-      aria-label="Gestisci la sessione: salva, esporta, termina o continua">
+      aria-label="Gestisci la sessione: salva, esporta o termina">
       <span class="session-end-title">GESTISCI LA SESSIONE</span>
-      <span class="session-end-sub">Salva · esporta · termina · continua</span>
+      <span class="session-end-sub">Salva · esporta · termina</span>
     </button>
   </div>
 
@@ -3818,15 +3818,7 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
       <h2 class="sheet-title" id="toolsTitle">Strumenti</h2>
       <div class="tools-scroll-body">
       <div class="sheet-grid">
-        <button class="sheet-action primary" id="resumeButton" type="button">
-          <strong>RIPRENDI</strong>
-          <span>Carica una conversazione Silver salvata.</span>
-        </button>
-        <button class="sheet-action" id="toolsSessionButton" type="button">
-          <strong>SESSIONE</strong>
-          <span>Salva, esporta, termina o continua anche se hai solo una bozza.</span>
-        </button>
-        <button class="sheet-action" id="attachmentButton" type="button">
+        <button class="sheet-action primary" id="attachmentButton" type="button">
           <strong>ALLEGA</strong>
           <span>Foto, PDF, Word, Excel, PowerPoint, testi, codice e audio.</span>
         </button>
@@ -4131,7 +4123,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.21';
+const SILVER_FRONTEND_VERSION = '5.21.22';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
@@ -4164,8 +4156,6 @@ const sessionEndButton = document.getElementById('sessionEndButton');
 
 const toolsBackdrop = document.getElementById('toolsBackdrop');
 const toolsClose = document.getElementById('toolsClose');
-const resumeButton = document.getElementById('resumeButton');
-const toolsSessionButton = document.getElementById('toolsSessionButton');
 const attachmentButton = document.getElementById('attachmentButton');
 const toolsNote = document.getElementById('toolsNote');
 const resumeFileInput = document.getElementById('resumeFileInput');
@@ -6889,17 +6879,6 @@ sessionClose.addEventListener('click',()=>closeSheet(sessionBackdrop));
 
 sessionBackdrop.addEventListener('click',e=>{
   if(e.target === sessionBackdrop) closeSheet(sessionBackdrop);
-});
-
-resumeButton.addEventListener('click',()=>{
-  closeSheet(toolsBackdrop);
-  resumeFileInput.value='';
-  resumeFileInput.click();
-});
-
-toolsSessionButton?.addEventListener('click',()=>{
-  closeSheet(toolsBackdrop);
-  openSheet(sessionBackdrop);
 });
 
 resumeFileInput.addEventListener('change',async ()=>{
