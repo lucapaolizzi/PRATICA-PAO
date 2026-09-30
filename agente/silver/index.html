@@ -4123,7 +4123,7 @@ const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.22';
+const SILVER_FRONTEND_VERSION = '5.21.23';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
@@ -6206,57 +6206,61 @@ function isSilverMobileDevice(){
 }
 
 async function saveSilverFileOnDesktop(json,fileName){
-  // Chrome/Edge desktop: usa il selettore nativo "Salva con nome".
-  // È molto più affidabile del download sintetico con <a>.click().
-  if(typeof window.showSaveFilePicker === 'function' && window.isSecureContext){
-    try{
-      const handle = await window.showSaveFilePicker({
-        suggestedName:fileName,
-        types:[{
-          description:'Sessione Silver',
-          accept:{[SILVER_SESSION_MIME]:[SILVER_SESSION_EXTENSION]}
-        }]
-      });
-      const writable = await handle.createWritable();
-      await writable.write(json);
-      await writable.close();
-      return {ok:true,method:'picker'};
-    }catch(err){
-      if(err?.name === 'AbortError') return {ok:false,cancelled:true,method:'picker'};
-      console.warn('File picker Silver non disponibile:',err);
-      // Se il picker fallisce per un motivo tecnico, passiamo al download classico.
-    }
-  }
+  /*
+    5.21.23 — SAVE GUARD DESKTOP
+    Per la sessione .silver non usiamo più showSaveFilePicker:
+    su alcuni Chrome/Windows il dialogo nativo può aprirsi senza il nome suggerito.
+    Il download diretto usa sempre l'attributo download con il nome già costruito.
+    La sessione NON viene azzerata finché la persona non conferma di aver visto il file.
+  */
+  const safeName=String(fileName || '').trim()
+    || `Silver_conversazione_${safeFileDate()}${SILVER_SESSION_EXTENSION}`;
 
   try{
     const blob=new Blob([json],{type:SILVER_SESSION_MIME});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;
-    a.download=fileName;
+    a.download=safeName;
+    a.setAttribute('download',safeName);
     a.rel='noopener';
     a.style.position='fixed';
     a.style.left='-9999px';
     a.style.top='0';
     document.body.appendChild(a);
+
+    // Deve partire direttamente dal gesto dell'utente.
     a.click();
 
-    // Lasciamo il blob vivo abbastanza a lungo perché Chrome completi l'avvio del download.
+    // Manteniamo il blob disponibile abbastanza a lungo per Chrome/Windows.
     setTimeout(()=>{
       try{ a.remove(); }catch(_){}
       try{ URL.revokeObjectURL(url); }catch(_){}
-    },15000);
+    },20000);
 
-    // Non esiste un evento browser affidabile per sapere se il download è stato salvato.
-    // Chiediamo conferma PRIMA di cancellare/reset della sessione.
-    await new Promise(resolve=>setTimeout(resolve,350));
-    const confirmed = window.confirm(
-      'Ho avviato il salvataggio della sessione.\n\nHai visto partire il download o comparire il file?\n\nOK = termina la sessione\nAnnulla = resta qui senza perdere nulla.'
+    /*
+      Il browser non espone un evento affidabile "file realmente scritto".
+      Per questo il reset della chat è subordinato a una conferma esplicita.
+      Se il download è stato bloccato, annullato o non è visibile, scegliendo
+      Annulla la conversazione e il recovery locale restano intatti.
+    */
+    await new Promise(resolve=>setTimeout(resolve,500));
+    const confirmed=window.confirm(
+      `Ho avviato il download con questo nome:\n\n${safeName}\n\n` +
+      'Controlla che il file sia comparso nella cartella Download (o nella finestra di salvataggio del browser).\n\n' +
+      'OK = il file è presente, termina la sessione\n' +
+      'Annulla = resta nella conversazione senza perdere nulla.'
     );
-    return {ok:confirmed,method:'download'};
+
+    return {
+      ok:confirmed,
+      cancelled:!confirmed,
+      method:'download',
+      fileName:safeName
+    };
   }catch(err){
-    console.error('Download Silver:',err);
-    return {ok:false,error:err,method:'download'};
+    console.error('Download Silver desktop:',err);
+    return {ok:false,error:err,method:'download',fileName:safeName};
   }
 }
 
@@ -6389,6 +6393,10 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
     return;
   }
 
+  // 5.21.23 — fotografa subito lo stato locale prima di aprire qualsiasi dialogo/download.
+  // Se Chrome/Windows interrompe il salvataggio, la sessione resta recuperabile.
+  saveRecoveryDraft();
+
   const button = triggerButton || saveConversationButton;
   const strong = button.querySelector('strong');
   const detail = button.querySelector('span');
@@ -6431,15 +6439,15 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
       await navigator.share({files:[file],title:'Sessione Silver'});
       exported=true;
     }else{
-      if(strong) strong.textContent='SALVA CON NOME…';
-      if(detail) detail.textContent='Scegli dove conservare la sessione sul computer.';
+      if(strong) strong.textContent='SCARICO LA SESSIONE…';
+      if(detail) detail.textContent=`File: ${fileName}`;
       const result = await saveSilverFileOnDesktop(json,fileName);
       exported=!!result.ok;
 
       if(result.cancelled){
-        setMicStatus('Salvataggio annullato. La sessione è ancora qui.');
+        setMicStatus('Salvataggio non confermato. La sessione è ancora qui e non è stata cancellata.');
       }else if(!result.ok && result.error){
-        setMicStatus('Non sono riuscito a salvare il file. La sessione non è stata cancellata.');
+        setMicStatus('Non sono riuscito a salvare il file. La sessione è ancora qui.');
       }
     }
   }catch(err){
