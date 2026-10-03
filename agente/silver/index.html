@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.22 — UX CLEANUP: ONE HOME FOR RESUME / SESSION MANAGEMENT — BASE 5.21.21 -->
+<!-- SILVER FRONTEND 5.21.24 — PRIVACY LOCK + WORKER 7.3.0 — BASE 5.21.23 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -4120,13 +4120,12 @@ const WORKER_URL = 'https://silver-pao.paolizzi.workers.dev/';
 const STREAM_URL = WORKER_URL + 'stream';
 const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
-const REVIEW_URL = WORKER_URL + 'review';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.23';
+const SILVER_FRONTEND_VERSION = '5.21.24';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
-const SILVER_EXPECTED_WORKER_VERSION = '7.1.8';
+const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
 
 
 const backLink = document.getElementById('backLink');
@@ -6141,62 +6140,7 @@ function safeFileDate(){
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
 }
 
-async function sendSessionReview(){
-  const history = reviewMessages.length ? reviewMessages : sessionMessages;
-
-  if(history.length < 2){
-    return {ok:true,event:false,reason:'sessione troppo breve'};
-  }const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(),12000);
-
-  try{
-    const response = await fetch(REVIEW_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        history:history.map(m=>({
-          role:m.role,
-          content:String(m.content || '')
-        }))
-      }),
-      signal:controller.signal
-    });
-
-    const data = await response.json();
-
-    if(!response.ok || !data.ok){
-      throw new Error(data.error || 'Silver Review non disponibile');
-    }
-
-    return data;
-  }catch(err){
-    console.error('Silver Review:',err);
-    return {ok:false,error:String(err?.message || err)};
-  }finally{
-    clearTimeout(timeout);
-  }
-}
-
-function sendSessionReviewInBackground(){
-  const history = reviewMessages.length ? reviewMessages : sessionMessages;
-  if(history.length < 2) return;
-
-  try{
-    fetch(REVIEW_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        history:history.map(m=>({
-          role:m.role,
-          content:String(m.content || '')
-        }))
-      }),
-      keepalive:true
-    }).catch(err=>console.error('Silver Review background:',err));
-  }catch(err){
-    console.error('Silver Review background:',err);
-  }
-}
+// 5.21.24 — PRIVACY LOCK: nessuna review post-sessione server-side.
 
 function isSilverMobileDevice(){
   const ua = navigator.userAgent || '';
@@ -6471,7 +6415,7 @@ async function saveConversationToDevice(exitAction=null, triggerButton=saveConve
   }
 
   // Solo DOPO un salvataggio riuscito terminiamo la sessione.
-  sendSessionReviewInBackground();
+  // Privacy Lock: nessuna review della sessione viene inviata al server.
   clearRecoveryDraft();
   closeSheet(sessionBackdrop);
   closeSheet(exitBackdrop);
@@ -7549,8 +7493,7 @@ bindSilverTap(deleteConversationButton,async ()=>{
   deleteConversationButton.dataset.confirmDelete='0';
   closeSheet(sessionBackdrop);
 
-  // La cancellazione locale non deve dipendere dalla rete: la review parte in background.
-  sendSessionReviewInBackground();
+  // Privacy Lock: la cancellazione resta locale e non invia review della sessione.
 
   clearRecoveryDraft();
   resetConversationUi();
