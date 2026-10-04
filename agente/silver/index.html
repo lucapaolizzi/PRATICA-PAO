@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.25 — MOBILE CHAT CLEANUP + FASTER UI + VOICE 1.10x — BASE 5.21.24 -->
+<!-- SILVER FRONTEND 5.21.26 — MOBILE OVERLAP FIX + STABLE CHAT SNAP + VOICE 1.10x — BASE 5.21.25 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3714,6 +3714,29 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
   }
 }
 
+
+/* === SILVER FRONTEND 5.21.26 — MOBILE OVERLAP FIX / STABLE CHAT SNAP === */
+@media(max-width:760px){
+  :root{--silver-browser-bottom-reserve:156px;}
+
+  /* Più aria reale tra le gambe delle sedie e il pannello istruzioni. */
+  body.conversation-mode .practice-info-under-c{
+    margin-top:18px !important;
+  }
+
+  /* Il fondo della pagina resta sopra le barre flottanti di Safari / browser in-app. */
+  body.conversation-mode .shell{
+    padding-bottom:calc(42px + env(safe-area-inset-bottom) + var(--silver-browser-bottom-reserve)) !important;
+  }
+  body.conversation-mode .session-row.visible{
+    margin-bottom:calc(24px + env(safe-area-inset-bottom) + var(--silver-browser-bottom-reserve)) !important;
+    scroll-margin-bottom:calc(var(--silver-browser-bottom-reserve) + 28px) !important;
+  }
+  body.conversation-mode:not(.keyboard-open) .composer{
+    scroll-margin-bottom:calc(var(--silver-browser-bottom-reserve) + 24px) !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -4133,7 +4156,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.25';
+const SILVER_FRONTEND_VERSION = '5.21.26';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
@@ -8186,16 +8209,22 @@ function snapConversationHeaderBoundary(){
   const identityEl=document.querySelector('.identity');
   if(!identityEl) return;
 
-  const vv=window.visualViewport;
-  const viewportTop=vv ? vv.offsetTop : 0;
   const rect=identityEl.getBoundingClientRect();
+  const currentY=Math.max(0,window.scrollY || document.documentElement.scrollTop || 0);
+  const identityTop=currentY + rect.top;
+  const identityBottom=currentY + rect.bottom;
 
-  // Se l'auto-scroll lascia la testata tagliata (es. solo le gambe delle sedie),
-  // completa lo spostamento: testata intera visibile oppure interamente fuori campo.
-  if(rect.top < viewportTop - 4 && rect.bottom > viewportTop + 4){
-    const delta=rect.bottom - viewportTop + 6;
-    markProgrammaticScroll(180);
-    window.scrollBy({top:Math.ceil(delta),left:0,behavior:'auto'});
+  // Safari e browser in-app possono fermare l'auto-scroll a metà della testata.
+  // Non lasciamo mai visibili solo schienali/gambe: scegliamo il bordo più vicino.
+  if(currentY > identityTop + 8 && currentY < identityBottom - 8){
+    const distanceToTop=currentY - identityTop;
+    const distanceToBottom=identityBottom - currentY;
+    const target=(distanceToTop <= distanceToBottom)
+      ? Math.max(0,Math.floor(identityTop))
+      : Math.max(0,Math.ceil(identityBottom + 10));
+
+    markProgrammaticScroll(220);
+    window.scrollTo({top:target,left:0,behavior:'auto'});
   }
 }
 
