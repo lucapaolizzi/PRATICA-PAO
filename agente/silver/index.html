@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.33 — IOS KEYBOARD RETURN STABILITY — BASE 5.21.32 -->
+<!-- SILVER FRONTEND 5.21.34 — MOBILE KEYBOARD TOGGLE + TRUE HELP CENTER — BASE 5.21.33 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -4021,6 +4021,46 @@ body.keyboard-open .session-practice-help{display:none !important;}
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.21.34 — TRUE HELP CENTER ===
+   Il ? non partecipa più al flusso: il titolo è centrato sul riquadro reale. */
+@media(max-width:760px){
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button,
+  body.conversation-mode .post-composer-slot .practice-info-button{
+    position:relative !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:6px 56px !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-q,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-q{
+    position:absolute !important;
+    left:12px !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+    margin:0 !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-copy,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-copy{
+    display:flex !important;
+    width:100% !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+    margin:0 !important;
+    transform:none !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-copy strong,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-copy strong{
+    display:block !important;
+    width:100% !important;
+    text-align:center !important;
+    margin:0 !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -4446,7 +4486,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.33';
+const SILVER_FRONTEND_VERSION = '5.21.34';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
@@ -5910,6 +5950,25 @@ async function stopSilverProgressiveFallback({cancelCurrent=false,silent=false}=
   try{ await silverProgressiveStopPromise; }catch(_){ }
 }
 
+let silverMobileKeyboardToggleWasOpen=false;
+
+function closeSilverMobileSystemKeyboard(){
+  // Il browser non espone un'API "hide keyboard": su iOS il modo affidabile è togliere il focus.
+  // Puliamo anche lo stato visuale subito, senza aspettare il resize del visualViewport.
+  suppressBlurFollowForMic(900);
+  silverNativeDictationArmed=false;
+  try{ input.blur(); }catch(_){ }
+  document.body.classList.remove('keyboard-open');
+  composer.classList.remove('keyboard-open');
+  document.documentElement.style.removeProperty('--composer-top');
+  document.documentElement.style.removeProperty('--help-top');
+  document.documentElement.style.removeProperty('--keyboard-reserve');
+  setMicStatus('');
+  updateComposerState();
+  configureSilverVoiceButton();
+  requestAnimationFrame(updateKeyboardLayout);
+}
+
 async function startSilverMic(){
   if(silverMicBusy || send.disabled) return;
 
@@ -5919,9 +5978,16 @@ async function startSilverMic(){
     return;
   }
 
-  // 5.21.19 — Su telefono il sito NON può premere il microfono della tastiera.
-  // Il pulsante è quindi dichiaratamente un helper tastiera, non un falso start-mic.
+  // 5.21.34 — su telefono il tasto ⌨️ è un vero toggle.
+  // pointerdown memorizza lo stato PRIMA che il tap sul bottone possa togliere il focus al textarea.
   if(isSilverMobileVoiceDevice()){
+    const shouldClose = silverMobileKeyboardToggleWasOpen ||
+      document.body.classList.contains('keyboard-open');
+    silverMobileKeyboardToggleWasOpen=false;
+    if(shouldClose){
+      closeSilverMobileSystemKeyboard();
+      return;
+    }
     silverNativeDictationArmed=true;
     focusSilverComposerForSystemDictation(
       'Tastiera aperta: per dettare tocca 🎤 nella tastiera del telefono. Il testo resta modificabile e Silver rifinisce localmente la punteggiatura all’invio.'
@@ -5936,6 +6002,12 @@ async function startSilverMic(){
   // Nessuna chiamata /transcribe nello standard: fallback alla dettatura del sistema.
   focusSilverComposerForSystemDictation(silverSystemDictationHint());
 }
+dictationHelpButton.addEventListener('pointerdown',()=>{
+  if(!isSilverMobileVoiceDevice()) return;
+  silverMobileKeyboardToggleWasOpen =
+    document.activeElement === input ||
+    document.body.classList.contains('keyboard-open');
+},{passive:true});
 dictationHelpButton.addEventListener('click',startSilverMic);
 configureSilverVoiceButton();
 
