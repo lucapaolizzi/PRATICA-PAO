@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.30 — CENTERED PRACTICE HELP + MOBILE SAFE ZONE — BASE 5.21.29 -->
+<!-- SILVER FRONTEND 5.21.32 — CENTERED PRACTICE HELP + MOBILE SAFE ZONE — BASE 5.21.29 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3949,6 +3949,78 @@ body.keyboard-open .session-practice-help{display:none !important;}
     padding-right:7px !important;
   }
 }
+
+
+/* === SILVER FRONTEND 5.21.31 — DEEP MOBILE QA FIXES ===
+   1) centratura reale di ISTRUZIONI: azzera vecchi padding/position più specifici;
+   2) apertura senza coda bianca artificiale: niente min-height + riserva browser fuori sessione;
+   3) sessione: stessa riserva 156px in CSS e JS, anche con risposte lunghe. */
+@media(max-width:760px){
+  body:not(.conversation-mode) .shell{
+    min-height:var(--silver-app-height,100dvh) !important;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom)) !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot{
+    padding-bottom:calc(18px + env(safe-area-inset-bottom)) !important;
+    scroll-margin-bottom:0 !important;
+  }
+
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button,
+  body.conversation-mode .post-composer-slot .practice-info-button{
+    display:grid !important;
+    grid-template-columns:40px minmax(0,1fr) 40px !important;
+    gap:0 !important;
+    padding-top:6px !important;
+    padding-bottom:6px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+    align-items:center !important;
+    justify-content:stretch !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-q,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-q{
+    position:static !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    transform:none !important;
+    grid-column:1 !important;
+    justify-self:center !important;
+    align-self:center !important;
+    margin:0 !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-copy,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-copy{
+    grid-column:2 !important;
+    width:100% !important;
+    justify-self:stretch !important;
+    align-items:center !important;
+    text-align:center !important;
+    margin:0 !important;
+    transform:none !important;
+  }
+  body:not(.conversation-mode) .post-composer-slot .practice-info-button .practice-info-copy strong,
+  body.conversation-mode .post-composer-slot .practice-info-button .practice-info-copy strong{
+    width:100% !important;
+    text-align:center !important;
+    white-space:normal !important;
+  }
+
+  :root{--silver-mobile-bottom-chrome:156px;}
+  body.conversation-mode:not(.keyboard-open) .post-composer-slot{
+    padding-bottom:calc(var(--silver-mobile-bottom-chrome) + env(safe-area-inset-bottom)) !important;
+    scroll-margin-bottom:calc(var(--silver-mobile-bottom-chrome) + 18px + env(safe-area-inset-bottom)) !important;
+  }
+  body.conversation-mode:not(.keyboard-open) .post-composer-slot .session-row.visible{
+    scroll-margin-bottom:calc(var(--silver-mobile-bottom-chrome) + 18px + env(safe-area-inset-bottom)) !important;
+  }
+  html,body{
+    scroll-padding-bottom:calc(var(--silver-mobile-bottom-chrome) + 18px + env(safe-area-inset-bottom)) !important;
+    overscroll-behavior-y:contain;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -4374,7 +4446,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.30';
+const SILVER_FRONTEND_VERSION = '5.21.32';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
@@ -5980,13 +6052,17 @@ input.addEventListener('focus',()=>{
 });
 
 input.addEventListener('blur',()=>{
+  // 5.21.32: non riallineare la pagina per un semplice tap fuori dal campo.
+  // Il follow dopo il blur serve soltanto se il visualViewport aveva davvero
+  // rilevato una tastiera aperta; altrimenti produceva salti di ~140 px.
+  const hadRealKeyboard = document.body.classList.contains('keyboard-open');
   setTimeout(()=>{
     document.body.classList.remove('keyboard-open');
     composer.classList.remove('keyboard-open');
     document.documentElement.style.removeProperty('--composer-top');
     document.documentElement.style.removeProperty('--help-top');
     document.documentElement.style.removeProperty('--keyboard-reserve');
-    if(silverAutoFollow && Date.now() >= silverSuppressBlurFollowUntil && !document.body.classList.contains('mic-active')){
+    if(hadRealKeyboard && silverAutoFollow && Date.now() >= silverSuppressBlurFollowUntil && !document.body.classList.contains('mic-active')){
       setTimeout(()=>followConversation({behavior:'auto'}),180);
     }
   },120);
@@ -8449,7 +8525,7 @@ function followConversation({behavior='auto',force=false}={}){
     const sessionAction=document.querySelector('.post-composer-slot .session-row.visible');
     const actionRect=sessionAction ? sessionAction.getBoundingClientRect() : null;
     const isMobile=window.matchMedia('(max-width:760px)').matches;
-    const browserChromeReserve=isMobile ? 142 : 14;
+    const browserChromeReserve=isMobile ? 156 : 14;
     const contentBottom=Math.max(
       lastRect.bottom,
       composerRect.bottom,
