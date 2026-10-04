@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.26 — MOBILE OVERLAP FIX + STABLE CHAT SNAP + VOICE 1.10x — BASE 5.21.25 -->
+<!-- SILVER FRONTEND 5.21.28 — PERSISTENT PRACTICE HELP + ACTION SLOT — BASE 5.21.27 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3737,6 +3737,160 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
   }
 }
 
+
+
+/* === SILVER FRONTEND 5.21.27 — MOBILE FLOW REFACTOR / ACTION SLOT / CALM SCROLL ===
+   ISTRUZIONI e GESTISCI SESSIONE condividono un solo spazio sotto il composer.
+   La testata A/B/C non contiene più CTA larghi: nessuna gamba può incrociarli.
+   A tastiera aperta lo slot sparisce, evitando collisioni con la accessory bar iOS. */
+.post-composer-slot{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:0;
+}
+.post-composer-slot .practice-info-under-c{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  align-self:auto !important;
+  width:min(560px,100%) !important;
+  max-width:100% !important;
+  margin:10px auto 0 !important;
+  padding:0 4px !important;
+  display:flex !important;
+}
+.post-composer-slot .practice-info-button{
+  width:100% !important;
+  max-width:none !important;
+  min-height:54px !important;
+  border-radius:22px !important;
+}
+body.conversation-mode .post-composer-slot .practice-info-under-c{display:none !important;}
+body:not(.conversation-mode) .post-composer-slot .session-row{display:none !important;}
+
+/* Un solo CTA nello slot: quando la sessione parte, GESTISCI prende davvero il posto di ISTRUZIONI. */
+.post-composer-slot .session-row.visible{
+  width:min(560px,100%) !important;
+  max-width:100% !important;
+  margin:10px auto 0 !important;
+  padding:0 4px !important;
+  justify-content:center !important;
+}
+.post-composer-slot .session-end{width:100% !important;}
+body.conversation-mode .post-composer-slot{order:4 !important;}
+body.conversation-mode .post-composer-slot .session-row.visible{
+  order:0 !important;
+  position:relative !important;
+  inset:auto !important;
+  transform:none !important;
+  width:min(560px,100%) !important;
+  margin:10px auto 0 !important;
+  padding:0 4px !important;
+}
+body.conversation-mode .post-composer-slot .session-end{width:100% !important;}
+
+@media(max-width:760px){
+  /* Niente sticky a tastiera chiusa: il documento scorre come una pagina unica, senza doppio piano. */
+  body.conversation-mode:not(.keyboard-open) .composer{
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    transform:none !important;
+    z-index:6 !important;
+    margin:10px auto 0 !important;
+    box-shadow:0 4px 16px rgba(36,33,29,.07) !important;
+  }
+
+  /* Più separazione verticale nella testata ora che il CTA non vive più sotto C. */
+  body:not(.conversation-mode) .identity,
+  body.conversation-mode .identity{
+    padding-bottom:10px !important;
+  }
+  body:not(.conversation-mode) .chair-scene,
+  body.conversation-mode .chair-scene{
+    margin-bottom:10px !important;
+  }
+
+  /* Zona azione sicura rispetto alle toolbar flottanti del browser. */
+  .post-composer-slot{
+    padding-bottom:calc(118px + env(safe-area-inset-bottom)) !important;
+    scroll-margin-bottom:calc(118px + env(safe-area-inset-bottom)) !important;
+  }
+  body.conversation-mode .shell{
+    padding-bottom:calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+  body.conversation-mode .post-composer-slot .session-row.visible{
+    margin:10px auto 0 !important;
+    scroll-margin-bottom:calc(118px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Durante la tastiera nessun CTA sotto al composer: evita la riga/accessory bar sopra GESTISCI. */
+  body.keyboard-open .post-composer-slot{display:none !important;}
+  body.keyboard-open .session-row.visible{display:none !important;visibility:hidden !important;}
+
+  html,body{scroll-behavior:auto !important;}
+}
+
+
+
+/* === SILVER FRONTEND 5.21.28 — RIVEDI ISTRUZIONI SEMPRE DISPONIBILE ===
+   All'avvio resta il CTA completo ISTRUZIONI. Durante la sessione GESTISCI occupa lo stesso slot
+   e un ? compatto, nello stesso riquadro orizzontale, riapre le istruzioni senza cambiare pagina. */
+.session-practice-help{
+  display:none;
+  flex:0 0 70px;
+  width:70px;
+  min-width:70px;
+  min-height:70px;
+  padding:0;
+  align-items:center;
+  justify-content:center;
+  border:1.5px solid var(--line);
+  border-radius:24px;
+  background:#fff;
+  color:var(--ink);
+  font:700 28px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(36,33,29,.05);
+}
+body.conversation-mode .post-composer-slot .session-row.visible{
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:stretch !important;
+  gap:10px !important;
+}
+body.conversation-mode .post-composer-slot .session-end{
+  flex:1 1 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+}
+body.conversation-mode .post-composer-slot .session-practice-help{
+  display:flex !important;
+}
+.session-practice-help:focus-visible{
+  outline:3px solid rgba(36,33,29,.22);
+  outline-offset:2px;
+}
+@media(max-width:520px){
+  .session-practice-help{
+    flex-basis:64px;
+    width:64px;
+    min-width:64px;
+    min-height:70px;
+    border-radius:22px;
+    font-size:26px;
+  }
+}
+body.keyboard-open .session-practice-help{display:none !important;}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -3761,12 +3915,6 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
         </div>
         <div class="observer-row">
           <button class="observer-button observer-eye" id="chairCButton" type="button" aria-pressed="false" aria-label="Vai nello spazio C di osservazione">C</button>
-        </div>
-        <div class="practice-info-row practice-info-under-c">
-          <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri le istruzioni della Pratica P.A.O.">
-            <span class="practice-info-q" aria-hidden="true">?</span>
-            <span class="practice-info-copy"><strong>ISTRUZIONI PRATICA P.A.O.</strong></span>
-          </button>
         </div>
         <div class="mode-badge" id="modeBadge" hidden></div>
       </div>
@@ -3827,18 +3975,30 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
     </div>
   </form>
 
+  <div class="post-composer-slot" id="postComposerSlot">
+    <div class="practice-info-row practice-info-under-c">
+      <button class="practice-info-button" id="practiceInfoButton" type="button" aria-label="Apri le istruzioni della Pratica P.A.O.">
+        <span class="practice-info-q" aria-hidden="true">?</span>
+        <span class="practice-info-copy"><strong>ISTRUZIONI PRATICA P.A.O.</strong></span>
+      </button>
+    </div>
+
+    <div class="session-row" id="sessionRow">
+      <button class="session-end" id="sessionEndButton" type="button"
+        aria-label="Gestisci la sessione: salva, esporta o termina">
+        <span class="session-end-title">GESTISCI LA SESSIONE</span>
+        <span class="session-end-sub">Salva · esporta · termina</span>
+      </button>
+      <button class="session-practice-help" id="sessionPracticeHelpButton" type="button"
+        aria-label="Rivedi le istruzioni della Pratica P.A.O." title="Istruzioni Pratica P.A.O.">?</button>
+    </div>
+  </div>
+
   <div class="dictation-help-row" id="dictationHelpRow">
     <button class="dictation-help voice-mic" id="dictationHelpButton" type="button"
       aria-label="Voce" title="Voce">🎤</button>
   </div>
 
-  <div class="session-row" id="sessionRow">
-    <button class="session-end" id="sessionEndButton" type="button"
-      aria-label="Gestisci la sessione: salva, esporta o termina">
-      <span class="session-end-title">GESTISCI LA SESSIONE</span>
-      <span class="session-end-sub">Salva · esporta · termina</span>
-    </button>
-  </div>
 
   <input class="hidden-file" id="resumeFileInput" type="file"
     accept=".silver,.json,.txt,application/vnd.praticapao.silver+json,application/json,text/plain,application/octet-stream">
@@ -4156,7 +4316,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.26';
+const SILVER_FRONTEND_VERSION = '5.21.28';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
@@ -4187,6 +4347,7 @@ const clearInputButton = document.getElementById('clearInputButton');
 const micStatus = document.getElementById('micStatus');
 const sessionRow = document.getElementById('sessionRow');
 const sessionEndButton = document.getElementById('sessionEndButton');
+const sessionPracticeHelpButton = document.getElementById('sessionPracticeHelpButton');
 
 const toolsBackdrop = document.getElementById('toolsBackdrop');
 const toolsClose = document.getElementById('toolsClose');
@@ -5980,7 +6141,6 @@ window.addEventListener(
 function updateSessionControls(persistRecovery=true){
   const hasSessionWork =
     sessionMessages.length > 0 ||
-    input.value.trim().length > 0 ||
     pendingAttachments.length > 0;
 
   sessionRow.classList.toggle('visible', hasSessionWork);
@@ -6546,6 +6706,7 @@ helpBackdrop.addEventListener('click',e=>{
 });
 
 practiceInfoButton?.addEventListener('click',()=>openSheet(practiceInfoBackdrop));
+sessionPracticeHelpButton?.addEventListener('click',()=>openSheet(practiceInfoBackdrop));
 practiceInfoClose?.addEventListener('click',()=>closeSheet(practiceInfoBackdrop));
 practiceInfoBackdrop?.addEventListener('click',e=>{
   if(e.target === practiceInfoBackdrop) closeSheet(practiceInfoBackdrop);
@@ -8201,31 +8362,8 @@ function documentBottomDistance(){
 }
 
 function snapConversationHeaderBoundary(){
-  if(window.innerWidth > 760) return;
-  if(!document.body.classList.contains('conversation-mode')) return;
-  if(document.body.classList.contains('keyboard-open')) return;
-  if(!silverAutoFollow) return;
-
-  const identityEl=document.querySelector('.identity');
-  if(!identityEl) return;
-
-  const rect=identityEl.getBoundingClientRect();
-  const currentY=Math.max(0,window.scrollY || document.documentElement.scrollTop || 0);
-  const identityTop=currentY + rect.top;
-  const identityBottom=currentY + rect.bottom;
-
-  // Safari e browser in-app possono fermare l'auto-scroll a metà della testata.
-  // Non lasciamo mai visibili solo schienali/gambe: scegliamo il bordo più vicino.
-  if(currentY > identityTop + 8 && currentY < identityBottom - 8){
-    const distanceToTop=currentY - identityTop;
-    const distanceToBottom=identityBottom - currentY;
-    const target=(distanceToTop <= distanceToBottom)
-      ? Math.max(0,Math.floor(identityTop))
-      : Math.max(0,Math.ceil(identityBottom + 10));
-
-    markProgrammaticScroll(220);
-    window.scrollTo({top:target,left:0,behavior:'auto'});
-  }
+  // 5.21.27: disattivato. Nessun aggancio forzato ai bordi della testata:
+  // il browser può scorrere naturalmente senza scatti tra sedie e chat.
 }
 
 function followConversation({behavior='auto',force=false}={}){
@@ -8233,30 +8371,38 @@ function followConversation({behavior='auto',force=false}={}){
   if(!force && !silverAutoFollow) return;
   if(document.body.classList.contains('keyboard-open')){
     scheduleKeyboardReveal(120);
+    return;
   }
 
   cancelAnimationFrame(silverFollowFrame);
   silverFollowFrame=requestAnimationFrame(()=>{
     const last=conversation.lastElementChild;
     if(!last) return;
+
     const vv=window.visualViewport;
     const viewportTop=vv ? vv.offsetTop : 0;
     const viewportBottom=vv ? vv.offsetTop+vv.height : window.innerHeight;
     const composerRect=composer.getBoundingClientRect();
-    const safeBottom=Math.min(viewportBottom-10,composerRect.top-10);
     const lastRect=last.getBoundingClientRect();
-    const overflow=lastRect.bottom-safeBottom;
+
+    // Un solo obiettivo: tenere risposta + composer nel visual viewport.
+    // Non tocchiamo la testata e non inseguiamo GESTISCI SESSIONE.
+    const contentBottom=Math.max(lastRect.bottom,composerRect.bottom);
+    const safeBottom=viewportBottom-14;
+    const overflow=contentBottom-safeBottom;
+
     if(overflow>4){
-      markProgrammaticScroll(behavior==='smooth'?650:260);
+      markProgrammaticScroll(behavior==='smooth'?520:220);
       window.scrollBy({top:Math.ceil(overflow),left:0,behavior});
-      if(behavior === 'auto') requestAnimationFrame(snapConversationHeaderBoundary);
-    }else if(lastRect.top<viewportTop+8 && lastRect.height<Math.max(180,(viewportBottom-viewportTop)*.58)){
-      // Messaggio breve finito troppo in alto: riportalo in zona leggibile senza centrarlo forzatamente.
-      const delta=lastRect.top-(viewportTop+12);
+      return;
+    }
+
+    // Solo se l'intero blocco utile è finito sopra il viewport, recuperiamo il minimo necessario.
+    if(composerRect.bottom < viewportTop+80){
+      const delta=composerRect.top-(viewportTop+12);
       if(delta<0){
-        markProgrammaticScroll(260);
+        markProgrammaticScroll(220);
         window.scrollBy({top:Math.floor(delta),left:0,behavior:'auto'});
-        requestAnimationFrame(snapConversationHeaderBoundary);
       }
     }
   });
