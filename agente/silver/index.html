@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.24 — PRIVACY LOCK + WORKER 7.3.0 — BASE 5.21.23 -->
+<!-- SILVER FRONTEND 5.21.25 — MOBILE CHAT CLEANUP + FASTER UI + VOICE 1.10x — BASE 5.21.24 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -3703,6 +3703,17 @@ body.conversation-mode .session-end{min-height:70px !important;padding:12px 18px
   body.keyboard-open .session-end-title{font-size:12px !important;}
   body.keyboard-open .session-end-sub{font-size:9.5px !important;}
 }
+
+
+/* === SILVER FRONTEND 5.21.25 — CHAT CLEAN / UI FAST === */
+@media(max-width:760px){
+  /* I cambi A/B/C diventano più pronti senza introdurre scatti. */
+  body.conversation-mode .chair-label,
+  body.conversation-mode .chair-drawing{
+    transition-duration:.10s !important;
+  }
+}
+
 </style>
 </head>
 <body class="mode-selected" data-silver-mode="practice">
@@ -4122,10 +4133,11 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.24';
+const SILVER_FRONTEND_VERSION = '5.21.25';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
+const SILVER_VOICE_PLAYBACK_RATE = 1.10;
 
 
 const backLink = document.getElementById('backLink');
@@ -6041,7 +6053,7 @@ function scheduleStreamFollow(){
     }else if(silverAutoFollow){
       followConversation({behavior:'auto'});
     }
-  },220);
+  },120);
 }
 
 window.addEventListener('wheel',e=>{
@@ -7727,6 +7739,9 @@ async function speakSilver(text, button, languageOverride=null){
       activeAudioUrl = URL.createObjectURL(blob);
       activeAudio = new Audio(activeAudioUrl);
       activeAudio.preload = 'auto';
+      activeAudio.playbackRate = SILVER_VOICE_PLAYBACK_RATE;
+      activeAudio.preservesPitch = true;
+      if('webkitPreservesPitch' in activeAudio) activeAudio.webkitPreservesPitch = true;
       activePaused = false;
 
       button.textContent = chunks.length > 1
@@ -8143,7 +8158,7 @@ form.addEventListener('submit', async e=>{
       if(silverAutoFollow){
         followConversation({behavior:'auto'});
       }
-    },110));
+    },40));
   }
 });
 
@@ -8160,6 +8175,28 @@ function documentBottomDistance(){
   const safeBottom=Math.min(viewportBottom-10,composerRect.top-10);
   const lastRect=last.getBoundingClientRect();
   return Math.max(0,lastRect.bottom-safeBottom);
+}
+
+function snapConversationHeaderBoundary(){
+  if(window.innerWidth > 760) return;
+  if(!document.body.classList.contains('conversation-mode')) return;
+  if(document.body.classList.contains('keyboard-open')) return;
+  if(!silverAutoFollow) return;
+
+  const identityEl=document.querySelector('.identity');
+  if(!identityEl) return;
+
+  const vv=window.visualViewport;
+  const viewportTop=vv ? vv.offsetTop : 0;
+  const rect=identityEl.getBoundingClientRect();
+
+  // Se l'auto-scroll lascia la testata tagliata (es. solo le gambe delle sedie),
+  // completa lo spostamento: testata intera visibile oppure interamente fuori campo.
+  if(rect.top < viewportTop - 4 && rect.bottom > viewportTop + 4){
+    const delta=rect.bottom - viewportTop + 6;
+    markProgrammaticScroll(180);
+    window.scrollBy({top:Math.ceil(delta),left:0,behavior:'auto'});
+  }
 }
 
 function followConversation({behavior='auto',force=false}={}){
@@ -8183,12 +8220,14 @@ function followConversation({behavior='auto',force=false}={}){
     if(overflow>4){
       markProgrammaticScroll(behavior==='smooth'?650:260);
       window.scrollBy({top:Math.ceil(overflow),left:0,behavior});
+      if(behavior === 'auto') requestAnimationFrame(snapConversationHeaderBoundary);
     }else if(lastRect.top<viewportTop+8 && lastRect.height<Math.max(180,(viewportBottom-viewportTop)*.58)){
       // Messaggio breve finito troppo in alto: riportalo in zona leggibile senza centrarlo forzatamente.
       const delta=lastRect.top-(viewportTop+12);
       if(delta<0){
         markProgrammaticScroll(260);
         window.scrollBy({top:Math.floor(delta),left:0,behavior:'auto'});
+        requestAnimationFrame(snapConversationHeaderBoundary);
       }
     }
   });
