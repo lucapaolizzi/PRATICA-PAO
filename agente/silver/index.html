@@ -1,4 +1,4 @@
-<!-- SILVER FRONTEND 5.21.32 — CENTERED PRACTICE HELP + MOBILE SAFE ZONE — BASE 5.21.29 -->
+<!-- SILVER FRONTEND 5.21.33 — IOS KEYBOARD RETURN STABILITY — BASE 5.21.32 -->
 <!doctype html>
 <html lang="it">
 <head>
@@ -4446,7 +4446,7 @@ const SPEECH_URL = WORKER_URL + 'speech';
 const TRANSCRIBE_URL = WORKER_URL + 'transcribe';
 const ATTACHMENT_URL = WORKER_URL + 'attachment';
 const TRANSLATE_URL = WORKER_URL + 'translate';
-const SILVER_FRONTEND_VERSION = '5.21.32';
+const SILVER_FRONTEND_VERSION = '5.21.33';
 const SILVER_SESSION_EXTENSION = '.silver';
 const SILVER_SESSION_MIME = 'application/vnd.praticapao.silver+json';
 const SILVER_EXPECTED_WORKER_VERSION = '7.3.0';
@@ -6063,7 +6063,7 @@ input.addEventListener('blur',()=>{
     document.documentElement.style.removeProperty('--help-top');
     document.documentElement.style.removeProperty('--keyboard-reserve');
     if(hadRealKeyboard && silverAutoFollow && Date.now() >= silverSuppressBlurFollowUntil && !document.body.classList.contains('mic-active')){
-      setTimeout(()=>followConversation({behavior:'auto'}),180);
+      setTimeout(()=>followConversation({behavior:'auto'}),220);
     }
   },120);
 });
@@ -8519,17 +8519,19 @@ function followConversation({behavior='auto',force=false}={}){
     const composerRect=composer.getBoundingClientRect();
     const lastRect=last.getBoundingClientRect();
 
-    // 5.21.29: tenere visibili risposta + composer e, quando presente,
-    // anche lo slot GESTISCI SESSIONE + ?. Sui browser iPhone/in-app
-    // riserviamo spazio alla toolbar inferiore che può sovrapporsi al viewport.
-    const sessionAction=document.querySelector('.post-composer-slot .session-row.visible');
-    const actionRect=sessionAction ? sessionAction.getBoundingClientRect() : null;
+    // 5.21.33: tenere visibili risposta + composer senza inseguire anche
+    // GESTISCI SESSIONE. Sui browser iPhone/in-app resta la riserva per
+    // la toolbar inferiore che può sovrapporsi al viewport.
+    // 5.21.33 — dopo una risposta o la chiusura della tastiera,
+    // l'auto-follow protegge soltanto la risposta corrente + il composer.
+    // GESTISCI SESSIONE / ? rimangono subito sotto e raggiungibili con uno
+    // scroll volontario, ma non devono trascinare tutta la pagina verso il
+    // basso: era la causa della sensazione di "pagina che scatta" su iPhone.
     const isMobile=window.matchMedia('(max-width:760px)').matches;
     const browserChromeReserve=isMobile ? 156 : 14;
     const contentBottom=Math.max(
       lastRect.bottom,
-      composerRect.bottom,
-      actionRect ? actionRect.bottom : 0
+      composerRect.bottom
     );
     const safeBottom=viewportBottom-browserChromeReserve;
     const overflow=contentBottom-safeBottom;
