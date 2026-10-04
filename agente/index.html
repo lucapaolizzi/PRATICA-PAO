@@ -32,11 +32,35 @@ body{display:flex;justify-content:center;font-family:Arial,sans-serif}
 /* DESKTOP FIT ONLY — mostra l'intera locandina, compreso ENTRA, senza alterare il mobile. */
 @media (min-width:761px){
   html,body{height:100%;overflow:hidden}
+  body{
+    position:relative;
+    isolation:isolate;
+    align-items:center;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:-28px;
+    z-index:-2;
+    background:
+      url("AGENTE-PAO-SILVER-UFFICIALE.png") center center / cover no-repeat;
+    filter:blur(24px);
+    transform:scale(1.06);
+    opacity:.58;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:rgba(0,0,0,.22);
+  }
   .stage{
     width:auto;
     height:100vh;
     max-width:100vw;
     aspect-ratio:1119 / 1406;
+    box-shadow:0 0 34px rgba(0,0,0,.34);
   }
   .poster{
     width:100%;
