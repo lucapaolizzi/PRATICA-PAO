@@ -3,37 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
 <title>Pratica P.A.O. — Silver</title>
-<meta name="description" content="Pratica P.A.O. — entra nello spazio P.A.O. con Silver. Pratica, Mappa, Quaderno e Agente P.A.O.">
+<meta name="description" content="Pratica P.A.O. con Silver: una pratica di presenza. Accettazione, Buona Relazione, Consapevolezza. Entra in Pratica, Mappa, Quaderno e Agente P.A.O.">
+
+<link rel="canonical" href="https://praticapao.it/">
+
 <meta property="og:title" content="Pratica P.A.O. — Silver">
-<meta property="og:description" content="Ho una mappa. Il territorio è il tuo. Insieme è più semplice.">
+<meta property="og:description" content="Una pratica di presenza. Infinite possibilità.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://praticapao.it/">
-<meta property="og:image" content="https://praticapao.it/agente/AGENTE-PAO-SILVER-UFFICIALE.png">
+<meta property="og:image" content="https://praticapao.it/agente/SILVER-HERO-DESKTOP.png">
+
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://praticapao.it/agente/AGENTE-PAO-SILVER-UFFICIALE.png">
+<meta name="twitter:title" content="Pratica P.A.O. — Silver">
+<meta name="twitter:description" content="Una pratica di presenza. Infinite possibilità.">
+<meta name="twitter:image" content="https://praticapao.it/agente/SILVER-HERO-DESKTOP.png">
+
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#111}
-body{
-  min-height:100svh;
-  min-height:100dvh;
+body{font-family:Arial,sans-serif}
+main{min-height:100vh}
+
+.hero{
+  position:relative;
   display:flex;
   justify-content:center;
   align-items:center;
-  font-family:Arial,sans-serif;
+  line-height:0;
+  overflow:hidden;
 }
-.stage{position:relative;width:min(100vw,900px);line-height:0}
-.poster{display:block;width:100%;height:auto}
-.enter{position:absolute;left:29%;width:42%;bottom:7.4%;height:6.2%;border-radius:999px;z-index:2;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.enter:focus{outline:3px solid #fff;outline-offset:3px}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hero img{display:block}
+.hero .enter{
+  position:absolute;
+  display:block;
+  border-radius:999px;
+  z-index:2;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.hero .enter:focus{
+  outline:3px solid #fff;
+  outline-offset:3px;
+}
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+
+/* MOBILE: baseline verticale attuale */
+.hero-mobile{
+  background:#111;
+  min-height:100vh;
+}
+.hero-mobile .stage{
+  position:relative;
+  width:min(100vw,900px);
+}
+.hero-mobile img{
+  width:100%;
+  height:auto;
+  max-width:900px;
+}
+.hero-mobile .enter{
+  left:29%;
+  width:42%;
+  bottom:7.4%;
+  height:6.2%;
+}
+
+/* DESKTOP: baseline orizzontale attuale */
+.hero-desktop{
+  display:none;
+  background:#111;
+  min-height:100vh;
+  padding:0;
+}
+.hero-desktop .desktop-canvas{
+  position:relative;
+  width:min(100vw,calc(100vh * 16 / 9));
+  aspect-ratio:16 / 9;
+  flex:0 0 auto;
+}
+.hero-desktop img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.hero-desktop .enter{
+  left:39.5%;
+  width:21.5%;
+  bottom:6.3%;
+  height:8.8%;
+}
+
+@media (min-width:861px){
+  .hero-mobile{display:none}
+  .hero-desktop{display:flex}
+}
 </style>
 </head>
+
 <body>
-<main class="stage">
-<img class="poster" src="/agente/AGENTE-PAO-SILVER-UFFICIALE.png" alt="Silver, Agente P.A.O. AI, con Luca Pao. Una pratica di presenza: cosa sento, cosa scelgo, come agisco.">
-<a class="enter" href="/entra/" aria-label="Entra nelle quattro porte P.A.O."><span class="sr-only">Entra nelle quattro porte P.A.O.</span></a>
+<main>
+
+  <section class="hero hero-mobile" aria-label="Ingresso Pratica P.A.O. mobile">
+    <div class="stage">
+      <img
+        src="/agente/AGENTE-PAO-SILVER-UFFICIALE.png"
+        alt="Silver, Agente P.A.O. AI, con Luca Pao. Una pratica di presenza: cosa sento, cosa scelgo, come agisco."
+      >
+      <a class="enter" href="/entra/" aria-label="Entra nelle quattro porte P.A.O.">
+        <span class="sr-only">Entra nelle quattro porte P.A.O.</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="hero hero-desktop" aria-label="Ingresso Pratica P.A.O. desktop">
+    <div class="desktop-canvas">
+      <img
+        src="/agente/SILVER-HERO-DESKTOP.png"
+        alt="Pratica P.A.O. con Luca Pao e Silver. Accettazione, Buona Relazione, Consapevolezza. Una pratica di presenza, infinite possibilità."
+      >
+      <a class="enter" href="/entra/" aria-label="Entra nelle quattro porte P.A.O.">
+        <span class="sr-only">Entra nelle quattro porte P.A.O.</span>
+      </a>
+    </div>
+  </section>
+
 </main>
 </body>
 </html>
