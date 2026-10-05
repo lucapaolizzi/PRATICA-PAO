@@ -29,13 +29,19 @@ main{min-height:100vh}
 .hero-mobile img{width:100%;max-width:900px}
 .hero-mobile .enter{left:29%;width:42%;bottom:7.4%;height:6.2%}
 
-/* Desktop: nuova hero orizzontale */
+/* Desktop: hero orizzontale */
 .hero-desktop{display:none;background:#111;min-height:100vh;padding:0}
-.hero-desktop .stage{position:relative;width:100vw;height:100vh;display:flex;justify-content:center;align-items:center;background:#111}
+
+/* Il canvas segue esattamente il rettangolo visibile dell'immagine 16:9 */
+.hero-desktop .desktop-canvas{
+  position:relative;
+  width:min(100vw,calc(100vh * 16 / 9));
+  aspect-ratio:16 / 9;
+  flex:0 0 auto;
+}
 .hero-desktop img{
-  width:100vw;
-  height:auto;
-  max-height:100vh;
+  width:100%;
+  height:100%;
   object-fit:contain;
 }
 .hero-desktop .enter{
@@ -45,48 +51,7 @@ main{min-height:100vh}
   height:8.8%;
 }
 
-
-/* Desktop only: saluto professionale di Silver */
-.silver-greeting{
-  position:absolute;
-  top:7.5%;
-  right:5.5%;
-  width:clamp(260px,22vw,390px);
-  padding:18px 22px 20px;
-  z-index:3;
-  line-height:1.18;
-  color:#17191d;
-  text-align:left;
-  background:rgba(255,255,255,.84);
-  border:1px solid rgba(255,255,255,.78);
-  border-radius:22px;
-  box-shadow:0 16px 42px rgba(0,0,0,.18);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-}
-.silver-greeting .hello{
-  display:block;
-  margin:0 0 7px;
-  font:700 clamp(13px,1.05vw,17px)/1.1 Arial,sans-serif;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  color:#454b55;
-}
-.silver-greeting .name{
-  display:block;
-  margin:0 0 8px;
-  font:800 clamp(27px,2.45vw,43px)/.95 Arial,sans-serif;
-  letter-spacing:.025em;
-  color:#17191d;
-}
-.silver-greeting .question{
-  margin:0;
-  font:500 clamp(18px,1.65vw,28px)/1.18 Georgia,"Times New Roman",serif;
-  color:#25282d;
-}
-.silver-greeting .question strong{font-weight:700}
-
-@media (min-width: 861px){
+@media (min-width:861px){
   .hero-mobile{display:none}
   .hero-desktop{display:flex}
 }
@@ -104,13 +69,8 @@ main{min-height:100vh}
   </section>
 
   <section class="hero hero-desktop" aria-label="Ingresso Silver desktop">
-    <div class="stage">
-      <img src="SILVER-HERO-DESKTOP.png" alt="Silver, Agente P.A.O. AI, con Luca Pao e Silver. Una pratica di presenza: Accettazione, Buona Relazione, Consapevolezza.">
-      <div class="silver-greeting" aria-label="Saluto di Silver">
-        <span class="hello">Ciao, sono</span>
-        <span class="name">SILVER</span>
-        <p class="question">Come stai?<br><strong>Da dove vuoi cominciare?</strong></p>
-      </div>
+    <div class="desktop-canvas">
+      <img src="SILVER-HERO-DESKTOP.png" alt="Silver, Agente P.A.O. AI, con Luca Pao. Una pratica di presenza: Accettazione, Buona Relazione, Consapevolezza.">
       <a class="enter" href="/entra/" aria-label="Entra nelle quattro porte P.A.O.">
         <span class="sr-only">Entra nelle quattro porte P.A.O.</span>
       </a>
